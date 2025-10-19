@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Goalkeeper Match Data Tracker (Firebase Ready)</title>
+    <title>Goalkeeper Match Data Pack Tracker (Fixed PDF)</title>
     <!-- PWA & Icon Setup -->
     <link rel="manifest" href="./manifest.json">
     <!-- Links the main icon for iOS home screen --><link rel="apple-touch-icon" href="Keeper Data Analytics.png"> 
@@ -52,6 +52,16 @@
         input:focus, select:focus, textarea:focus {
             box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.5) !important;
             border-color: #2563EB !important;
+        }
+
+        /* NEW: Report Section Styling for PDF Separation */
+        .report-section {
+            background-color: #1F2937; /* Gray 800 background for the section cards */
+            padding: 1.5rem;
+            border-radius: 0.75rem; /* rounded-xl */
+            border: 1px solid #374151; /* Gray 700 border for separation */
+            margin-top: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
         }
 
         /* Shared Zonal Overlay Styles */
@@ -153,8 +163,8 @@
                 </div>
             </div>
             
-            <!-- SECTION 1: MATCH DETAILS & COMMENTS --><h2 class="text-2xl font-bold text-white mb-4 mt-8 border-l-4 border-primary pl-2">1. Match Details & Final Score</h2>
-            <div class="p-4 bg-gray-700/50 rounded-lg shadow-inner space-y-4">
+            <!-- SECTION 1: MATCH DETAILS & COMMENTS (Now wrapped in .report-section) --><div class="report-section">
+                <h2 class="text-2xl font-bold text-white mb-4 border-l-4 border-primary pl-2">1. Match Details & Final Score</h2>
                 
                 <!-- Standard Match Info Grid --><div class="grid grid-cols-2 md:grid-cols-4 gap-4">
 
@@ -198,99 +208,107 @@
                 </div>
             </div>
 
-            <!-- SECTION 2: RAW DATA COUNTERS (PDF-Aligned) --><h2 class="text-2xl font-bold text-white mb-4 mt-8 border-l-4 border-primary pl-2">2. Raw Data Counters</h2>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <!-- SECTION 2: RAW DATA COUNTERS (Now wrapped in .report-section) --><div class="report-section">
+                <h2 class="text-2xl font-bold text-white mb-4 border-l-4 border-primary pl-2">2. Raw Data Counters</h2>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
 
-                <!-- Row 1: Shot Stopping --><div class="col-span-2 md:col-span-1 flex flex-col items-center bg-gray-700 p-3 rounded-lg shadow-md border border-gray-600"><span class="text-xs font-semibold text-gray-400 mb-1">Total Shots Faced</span><span id="count-shots_faced" class="text-3xl font-extrabold text-white">0</span><button data-key="shots_faced" class="mt-2 w-full py-2 bg-primary text-white font-bold rounded-lg hover:bg-indigo-700 transition shadow-md">+1</button></div>
-                <div class="col-span-2 md:col-span-1 flex flex-col items-center bg-gray-700 p-3 rounded-lg shadow-md border border-gray-600"><span class="text-xs font-semibold text-gray-400 mb-1">Shots Saved</span><span id="count-shots_saved" class="text-3xl font-extrabold text-save-color">0</span><button data-key="shots_saved" class="mt-2 w-full py-2 bg-save-color text-white font-bold rounded-lg hover:bg-emerald-600 transition shadow-md">+1</button></div>
-                <div class="col-span-2 md:col-span-1 flex flex-col items-center bg-gray-700 p-3 rounded-lg shadow-md border border-gray-600"><span class="text-xs font-semibold text-gray-400 mb-1">Goals Against</span><span id="count-goals_against" class="text-3xl font-extrabold text-conceded-color">0</span><button data-key="goals_against" class="mt-2 w-full py-2 bg-conceded-color text-white font-bold rounded-lg hover:bg-red-600 transition shadow-md">+1</button></div>
-                <div class="col-span-2 md:col-span-1 flex flex-col items-center bg-gray-700 p-3 rounded-lg shadow-md border border-gray-600"><span class="text-xs font-semibold text-gray-400 mb-1">Unforced Goal Errors</span><span id="count-unforced_errors" class="text-3xl font-extrabold text-white">0</span><button data-key="unforced_errors" class="mt-2 w-full py-2 bg-primary text-white font-bold rounded-lg hover:bg-indigo-700 transition shadow-md">+1</button></div>
-                
-                <!-- Row 2: 1v1s and Distribution --><div class="col-span-2 md:col-span-1 flex flex-col items-center bg-gray-700 p-3 rounded-lg shadow-md border border-gray-600"><span class="text-xs font-semibold text-gray-400 mb-1">1v1 Battles</span><span id="count-1v1_battles" class="text-3xl font-extrabold text-white">0</span><button data-key="1v1_battles" class="mt-2 w-full py-2 bg-primary text-white font-bold rounded-lg hover:bg-indigo-700 transition shadow-md">+1</button></div>
-                <div class="col-span-2 md:col-span-1 flex flex-col items-center bg-gray-700 p-3 rounded-lg shadow-md border border-gray-600"><span class="text-xs font-semibold text-gray-400 mb-1">1v1s Won</span><span id="count-1v1s_won" class="text-3xl font-extrabold text-save-color">0</span><button data-key="1v1s_won" class="mt-2 w-full py-2 bg-save-color text-white font-bold rounded-lg hover:bg-emerald-600 transition shadow-md">+1</button></div>
-                <div class="col-span-2 md:col-span-1 flex flex-col items-center bg-gray-700 p-3 rounded-lg shadow-md border border-gray-600"><span class="text-xs font-semibold text-gray-400 mb-1">Play-Make Hands</span><span id="count-playmake_hands" class="text-3xl font-extrabold text-contact-color">0</span><button data-key="playmake_hands" class="mt-2 w-full py-2 bg-contact-color text-white font-bold rounded-lg hover:bg-blue-600 transition shadow-md">+1</button></div>
-                <div class="col-span-2 md:col-span-1 flex flex-col items-center bg-gray-700 p-3 rounded-lg shadow-md border border-gray-600"><span class="text-xs font-semibold text-gray-400 mb-1">Play-Make Feet</span><span id="count-playmake_feet" class="text-3xl font-extrabold text-contact-color">0</span><button data-key="playmake_feet" class="mt-2 w-full py-2 bg-contact-color text-white font-bold rounded-lg hover:bg-blue-600 transition shadow-md">+1</button></div>
-                
-                <!-- Row 3: Crosses and Interceptions --><div class="col-span-2 md:col-span-1 flex flex-col items-center bg-gray-700 p-3 rounded-lg shadow-md border border-gray-600"><span class="text-xs font-semibold text-gray-400 mb-1">Crosses Claimed</span><span id="count-crosses_claimed" class="text-3xl font-extrabold text-contact-color">0</span><button data-key="crosses_claimed" class="mt-2 w-full py-2 bg-contact-color text-white font-bold rounded-lg hover:bg-blue-600 transition shadow-md">+1</button></div>
-                <div class="col-span-2 md:col-span-1 flex flex-col items-center bg-gray-700 p-3 rounded-lg shadow-md border border-gray-600"><span class="text-xs font-semibold text-gray-400 mb-1">Punches Completed</span><span id="count-punches_completed" class="text-3xl font-extrabold text-white">0</span><button data-key="punches_completed" class="mt-2 w-full py-2 bg-primary text-white font-bold rounded-lg hover:bg-indigo-700 transition shadow-md">+1</button></div>
-                <div class="col-span-2 md:col-span-1 flex flex-col items-center bg-gray-700 p-3 rounded-lg shadow-md border border-gray-600"><span class="text-xs font-semibold text-gray-400 mb-1">Interceptions Made</span><span id="count-interceptions_made" class="text-3xl font-extrabold text-contact-color">0</span><button data-key="interceptions_made" class="mt-2 w-full py-2 bg-contact-color text-white font-bold rounded-lg hover:bg-blue-600 transition shadow-md">+1</button></div>
-                <div class="col-span-2 md:col-span-1"></div> <!-- Spacer --></div>
-
-            <!-- SECTION 3: ZONAL TRACKING (Saves & Goals) - FRONT-FACING GOAL SVG --><h2 class="text-2xl font-bold text-white mb-4 mt-8 border-l-4 border-primary pl-2">3. Zonal Tracking (Shot Stopping - 9 Zones)</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-                <!-- Shots Saved Map --><div class="p-4 bg-gray-700 rounded-lg shadow-xl">
-                    <h3 class="text-xl font-bold text-save-color text-center mb-3">Shots Saved Zones</h3>
-                    <div class="relative w-full aspect-[2/1.5] mx-auto border-4 border-gray-600 rounded-lg overflow-hidden">
-                        <!-- SVG Goal Visuals --><svg viewBox="0 0 100 75" class="w-full h-full absolute inset-0">
-                            <!-- Goal Background --><rect x="0" y="0" width="100" height="75" fill="#1F2937" />
-                            <!-- Goal Frame and Divisions (3x3 Grid) --><rect x="0" y="0" width="100" height="75" fill="none" stroke="#FBBF24" stroke-width="2.5" />
-                            <!-- Inner Divisions --><line x1="0" y1="25" x2="100" y2="25" stroke="#FBBF24" stroke-width="1" stroke-dasharray="2" />
-                            <line x1="0" y1="50" x2="100" y2="50" stroke="#FBBF24" stroke-width="1" stroke-dasharray="2" />
-                            <line x1="33.33" y1="0" x2="33.33" y2="75" stroke="#FBBF24" stroke-width="1" stroke-dasharray="2" />
-                            <line x1="66.66" y1="0" x2="66.66" y2="75" stroke="#FBBF24" stroke-width="1" stroke-dasharray="2" />
-                        </svg>
-                        <!-- Clickable Overlay Grid --><div id="saved-grid-overlay" class="absolute inset-0 grid grid-cols-3 grid-rows-3">
-                            <!-- Zonal cells dynamically inserted by JS --></div>
-                    </div>
+                    <!-- Row 1: Shot Stopping --><div class="col-span-2 md:col-span-1 flex flex-col items-center bg-gray-700 p-3 rounded-lg shadow-md border border-gray-600"><span class="text-xs font-semibold text-gray-400 mb-1">Total Shots Faced</span><span id="count-shots_faced" class="text-3xl font-extrabold text-white">0</span><button data-key="shots_faced" class="mt-2 w-full py-2 bg-primary text-white font-bold rounded-lg hover:bg-indigo-700 transition shadow-md">+1</button></div>
+                    <div class="col-span-2 md:col-span-1 flex flex-col items-center bg-gray-700 p-3 rounded-lg shadow-md border border-gray-600"><span class="text-xs font-semibold text-gray-400 mb-1">Shots Saved</span><span id="count-shots_saved" class="text-3xl font-extrabold text-save-color">0</span><button data-key="shots_saved" class="mt-2 w-full py-2 bg-save-color text-white font-bold rounded-lg hover:bg-emerald-600 transition shadow-md">+1</button></div>
+                    <div class="col-span-2 md:col-span-1 flex flex-col items-center bg-gray-700 p-3 rounded-lg shadow-md border border-gray-600"><span class="text-xs font-semibold text-gray-400 mb-1">Goals Against</span><span id="count-goals_against" class="text-3xl font-extrabold text-conceded-color">0</span><button data-key="goals_against" class="mt-2 w-full py-2 bg-conceded-color text-white font-bold rounded-lg hover:bg-red-600 transition shadow-md">+1</button></div>
+                    <div class="col-span-2 md:col-span-1 flex flex-col items-center bg-gray-700 p-3 rounded-lg shadow-md border border-gray-600"><span class="text-xs font-semibold text-gray-400 mb-1">Unforced Goal Errors</span><span id="count-unforced_errors" class="text-3xl font-extrabold text-white">0</span><button data-key="unforced_errors" class="mt-2 w-full py-2 bg-primary text-white font-bold rounded-lg hover:bg-indigo-700 transition shadow-md">+1</button></div>
+                    
+                    <!-- Row 2: 1v1s and Distribution --><div class="col-span-2 md:col-span-1 flex flex-col items-center bg-gray-700 p-3 rounded-lg shadow-md border border-gray-600"><span class="text-xs font-semibold text-gray-400 mb-1">1v1 Battles</span><span id="count-1v1_battles" class="text-3xl font-extrabold text-white">0</span><button data-key="1v1_battles" class="mt-2 w-full py-2 bg-primary text-white font-bold rounded-lg hover:bg-indigo-700 transition shadow-md">+1</button></div>
+                    <div class="col-span-2 md:col-span-1 flex flex-col items-center bg-gray-700 p-3 rounded-lg shadow-md border border-gray-600"><span class="text-xs font-semibold text-gray-400 mb-1">1v1s Won</span><span id="count-1v1s_won" class="text-3xl font-extrabold text-save-color">0</span><button data-key="1v1s_won" class="mt-2 w-full py-2 bg-save-color text-white font-bold rounded-lg hover:bg-emerald-600 transition shadow-md">+1</button></div>
+                    <div class="col-span-2 md:col-span-1 flex flex-col items-center bg-gray-700 p-3 rounded-lg shadow-md border border-gray-600"><span class="text-xs font-semibold text-gray-400 mb-1">Play-Make Hands</span><span id="count-playmake_hands" class="text-3xl font-extrabold text-contact-color">0</span><button data-key="playmake_hands" class="mt-2 w-full py-2 bg-contact-color text-white font-bold rounded-lg hover:bg-blue-600 transition shadow-md">+1</button></div>
+                    <div class="col-span-2 md:col-span-1 flex flex-col items-center bg-gray-700 p-3 rounded-lg shadow-md border border-gray-600"><span class="text-xs font-semibold text-gray-400 mb-1">Play-Make Feet</span><span id="count-playmake_feet" class="text-3xl font-extrabold text-contact-color">0</span><button data-key="playmake_feet" class="mt-2 w-full py-2 bg-contact-color text-white font-bold rounded-lg hover:bg-blue-600 transition shadow-md">+1</button></div>
+                    
+                    <!-- Row 3: Crosses and Interceptions --><div class="col-span-2 md:col-span-1 flex flex-col items-center bg-gray-700 p-3 rounded-lg shadow-md border border-gray-600"><span class="text-xs font-semibold text-gray-400 mb-1">Crosses Claimed</span><span id="count-crosses_claimed" class="text-3xl font-extrabold text-contact-color">0</span><button data-key="crosses_claimed" class="mt-2 w-full py-2 bg-contact-color text-white font-bold rounded-lg hover:bg-blue-600 transition shadow-md">+1</button></div>
+                    <div class="col-span-2 md:col-span-1 flex flex-col items-center bg-gray-700 p-3 rounded-lg shadow-md border border-gray-600"><span class="text-xs font-semibold text-gray-400 mb-1">Punches Completed</span><span id="count-punches_completed" class="text-3xl font-extrabold text-white">0</span><button data-key="punches_completed" class="mt-2 w-full py-2 bg-primary text-white font-bold rounded-lg hover:bg-indigo-700 transition shadow-md">+1</button></div>
+                    <div class="col-span-2 md:col-span-1 flex flex-col items-center bg-gray-700 p-3 rounded-lg shadow-md border border-gray-600"><span class="text-xs font-semibold text-gray-400 mb-1">Interceptions Made</span><span id="count-interceptions_made" class="text-3xl font-extrabold text-contact-color">0</span><button data-key="interceptions_made" class="mt-2 w-full py-2 bg-contact-color text-white font-bold rounded-lg hover:bg-blue-600 transition shadow-md">+1</button></div>
+                    <div class="col-span-2 md:col-span-1"></div> <!-- Spacer -->
                 </div>
-                
-                <!-- Goals Conceded Map --><div class="p-4 bg-gray-700 rounded-lg shadow-xl">
-                    <h3 class="text-xl font-bold text-conceded-color text-center mb-3">Goals Conceded Zones</h3>
-                    <div class="relative w-full aspect-[2/1.5] mx-auto border-4 border-gray-600 rounded-lg overflow-hidden">
-                        <!-- SVG Goal Visuals --><svg viewBox="0 0 100 75" class="w-full h-full absolute inset-0">
-                            <!-- Goal Background --><rect x="0" y="0" width="100" height="75" fill="#1F2937" />
-                            <!-- Goal Frame and Divisions (3x3 Grid) --><rect x="0" y="0" width="100" height="75" fill="none" stroke="#FBBF24" stroke-width="2.5" />
-                            <!-- Inner Divisions --><line x1="0" y1="25" x2="100" y2="25" stroke="#FBBF24" stroke-width="1" stroke-dasharray="2" />
-                            <line x1="0" y1="50" x2="100" y2="50" stroke="#FBBF24" stroke-width="1" stroke-dasharray="2" />
-                            <line x1="33.33" y1="0" x2="33.33" y2="75" stroke="#FBBF24" stroke-width="1" stroke-dasharray="2" />
-                            <line x1="66.66" y1="0" x2="66.66" y2="75" stroke="#FBBF24" stroke-width="1" stroke-dasharray="2" />
-                        </svg>
-                        <!-- Clickable Overlay Grid --><div id="conceded-grid-overlay" class="absolute inset-0 grid grid-cols-3 grid-rows-3">
-                            <!-- Zonal cells dynamically inserted by JS --></div>
+            </div>
+
+            <!-- SECTION 3: ZONAL TRACKING (Now wrapped in .report-section) --><div class="report-section">
+                <h2 class="text-2xl font-bold text-white mb-4 border-l-4 border-primary pl-2">3. Zonal Tracking (Shot Stopping - 9 Zones)</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                    <!-- Shots Saved Map --><div class="p-4 bg-gray-700 rounded-lg shadow-xl">
+                        <h3 class="text-xl font-bold text-save-color text-center mb-3">Shots Saved Zones</h3>
+                        <div class="relative w-full aspect-[2/1.5] mx-auto border-4 border-gray-600 rounded-lg overflow-hidden">
+                            <!-- SVG Goal Visuals --><svg viewBox="0 0 100 75" class="w-full h-full absolute inset-0">
+                                <!-- Goal Background --><rect x="0" y="0" width="100" height="75" fill="#1F2937" />
+                                <!-- Goal Frame and Divisions (3x3 Grid) --><rect x="0" y="0" width="100" height="75" fill="none" stroke="#FBBF24" stroke-width="2.5" />
+                                <!-- Inner Divisions --><line x1="0" y1="25" x2="100" y2="25" stroke="#FBBF24" stroke-width="1" stroke-dasharray="2" />
+                                <line x1="0" y1="50" x2="100" y2="50" stroke="#FBBF24" stroke-width="1" stroke-dasharray="2" />
+                                <line x1="33.33" y1="0" x2="33.33" y2="75" stroke="#FBBF24" stroke-width="1" stroke-dasharray="2" />
+                                <line x1="66.66" y1="0" x2="66.66" y2="75" stroke="#FBBF24" stroke-width="1" stroke-dasharray="2" />
+                            </svg>
+                            <!-- Clickable Overlay Grid --><div id="saved-grid-overlay" class="absolute inset-0 grid grid-cols-3 grid-rows-3">
+                                <!-- Zonal cells dynamically inserted by JS --></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Goals Conceded Map --><div class="p-4 bg-gray-700 rounded-lg shadow-xl">
+                        <h3 class="text-xl font-bold text-conceded-color text-center mb-3">Goals Conceded Zones</h3>
+                        <div class="relative w-full aspect-[2/1.5] mx-auto border-4 border-gray-600 rounded-lg overflow-hidden">
+                            <!-- SVG Goal Visuals --><svg viewBox="0 0 100 75" class="w-full h-full absolute inset-0">
+                                <!-- Goal Background --><rect x="0" y="0" width="100" height="75" fill="#1F2937" />
+                                <!-- Goal Frame and Divisions (3x3 Grid) --><rect x="0" y="0" width="100" height="75" fill="none" stroke="#FBBF24" stroke-width="2.5" />
+                                <!-- Inner Divisions --><line x1="0" y1="25" x2="100" y2="25" stroke="#FBBF24" stroke-width="1" stroke-dasharray="2" />
+                                <line x1="0" y1="50" x2="100" y2="50" stroke="#FBBF24" stroke-width="1" stroke-dasharray="2" />
+                                <line x1="33.33" y1="0" x2="33.33" y2="75" stroke="#FBBF24" stroke-width="1" stroke-dasharray="2" />
+                                <line x1="66.66" y1="0" x2="66.66" y2="75" stroke="#FBBF24" stroke-width="1" stroke-dasharray="2" />
+                            </svg>
+                            <!-- Clickable Overlay Grid --><div id="conceded-grid-overlay" class="absolute inset-0 grid grid-cols-3 grid-rows-3">
+                                <!-- Zonal cells dynamically inserted by JS --></div>
+                        </div>
                     </div>
                 </div>
             </div>
             
-            <!-- SECTION 4: CONTACT ZONES (16 Areas Top-Down) - SVG VISUAL REFERENCE --><h2 class="text-2xl font-bold text-white mb-4 mt-8 border-l-4 border-contact-color pl-2">4. Contact Zones (Top Down - 16 Zones)</h2>
-            <div class="flex justify-center">
-                <div class="w-full">
-                    <h3 class="text-xl font-bold text-contact-color text-center mb-3">Claim/Interception/Distribution Contact Zones</h3>
-                    
-                    <!-- Contact Map Container - RESTORED SVG BACKGROUND --><div id="contact-map-container" class="relative w-full max-w-4xl mx-auto border-4 border-gray-600 rounded-lg overflow-hidden aspect-[4/3] bg-[#14532D]">
+            <!-- SECTION 4: CONTACT ZONES (Now wrapped in .report-section) --><div class="report-section">
+                <h2 class="text-2xl font-bold text-white mb-4 border-l-4 border-contact-color pl-2">4. Contact Zones (Top Down - 16 Zones)</h2>
+                <div class="flex justify-center">
+                    <div class="w-full">
+                        <h3 class="text-xl font-bold text-contact-color text-center mb-3">Claim/Interception/Distribution Contact Zones</h3>
                         
-                        <!-- SVG Grid Background (Represents a portion of the field divided into 16 zones) -->
-                        <svg viewBox="0 0 400 300" class="w-full h-full absolute inset-0">
-                            <!-- Field Green Background -->
-                            <rect x="0" y="0" width="400" height="300" fill="#14532D" /> 
+                        <!-- Contact Map Container - RESTORED SVG BACKGROUND --><div id="contact-map-container" class="relative w-full max-w-4xl mx-auto border-4 border-gray-600 rounded-lg overflow-hidden aspect-[4/3] bg-[#14532D]">
                             
-                            <!-- 4x4 Grid Lines (White) -->
-                            <g stroke="#ffffff" stroke-width="1.5">
-                                <!-- Outer Border -->
-                                <rect x="0" y="0" width="400" height="300" fill="none" />
+                            <!-- SVG Grid Background (Represents a portion of the field divided into 16 zones) -->
+                            <svg viewBox="0 0 400 300" class="w-full h-full absolute inset-0">
+                                <!-- Field Green Background -->
+                                <rect x="0" y="0" width="400" height="300" fill="#14532D" /> 
                                 
-                                <!-- Horizontal Divisions -->
-                                <line x1="0" y1="75" x2="400" y2="75" />
-                                <line x1="0" y1="150" x2="400" y2="150" />
-                                <line x1="0" y1="225" x2="400" y2="225" />
-                                
-                                <!-- Vertical Divisions -->
-                                <line x1="100" y1="0" x2="100" y2="300" />
-                                <line x1="200" y1="0" x2="200" y2="300" />
-                                <line x1="300" y1="0" x2="300" y2="300" />
-                            </g>
-                        </svg>
-                        
-                        <!-- Clickable Overlay Grid (Covers the entire 16-zone area) --><div id="contact-grid-overlay" class="absolute inset-0 grid grid-cols-4 grid-rows-4 z-10">
-                            <!-- 16 Zonal cells dynamically inserted by JS --></div>
-                    </div>
+                                <!-- 4x4 Grid Lines (White) -->
+                                <g stroke="#ffffff" stroke-width="1.5">
+                                    <!-- Outer Border -->
+                                    <rect x="0" y="0" width="400" height="300" fill="none" />
+                                    
+                                    <!-- Horizontal Divisions -->
+                                    <line x1="0" y1="75" x2="400" y2="75" />
+                                    <line x1="0" y1="150" x2="400" y2="150" />
+                                    <line x1="0" y1="225" x2="400" y2="225" />
+                                    
+                                    <!-- Vertical Divisions -->
+                                    <line x1="100" y1="0" x2="100" y2="300" />
+                                    <line x1="200" y1="0" x2="200" y2="300" />
+                                    <line x1="300" y1="0" x2="300" y2="300" />
+                                </g>
+                            </svg>
+                            
+                            <!-- Clickable Overlay Grid (Covers the entire 16-zone area) --><div id="contact-grid-overlay" class="absolute inset-0 grid grid-cols-4 grid-rows-4 z-10">
+                                <!-- 16 Zonal cells dynamically inserted by JS --></div>
+                        </div>
 
-                    <div class="mt-8 p-4 bg-gray-800/50 rounded-lg">
-                        <h4 class="text-lg font-semibold text-gray-400 mb-3 text-center">Contact Zone Layout: C1 (Top Left) to C16 (Bottom Right)</h4>
-                        <p class="text-sm text-gray-500 mt-3 text-center">The visual grid above acts as your reference diagram. The zone labels (C1-C16) on the overlay allow you to record data directly onto the grid.</p>
+                        <div class="mt-8 p-4 bg-gray-800/50 rounded-lg">
+                            <h4 class="text-lg font-semibold text-gray-400 mb-3 text-center">Contact Zone Layout: C1 (Top Left) to C16 (Bottom Right)</h4>
+                            <p class="text-sm text-gray-500 mt-3 text-center">The visual grid above acts as your reference diagram. The zone labels (C1-C16) on the overlay allow you to record data directly onto the grid.</p>
+                        </div>
                     </div>
                 </div>
             </div>
+
 
             <!-- CONTROLS & SUMMARY --><div class="pt-8 flex flex-col md:flex-row justify-between items-center border-t border-gray-700 mt-8 pt-6">
                 <div id="summary-display" class="w-full md:w-auto text-sm text-gray-400 mb-4 md:mb-0">
