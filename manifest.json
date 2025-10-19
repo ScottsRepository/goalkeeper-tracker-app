@@ -1,0 +1,22 @@
+{
+"name": "Goalkeeper Data Tracker",
+"short_name": "GK Tracker",
+"description": "Professional Goalkeeper Match Data and Analytics Tracker.",
+"start_url": "./goalkeeper_data_pack_final.html",
+"display": "standalone",
+"background_color": "#111827",
+"theme_color": "#2563EB",
+"orientation": "portrait",
+"icons": [
+{
+"src": "Keeper Data Analytics.png",
+"sizes": "192x192",
+"type": "image/png"
+},
+{
+"src": "Keeper Data Analytics.png",
+"sizes": "512x512",
+"type": "image/png"
+}
+]
+}
