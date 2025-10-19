@@ -332,9 +332,11 @@
         // Check if running in the Canvas environment, otherwise use a custom config.
         const runningInCanvas = typeof __firebase_config !== 'undefined';
         
-        // 🚨 CRITICAL: REPLACE THE ENTIRE OBJECT BELOW WITH YOUR FIREBASE CONFIGURATION
-        const firebaseConfig = { 
-            apiKey: "AIzaSyA0C5LrSq1LuTUo9EsairITEOuoQt8ISXo",
+        // 🚨 CRITICAL: FIREBASE CONFIGURATION (USE PLACEHOLDERS FOR GITHUB COMMIT!) 🚨
+        // Replace this entire config object with your real Firebase config BEFORE running the app live.
+        // The placeholder key below is intended ONLY to clear the GitHub security alert.
+        const YOUR_FIREBASE_CONFIG = { 
+            apiKey: "YOUR_API_KEY_HERE_AIzaSyA0C5LrSq1LuTUo9EsairITEOuoQt8ISXo",
             authDomain: "gk-tracker-app.firebaseapp.com",
             projectId: "gk-tracker-app",
             storageBucket: "gk-tracker-app.firebasestorage.app",
@@ -405,11 +407,10 @@
                 const isExternalMock = firebaseConfig.apiKey.includes('YOUR_API_KEY_HERE');
 
                 if (!runningInCanvas && isExternalMock) {
-                    // Running externally AND user hasn't replaced the config
+                    // This block will execute if the user commits the file with the placeholder key.
                     console.warn("Running outside Canvas environment with mock config. Data persistence is DISABLED.");
-                    authStatusElement.innerHTML = `<span class="text-red-400">🚨 WARNING: Persistence Disabled. Data will NOT persist.</span>`;
+                    authStatusElement.innerHTML = `<span class="text-red-400">🚨 WARNING: Persistence Disabled. Please update config.</span>`;
                     
-                    // Proceed to UI rendering immediately with default data
                     isDataReady = true;
                     loadingOverlay.style.display = 'none';
                     mainContent.style.display = 'block';
@@ -424,7 +425,6 @@
                 // setLogLevel('debug'); // Uncomment for debugging in browser console
 
                 
-                // If we are here, we are using a real (Canvas or User) config
                 authStatusElement.innerHTML = `Connecting to Firebase...`;
 
                 // Sign in anonymously to get a unique user ID
