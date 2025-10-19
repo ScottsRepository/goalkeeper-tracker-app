@@ -96,7 +96,8 @@
         .non-interactive-pdf {
             cursor: default !important;
             transition: none !important;
-            background-color: transparent !important; /* Hide hover effect on PDF */
+            /* CRITICAL: Ensure transparent background for clean PDF capture */
+            background-color: transparent !important; 
         }
         .non-interactive-pdf:hover {
             transform: none !important;
@@ -332,8 +333,7 @@
         // Check if running in the Canvas environment, otherwise use a custom config.
         const runningInCanvas = typeof __firebase_config !== 'undefined';
         
-        // --- CRITICAL: FIREBASE CONFIGURATION (NOW WITH YOUR KEYS) ---
-        // This is the configuration you provided. It will enable persistence.
+        // --- CRITICAL: FIREBASE CONFIGURATION (USING USER'S KEYS) ---
         const YOUR_FIREBASE_CONFIG = { 
             apiKey: "AIzaSyA0C5LrSq1LuTUo9EsairITEOuoQt8ISXo",
             authDomain: "gk-tracker-app.firebaseapp.com",
@@ -341,7 +341,7 @@
             storageBucket: "gk-tracker-app.firebasestorage.app",
             messagingSenderId: "274304840483",
             appId: "1:274304840483:web:916554bc205717c9531296",
-            measurementId: "G-6ZM1EG0FQC" // Added your measurementId as well
+            measurementId: "G-6ZM1EG0FQC" 
         };
         // ------------------------------------------
         
@@ -724,7 +724,7 @@
             document.getElementById('summary-goals_against').textContent = totalGoalsAgainst;
         }
         
-        // --- PDF DOWNLOAD FUNCTION ---
+        // --- PDF DOWNLOAD FUNCTION (FIXED ASPECT RATIO) ---
         window.downloadPDF = async function() {
             if (!isDataReady) {
                 console.warn("App is not ready to generate PDF yet. Please wait.");
@@ -759,34 +759,47 @@
 
             try {
                 const canvas = await html2canvas(appContainer, {
-                    scale: 2, 
+                    scale: 2, // High resolution capture
                     logging: false,
                     useCORS: true,
+                    backgroundColor: '#1F2937' // Set background color to match app container
                 });
 
                 const imgData = canvas.toDataURL('image/jpeg', 1.0);
                 const { jsPDF } = window.jspdf;
                 const pdf = new jsPDF('p', 'mm', 'a4'); 
 
-                const pdfWidth = pdf.internal.pageSize.getWidth();
-                const pdfHeight = pdf.internal.pageSize.getHeight();
+                // A4 dimensions in mm
+                const pdfWidth = pdf.internal.pageSize.getWidth(); // 210 mm
+                const pdfHeight = pdf.internal.pageSize.getHeight(); // 297 mm
                 
-                const imgWidth = canvas.width;
-                const imgHeight = canvas.height;
-                const ratio = imgHeight / imgWidth;
+                const canvasWidth = canvas.width;
+                const canvasHeight = canvas.height;
                 
-                const targetWidth = pdfWidth * 0.9; 
-                let targetHeight = targetWidth * ratio;
-                const margin = pdfWidth * 0.05; 
-                
-                if (targetHeight > pdfHeight - 2 * margin) {
-                    targetHeight = pdfHeight - 2 * margin;
+                // Define margin (e.g., 10mm on each side)
+                const margin = 10;
+                const availableWidth = pdfWidth - 2 * margin;
+
+                // Calculate the final dimensions to maintain aspect ratio
+                const finalWidth = availableWidth;
+                const finalHeight = (canvasHeight * finalWidth) / canvasWidth;
+
+                // If the content is too tall, scale everything down (rare for this app layout)
+                if (finalHeight > pdfHeight - 2 * margin) {
+                    // Recalculate based on height limit
+                    const heightLimit = pdfHeight - 2 * margin;
+                    const finalHeight = heightLimit;
+                    const finalWidth = (canvasWidth * finalHeight) / canvasHeight;
+                    pdf.addImage(imgData, 'JPEG', margin + (availableWidth - finalWidth) / 2, margin, finalWidth, finalHeight);
+
+                } else {
+                    // Fit to width, center the image vertically (if there is space)
+                    pdf.addImage(imgData, 'JPEG', margin, margin, finalWidth, finalHeight);
                 }
 
-                pdf.addImage(imgData, 'JPEG', margin, margin, targetWidth, targetHeight);
 
                 // Add footer
-                const teamName = matchData.teamName === 'Other' ? matchData.otherTeamName : matchData.teamName;
+                const teamName = matchData.teamName === 'Other' ? matchData.otherTeamName : matchData.otherTeamName || matchData.teamName;
                 const gkName = document.getElementById('input-name').value || 'GK';
                 const opposition = document.getElementById('input-opposition').value || 'Match';
                 const date = document.getElementById('input-date').value || new Date().toISOString().slice(0, 10);
