@@ -332,18 +332,18 @@
         // Check if running in the Canvas environment, otherwise use a custom config.
         const runningInCanvas = typeof __firebase_config !== 'undefined';
         
-        // 🚨 CRITICAL: FIREBASE CONFIGURATION (USE PLACEHOLDERS FOR GITHUB COMMIT!) 🚨
-        // Replace this entire config object with your real Firebase config BEFORE running the app live.
-        // The placeholder key below is intended ONLY to clear the GitHub security alert.
+        // --- CRITICAL: FIREBASE CONFIGURATION (NOW WITH YOUR KEYS) ---
+        // This is the configuration you provided. It will enable persistence.
         const YOUR_FIREBASE_CONFIG = { 
-            apiKey: "YOUR_API_KEY_HERE_AIzaSyA0C5LrSq1LuTUo9EsairITEOuoQt8ISXo",
+            apiKey: "AIzaSyA0C5LrSq1LuTUo9EsairITEOuoQt8ISXo",
             authDomain: "gk-tracker-app.firebaseapp.com",
             projectId: "gk-tracker-app",
             storageBucket: "gk-tracker-app.firebasestorage.app",
             messagingSenderId: "274304840483",
-            appId: "1:274304840483:web:916554bc205717c9531296"
+            appId: "1:274304840483:web:916554bc205717c9531296",
+            measurementId: "G-6ZM1EG0FQC" // Added your measurementId as well
         };
-        // 🚨 END CRITICAL BLOCK 🚨
+        // ------------------------------------------
         
         const appId = runningInCanvas ? __app_id : 'external-app-id';
         // Selects the Canvas config if available, otherwise uses YOUR_FIREBASE_CONFIG
@@ -403,11 +403,11 @@
             loadingOverlay.style.display = 'flex';
             
             try {
-                // Check if the external config is the default placeholder
-                const isExternalMock = firebaseConfig.apiKey.includes('YOUR_API_KEY_HERE');
+                // Check if running externally, and if the user provided config is present (now it is!)
+                const isPlaceholderConfig = YOUR_FIREBASE_CONFIG.apiKey.includes('PASTE_YOUR_ACTUAL_FIREBASE_API_KEY_HERE');
 
-                if (!runningInCanvas && isExternalMock) {
-                    // This block will execute if the user commits the file with the placeholder key.
+                if (!runningInCanvas && isPlaceholderConfig) {
+                    // This block will no longer execute with your real keys inserted!
                     console.warn("Running outside Canvas environment with mock config. Data persistence is DISABLED.");
                     authStatusElement.innerHTML = `<span class="text-red-400">🚨 WARNING: Persistence Disabled. Please update config.</span>`;
                     
@@ -506,8 +506,8 @@
             updateUI(); // Immediately reflect local change
             
             // 2. Persist to Firebase if running with a real configuration
-            const isExternalMock = firebaseConfig.apiKey.includes('YOUR_API_KEY_HERE');
-            if (runningInCanvas || !isExternalMock) {
+            const isPlaceholderConfig = firebaseConfig.apiKey.includes('PASTE_YOUR_ACTUAL_FIREBASE_API_KEY_HERE');
+            if (runningInCanvas || !isPlaceholderConfig) {
                 try {
                     const docRef = getMatchDocPath();
                     if (docRef) {
@@ -837,7 +837,7 @@
             }
             
             // Check if the external config is the default placeholder
-            const isExternalMock = firebaseConfig.apiKey.includes('YOUR_API_KEY_HERE');
+            const isPlaceholderConfig = firebaseConfig.apiKey.includes('PASTE_YOUR_ACTUAL_FIREBASE_API_KEY_HERE');
 
             try {
                 // Retain basic identity fields when resetting counters
@@ -853,7 +853,7 @@
                 updateUI();
                 
                 // 2. Persist reset to Firebase if running with a real configuration
-                if (runningInCanvas || !isExternalMock) {
+                if (runningInCanvas || !isPlaceholderConfig) {
                     const docRef = getMatchDocPath();
                     await setDoc(docRef, resetPayload);
                 } else {
