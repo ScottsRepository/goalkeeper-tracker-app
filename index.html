@@ -6,8 +6,7 @@
     <title>Goalkeeper Match Data Tracker (Final)</title>
     <!-- PWA & Icon Setup -->
     <link rel="manifest" href="./manifest.json">
-    <!-- Links the main icon for iOS home screen - CORRECTED TO PNG -->
-    <link rel="apple-touch-icon" href="Keeper Data Analytics.png"> 
+    <!-- Links the main icon for iOS home screen --><link rel="apple-touch-icon" href="Keeper Data Analytics.png"> 
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="GK Tracker">
@@ -335,7 +334,8 @@
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
         
         let app, db, auth, userId = null;
-        let isAuthReady = false;
+        // FLAG: Only allow data updates if the auth and data path are confirmed ready
+        let isDataReady = false; 
         
         // Keys for the 16 contact zones (C1-C16, read left-to-right, top-to-bottom on the 4x4 grid)
         const DEFAULT_CONTACT_ZONES = { 
@@ -398,7 +398,6 @@
                     if (user) {
                         userId = user.uid;
                         authStatusElement.innerHTML = `Signed in as <span class="font-mono text-gray-300">${userId}</span>`;
-                        isAuthReady = true;
                         startDataListener();
                     } else {
                         if (initialAuthToken) {
@@ -442,6 +441,9 @@
                     setDoc(docRef, DEFAULT_MATCH_DATA).catch(e => console.error("Error setting initial document:", e));
                 }
                 
+                // CRITICAL FIX: Set flag only AFTER data is loaded/initialized AND we have a userId
+                isDataReady = true; 
+                
                 // Once data is loaded/initialized, hide overlay and show content
                 loadingOverlay.style.display = 'none';
                 mainContent.style.display = 'block';
@@ -455,7 +457,11 @@
 
         // --- WRITE FUNCTIONS ---
         async function updateData(payload) {
-            if (!db || !isAuthReady) return console.warn("Database not ready.");
+            // FIX: Check the isDataReady flag here
+            if (!isDataReady) {
+                console.warn("Database not ready or data listener not initialized. Ignoring write operation.");
+                return;
+            }
             try {
                 const docRef = getMatchDocPath();
                 if (docRef) {
@@ -490,6 +496,12 @@
 
         // Handles Raw Data Counters
         window.incrementCounter = function(key) {
+            // FIX: Guard the counter function just like updateData
+            if (!isDataReady) {
+                console.warn("App is not ready to save data yet. Please wait a moment.");
+                return;
+            }
+
             // Using a simple increment/update here; real increment would be done server-side
             const newValue = matchData[key] + 1;
             updateData({ [key]: newValue });
@@ -504,6 +516,12 @@
 
         // Handles ALL Zonal Data (Saves, Conceded, Contact)
         window.recordZonalData = function(type, zone) {
+            // FIX: Guard the zonal function just like updateData
+            if (!isDataReady) {
+                console.warn("App is not ready to save data yet. Please wait a moment.");
+                return;
+            }
+
             let path, colorClass, countKey;
             
             switch (type) {
@@ -651,6 +669,11 @@
         
         // --- PDF DOWNLOAD FUNCTION ---
         window.downloadPDF = async function() {
+            if (!isDataReady) {
+                console.warn("App is not ready to generate PDF yet. Please wait.");
+                return;
+            }
+
             const pdfButton = document.getElementById('download-pdf-button');
             const appContainer = document.getElementById('app-container');
             
@@ -740,6 +763,10 @@
 
         // --- MODAL AND RESET LOGIC ---
         function showModal() {
+            if (!isDataReady) {
+                console.warn("App is not ready to reset data yet. Please wait a moment.");
+                return;
+            }
             resetModal.classList.remove('opacity-0', 'pointer-events-none');
             resetModal.querySelector('div').classList.remove('scale-95');
         }
@@ -750,15 +777,23 @@
         }
 
         async function handleResetData() {
-            if (!db || !isAuthReady) {
-                console.warn("Database not ready or not authenticated.");
+            if (!isDataReady) {
+                console.warn("App is not ready to save data yet. Ignoring reset.");
                 hideModal();
                 return;
             }
 
             try {
                 const docRef = getMatchDocPath();
-                await setDoc(docRef, DEFAULT_MATCH_DATA);
+                // Ensure we don't accidentally wipe the match info if it was already filled
+                const resetPayload = { ...DEFAULT_MATCH_DATA, 
+                    // Preserve Name, Date, Team to make re-logging easier
+                    name: matchData.name, 
+                    date: matchData.date, 
+                    teamName: matchData.teamName,
+                    otherTeamName: matchData.otherTeamName
+                }; 
+                await setDoc(docRef, resetPayload);
                 hideModal();
             } catch (error) {
                 console.error("Error resetting data:", error);
