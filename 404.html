@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Page Not Found - Client Side Routing Fix</title>
+    <script type="text/javascript">
+        // CRITICAL FIX FOR GITHUB PAGES SPAs
+        //
+        // 1. When a user visits a deep link (e.g., /about), GitHub Pages serves this 404.html.
+        // 2. This script saves the requested path in sessionStorage.
+        // 3. It redirects the user back to the root ('/').
+        // 4. The script in the main index.html will pick up this path and restore it, allowing the SPA router to take over.
+        
+        // Only run this logic if we have a path to save
+        if (window.location.pathname !== '/') {
+            // Save the full path and query string (e.g., '/blog/post?id=5')
+            var fullPath = window.location.pathname + window.location.search;
+            
+            // Use a unique key to store the intended path
+            sessionStorage.setItem('ghPagesPath', fullPath);
+            
+            // Redirect to the root of the site, which loads index.html
+            // This forces GitHub Pages to serve the main entry point.
+            window.location.replace(window.location.origin);
+        }
+        
+        // If the path is just '/', the script exits, and the default 404 content below is shown (shouldn't happen often)
+    </script>
+    <style>
+        /* Minimal styling in case the script fails or runs on a non-deep link 404 */
+        body { font-family: 'Inter', sans-serif; background-color: #f8f8f8; color: #333; text-align: center; padding-top: 50px; }
+        h1 { font-size: 2.5rem; color: #007bff; }
+        p { font-size: 1.1rem; }
+    </style>
+</head>
+<body>
+    <h1>404 - Not Found</h1>
+    <p>If you see this message, the automated routing fix is running...</p>
+    <p>Please wait while we redirect you to the application.</p>
+</body>
+</html>
