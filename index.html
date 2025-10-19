@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Goalkeeper Match Data Tracker (Final)</title>
+    <title>Goalkeeper Match Data Tracker (Stable)</title>
     <!-- PWA & Icon Setup -->
     <link rel="manifest" href="./manifest.json">
     <!-- Links the main icon for iOS home screen --><link rel="apple-touch-icon" href="Keeper Data Analytics.png"> 
@@ -392,6 +392,7 @@
                 app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 auth = getAuth(app);
+                // setLogLevel('debug'); // Uncomment for debugging in browser console
 
                 onAuthStateChanged(auth, async (user) => {
                     if (user) {
@@ -440,7 +441,7 @@
                     setDoc(docRef, DEFAULT_MATCH_DATA).catch(e => console.error("Error setting initial document:", e));
                 }
                 
-                // CRITICAL: Set flag only AFTER data is loaded/initialized AND we have a userId
+                // CRITICAL: Set flag only AFTER data is loaded/initialized
                 isDataReady = true; 
                 
                 // Once data is loaded/initialized, hide overlay and show content
@@ -448,8 +449,6 @@
                 mainContent.style.display = 'block';
 
                 updateUI();
-                // CRITICAL FIX: Attach all dynamic listeners now that the DOM and data are ready
-                attachCounterListeners();
             }, (error) => {
                 console.error("Error listening to match data:", error);
                 authStatusElement.textContent = `Error: Data sync failed.`;
@@ -469,8 +468,6 @@
                 }
             } catch (error) {
                 console.error("Error updating data:", error);
-                // Log a friendly mobile message to console
-                console.error("Firebase Write Error: Data not saved. Check network connection or auth status.");
             }
         }
 
@@ -492,7 +489,7 @@
             }
 
             // 2. Data Update (Only save the primary team choice)
-            updateData({ teamName: value });
+            updateData({ teamName: value, otherTeamName: (value !== 'Other' ? '' : matchData.otherTeamName) });
         }
 
 
@@ -502,6 +499,9 @@
                 console.warn("App is not ready to save data yet. Please wait a moment.");
                 return;
             }
+            
+            // Console log for debugging: check if the button click event is reaching this function
+            console.log(`Attempting to increment counter for key: ${key}`);
 
             const newValue = matchData[key] + 1;
             updateData({ [key]: newValue });
@@ -520,6 +520,8 @@
                 console.warn("App is not ready to save data yet. Please wait a moment.");
                 return;
             }
+            
+            console.log(`Attempting to record zonal data for: ${type}, zone: ${zone}`);
 
             let path, colorClass, countKey;
             
@@ -530,7 +532,7 @@
                 default: return;
             }
 
-            const currentCount = matchData[path][zone];
+            const currentCount = matchData[path][zone] || 0;
             const newValue = currentCount + 1;
             
             // Build the specific payload for the nested map update (dot notation)
@@ -548,17 +550,16 @@
             }
         }
 
-        // --- ATTACH LISTENERS (CRITICAL FIX) ---
-        function attachCounterListeners() {
-            // Raw Data Counters
+        // --- ATTACH LISTENERS (CRITICAL FIX: Attach once on load) ---
+        function attachGlobalListeners() {
+            // Raw Data Counters: Attach to the static buttons once
             document.querySelectorAll('button[data-key]').forEach(button => {
                 const key = button.getAttribute('data-key');
-                // Remove any existing listener before adding a new one
-                button.removeEventListener('click', () => window.incrementCounter(key)); 
+                // Use a dedicated listener function reference to avoid binding issues
                 button.addEventListener('click', () => window.incrementCounter(key));
             });
 
-            // Main Action Buttons
+            // Main Action Buttons: Attach once
             document.getElementById('download-pdf-button').addEventListener('click', window.downloadPDF);
             document.getElementById('reset-button').addEventListener('click', showModal);
         }
@@ -572,9 +573,10 @@
                 container.innerHTML = ''; 
                 const color = type === 'conceded' ? 'conceded-color' : 'save-color';
                 const textColor = type === 'conceded' ? 'text-conceded-color' : 'text-save-color';
+                const path = type === 'conceded' ? 'zones_conceded' : 'zones_saved';
                 
                 GOAL_ZONE_KEYS.forEach(zone => {
-                    const count = matchData[type === 'conceded' ? 'zones_conceded' : 'zones_saved'][zone] || 0;
+                    const count = matchData[path][zone] || 0;
                     
                     const cell = document.createElement('div');
                     cell.className = `zone-overlay-cell hover:bg-${color}/20`;
@@ -584,7 +586,7 @@
                         <span class="text-sm font-light text-gray-300">${zone}</span>
                         <span id="${type}-${zone}-count" class="text-xl font-extrabold ${textColor}">${count}</span>
                     `;
-                    // Attach the listener directly to the dynamically created element
+                    // Attach the listener directly to the dynamically created element (correct pattern for dynamic elements)
                     cell.addEventListener('click', () => recordZonalData(type, zone)); 
                     container.appendChild(cell);
                 });
@@ -607,8 +609,8 @@
                         <span class="text-lg font-bold text-gray-200">${zone}</span>
                         <span id="${type}-${zone}-count" class="text-3xl font-extrabold ${textColor}">${count}</span>
                     `;
-                    // Attach the listener directly to the dynamically created element
-                    cell.addEventListener('click', () => recordZonalData(type, zone)); 
+                    // Attach the listener directly to the dynamically created element (correct pattern for dynamic elements)
+                    cell.addEventListener('click', () => recordZonalData('contact', zone)); 
                     container.appendChild(cell);
                 });
             };
@@ -633,7 +635,7 @@
                 }
             }
 
-            // 1. Update Match Info inputs (onchange is still used for these, which is fine)
+            // 1. Update Match Info inputs
             document.getElementById('input-name').value = matchData.name;
             document.getElementById('input-date').value = matchData.date;
             document.getElementById('input-opposition').value = matchData.opposition;
@@ -662,7 +664,7 @@
                 }
             });
 
-            // 3 & 4. Re-render Zonal Grids (This is what updates the counts AND ensures new event listeners are attached to the zone cells)
+            // 3 & 4. Re-render Zonal Grids (This updates the counts AND attaches/re-attaches listeners for dynamic cells)
             renderZonalGrids();
             
             // 5. Update Summary Display
@@ -785,6 +787,7 @@
 
             try {
                 const docRef = getMatchDocPath();
+                // Retain basic identity fields when resetting counters
                 const resetPayload = { ...DEFAULT_MATCH_DATA, 
                     name: matchData.name, 
                     date: matchData.date, 
@@ -806,6 +809,9 @@
             cancelResetButton.addEventListener('click', hideModal);
             confirmResetButton.addEventListener('click', handleResetData);
             
+            // CRITICAL: Attach listeners for the static raw data counters ONCE
+            attachGlobalListeners();
+
             // Initialize Firebase and start data sync
             initFirebase();
         };
