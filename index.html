@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Goalkeeper Match Data Tracker (Stable)</title>
+    <title>Goalkeeper Match Data Tracker (Firebase Ready)</title>
     <!-- PWA & Icon Setup -->
     <link rel="manifest" href="./manifest.json">
     <!-- Links the main icon for iOS home screen --><link rel="apple-touch-icon" href="Keeper Data Analytics.png"> 
@@ -152,7 +152,7 @@
                 </div>
             </div>
             
-            <!-- SECTION 1: MATCH DETAILS & COMMENTS --><h2 class="text-2xl font-bold text-white mb-4 border-l-4 border-primary pl-2">1. Match Details & Final Score</h2>
+            <!-- SECTION 1: MATCH DETAILS & COMMENTS --><h2 class="text-2xl font-bold text-white mb-4 mt-8 border-l-4 border-primary pl-2">1. Match Details & Final Score</h2>
             <div class="p-4 bg-gray-700/50 rounded-lg shadow-inner space-y-4">
                 
                 <!-- Standard Match Info Grid --><div class="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -325,16 +325,29 @@
 
     <!-- Firebase SDK Imports and Logic --><script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, onSnapshot, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
-        // --- GLOBAL SETUP ---
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        // --- GLOBAL SETUP (Modified for External Deployment) ---
+        // Check if running in the Canvas environment, otherwise use a custom config.
+        const runningInCanvas = typeof __firebase_config !== 'undefined';
+        
+        // 🚨 CRITICAL: REPLACE THE ENTIRE OBJECT BELOW WITH YOUR FIREBASE CONFIGURATION
+        const firebaseConfig = { 
+            apiKey: "AIzaSyA0C5LrSq1LuTUo9EsairITEOuoQt8ISXo",
+            authDomain: "gk-tracker-app.firebaseapp.com",
+            projectId: "gk-tracker-app",
+            storageBucket: "gk-tracker-app.firebasestorage.app",
+            messagingSenderId: "274304840483",
+            appId: "1:274304840483:web:916554bc205717c9531296"
+        };
+        // 🚨 END CRITICAL BLOCK 🚨
+        
+        const appId = runningInCanvas ? __app_id : 'external-app-id';
+        // Selects the Canvas config if available, otherwise uses YOUR_FIREBASE_CONFIG
+        const firebaseConfig = runningInCanvas ? JSON.parse(__firebase_config) : YOUR_FIREBASE_CONFIG;
         
         let app, db, auth, userId = null;
-        // FLAG: Only allow data updates if the auth and data path are confirmed ready
         let isDataReady = false; 
         
         // Keys for the 16 contact zones
@@ -369,6 +382,7 @@
             // Contact Data (16 zones)
             zones_contact: DEFAULT_CONTACT_ZONES,
         };
+        // Use DEFAULT_MATCH_DATA as the starting point for local matchData
         let matchData = {...DEFAULT_MATCH_DATA};
         
         // --- DOM ELEMENTS ---
@@ -387,29 +401,44 @@
             loadingOverlay.style.display = 'flex';
             
             try {
-                if (Object.keys(firebaseConfig).length === 0) throw new Error("Firebase config is missing.");
+                // Check if the external config is the default placeholder
+                const isExternalMock = firebaseConfig.apiKey.includes('YOUR_API_KEY_HERE');
 
+                if (!runningInCanvas && isExternalMock) {
+                    // Running externally AND user hasn't replaced the config
+                    console.warn("Running outside Canvas environment with mock config. Data persistence is DISABLED.");
+                    authStatusElement.innerHTML = `<span class="text-red-400">🚨 WARNING: Persistence Disabled. Data will NOT persist.</span>`;
+                    
+                    // Proceed to UI rendering immediately with default data
+                    isDataReady = true;
+                    loadingOverlay.style.display = 'none';
+                    mainContent.style.display = 'block';
+                    updateUI(); 
+                    return;
+                }
+                
+                // If running in Canvas OR running externally with a real config, proceed with standard Firebase init
                 app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 auth = getAuth(app);
                 // setLogLevel('debug'); // Uncomment for debugging in browser console
 
-                onAuthStateChanged(auth, async (user) => {
-                    if (user) {
-                        userId = user.uid;
-                        authStatusElement.innerHTML = `Signed in as <span class="font-mono text-gray-300">${userId}</span>`;
-                        startDataListener();
-                    } else {
-                        if (initialAuthToken) {
-                            await signInWithCustomToken(auth, initialAuthToken);
-                        } else {
-                            await signInAnonymously(auth);
-                        }
-                    }
-                });
+                
+                // If we are here, we are using a real (Canvas or User) config
+                authStatusElement.innerHTML = `Connecting to Firebase...`;
+
+                // Sign in anonymously to get a unique user ID
+                const userCredential = await signInAnonymously(auth);
+                userId = userCredential.user.uid;
+                
+                authStatusElement.innerHTML = `Signed in as <span class="font-mono text-gray-300">${userId.slice(0, 8)}...</span>`;
+
+                startDataListener();
+
             } catch (error) {
+                // This will catch any errors if the user's config keys are wrong or services aren't enabled
                 console.error("Firebase initialization failed:", error);
-                authStatusElement.textContent = `Error: Initialization failed. See console.`;
+                authStatusElement.textContent = `Error: Initialization failed (${error.code}). Check console and config keys.`;
                 loadingOverlay.style.display = 'none';
                 mainContent.style.display = 'block';
             }
@@ -417,7 +446,7 @@
 
         // --- DATA PATH & LISTENER ---
         function getMatchDocPath() {
-            if (!userId) return null;
+            if (!db || !userId) return null;
             // Use the user's private space to store match data
             return doc(db, `/artifacts/${appId}/users/${userId}/current_match/data`);
         }
@@ -456,18 +485,39 @@
         }
 
         // --- WRITE FUNCTIONS ---
+        // This function now handles both Firebase persistence and local-only updates
         async function updateData(payload) {
             if (!isDataReady) {
-                console.warn("Database not ready or data listener not initialized. Ignoring write operation.");
+                console.warn("App not ready. Ignoring write operation.");
                 return;
             }
-            try {
-                const docRef = getMatchDocPath();
-                if (docRef) {
-                    await updateDoc(docRef, payload);
+
+            // 1. Update Local Model
+            Object.keys(payload).forEach(key => {
+                if (key.includes('.')) {
+                    // Handle nested updates (e.g., 'zones_contact.C1')
+                    const [parent, child] = key.split('.');
+                    matchData[parent] = {...matchData[parent], [child]: payload[key]};
+                } else {
+                    // Handle top-level updates (e.g., 'shots_faced')
+                    matchData[key] = payload[key];
                 }
-            } catch (error) {
-                console.error("Error updating data:", error);
+            });
+            updateUI(); // Immediately reflect local change
+            
+            // 2. Persist to Firebase if running with a real configuration
+            const isExternalMock = firebaseConfig.apiKey.includes('YOUR_API_KEY_HERE');
+            if (runningInCanvas || !isExternalMock) {
+                try {
+                    const docRef = getMatchDocPath();
+                    if (docRef) {
+                        await updateDoc(docRef, payload);
+                    }
+                } catch (error) {
+                    console.error("Error updating data to Firebase:", error);
+                }
+            } else {
+                console.log("Local Update Only (Persistence Disabled)");
             }
         }
 
@@ -500,7 +550,6 @@
                 return;
             }
             
-            // Console log for debugging: check if the button click event is reaching this function
             console.log(`Attempting to increment counter for key: ${key}`);
 
             const newValue = matchData[key] + 1;
@@ -523,12 +572,12 @@
             
             console.log(`Attempting to record zonal data for: ${type}, zone: ${zone}`);
 
-            let path, colorClass, countKey;
+            let path, colorClass;
             
             switch (type) {
-                case 'conceded': path = 'zones_conceded'; colorClass = 'rgba(239, 68, 68, 0.6)'; countKey = 'conceded'; break;
-                case 'saved': path = 'zones_saved'; colorClass = 'rgba(16, 185, 129, 0.6)'; countKey = 'saved'; break;
-                case 'contact': path = 'zones_contact'; colorClass = 'rgba(59, 130, 246, 0.2)'; countKey = 'contact'; break;
+                case 'conceded': path = 'zones_conceded'; colorClass = 'rgba(239, 68, 68, 0.6)'; break;
+                case 'saved': path = 'zones_saved'; colorClass = 'rgba(16, 185, 129, 0.6)'; break;
+                case 'contact': path = 'zones_contact'; colorClass = 'rgba(59, 130, 246, 0.2)'; break;
                 default: return;
             }
 
@@ -539,10 +588,10 @@
             const payload = {};
             payload[`${path}.${zone}`] = newValue;
             
-            updateData(payload);
+            updateData(payload); // Calls the unified updateData function
 
             // Quick visual feedback on the cell
-            const cell = document.querySelector(`[data-type="${countKey}"][data-zone="${zone}"]`);
+            const cell = document.querySelector(`[data-type="${type}"][data-zone="${zone}"]`);
             if (cell) {
                 // Flash the background color for feedback
                 cell.style.backgroundColor = colorClass;
@@ -576,7 +625,8 @@
                 const path = type === 'conceded' ? 'zones_conceded' : 'zones_saved';
                 
                 GOAL_ZONE_KEYS.forEach(zone => {
-                    const count = matchData[path][zone] || 0;
+                    // Safely read count from local model
+                    const count = (matchData[path] && matchData[path][zone]) || 0; 
                     
                     const cell = document.createElement('div');
                     cell.className = `zone-overlay-cell hover:bg-${color}/20`;
@@ -599,7 +649,8 @@
                 const textColor = 'text-white'; 
                 
                 CONTACT_ZONE_KEYS.forEach(zone => {
-                    const count = matchData.zones_contact[zone] || 0;
+                    // Safely read count from local model
+                    const count = (matchData.zones_contact && matchData.zones_contact[zone]) || 0; 
                     
                     const cell = document.createElement('div');
                     cell.className = `zone-overlay-cell contact-zone-cell`; 
@@ -784,9 +835,11 @@
                 hideModal();
                 return;
             }
+            
+            // Check if the external config is the default placeholder
+            const isExternalMock = firebaseConfig.apiKey.includes('YOUR_API_KEY_HERE');
 
             try {
-                const docRef = getMatchDocPath();
                 // Retain basic identity fields when resetting counters
                 const resetPayload = { ...DEFAULT_MATCH_DATA, 
                     name: matchData.name, 
@@ -794,7 +847,19 @@
                     teamName: matchData.teamName,
                     otherTeamName: matchData.otherTeamName
                 }; 
-                await setDoc(docRef, resetPayload);
+                
+                // 1. Reset Local Data
+                matchData = resetPayload;
+                updateUI();
+                
+                // 2. Persist reset to Firebase if running with a real configuration
+                if (runningInCanvas || !isExternalMock) {
+                    const docRef = getMatchDocPath();
+                    await setDoc(docRef, resetPayload);
+                } else {
+                    console.log("Data Reset Locally (Persistence Disabled)");
+                }
+
                 hideModal();
             } catch (error) {
                 console.error("Error resetting data:", error);
