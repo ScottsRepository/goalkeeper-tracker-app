@@ -3,877 +3,401 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Goalkeeper Data Tracker</title>
+    <title>Goalkeeper Data Pack - CogniverseAI Pro</title>
     
     <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Load PDF Libraries -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
     
     <style>
-        /* Custom Colors based on CogniverseAI Branding */
+        /* Base Colors & Fonts */
         :root {
-            --color-dark-blue: #0A192F; /* Deep background blue */
-            --color-card-dark: #112240; /* Card background blue */
-            --color-cogni-cyan: #61DAFB; /* Bright cyan for accents */
-            --color-cogni-light-blue: #00CFFF; /* Slightly deeper light blue */
-            --color-text-light: #E2E8F0; /* Light text */
+            --bg-dark: #070D12; /* Very Dark Blue-Black */
+            --primary-blue: #00BFFF; /* Deep Sky Blue - Bright/Cyan */
+            --accent-gray: #1E293B; /* Slate-700 for panels */
         }
 
-        /* Base Styles */
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background-color: var(--color-dark-blue);
-            color: var(--color-text-light);
-            min-height: 100vh;
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: #E5E7EB; 
         }
 
-        /* Custom Input Styling to match the simple, clean reference style */
-        .app-input-group {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.75rem 1rem;
-            background-color: var(--color-dark-blue); /* Darker input background */
-            border-radius: 0.5rem;
+        /* Futuristic Card and Input Styling */
+        .data-panel {
+            background-color: var(--accent-gray);
             border: 1px solid #334155; /* Subtle border */
-            transition: all 0.2s;
+            box-shadow: 0 0 20px rgba(0, 191, 255, 0.1); /* Subtle glow */
+            @apply rounded-xl p-6 lg:p-8;
         }
-        
-        /* Input Field itself */
-        .app-input-field {
-            width: 50%; /* Gives the input value half the space, like the reference */
-            background: transparent;
+
+        .input-group input, 
+        .input-group select {
+            background-color: #0F172A; /* Slate-900 for inputs */
             border: none;
-            text-align: right;
-            color: var(--color-cogni-cyan);
-            font-size: 1.125rem; /* text-lg */
-            font-weight: 700; /* font-bold */
+            border-bottom: 2px solid var(--primary-blue);
+            color: #E5E7EB;
+            font-family: 'Orbitron', sans-serif; /* Use Orbitron for key data entry */
+            @apply w-full p-2.5 rounded-t-lg transition duration-300 focus:outline-none focus:ring-2 focus:ring-opacity-50 focus:ring-blue-400;
         }
-        .app-input-field:focus {
-            outline: none;
-            /* No visible border change on input field itself, relying on group focus */
+
+        .section-header {
+            font-family: 'Orbitron', sans-serif;
+            @apply text-3xl font-bold text-blue-400 border-b-2 border-blue-400/50 pb-3 mb-6;
+        }
+
+        /* Zonal Grid Styles (Highly visual) */
+        .zone-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 0;
+            aspect-ratio: 1 / 1;
+            border: 3px solid var(--primary-blue);
+            @apply rounded-xl overflow-hidden shadow-lg shadow-blue-500/20;
+        }
+
+        .zone-cell {
+            @apply border-2 border-gray-700 flex flex-col items-center justify-center p-2 text-center;
+            min-height: 80px;
         }
         
-        /* Label styling */
-        .app-input-label {
-            width: 50%;
-            color: #94A3B8; /* Slate gray for labels */
+        /* Utility for the floating action button */
+        .action-button {
+            background: linear-gradient(90deg, #00BFFF, #0080FF);
+            @apply text-gray-900 font-extrabold text-lg py-3 px-10 rounded-full shadow-2xl transition transform hover:scale-[1.03] active:scale-95 duration-200 border-b-4 border-blue-900/50;
         }
 
-        /* Focus state for the entire group */
-        .app-input-group:focus-within {
-            border-color: var(--color-cogni-cyan); /* Cyan glow on focus */
-            box-shadow: 0 0 0 1px var(--color-cogni-cyan);
-        }
-
-        /* PDF Report Page Styles (Kept White for Print) */
-        .report-page {
-            width: 210mm;
-            min-height: 297mm;
-            background: white;
-            color: #1A202C;
-            padding: 20mm;
-            box-sizing: border-box;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 0 0 15px rgba(0,0,0,0.15);
-            page-break-after: always;
-        }
-        #report-container {
-            position: absolute;
-            top: 0;
-            left: -9999px;
-            z-index: -1;
+        .stat-value {
+            font-family: 'Orbitron', sans-serif;
+            @apply text-4xl font-extrabold text-blue-300;
         }
     </style>
 </head>
-<body class="bg-[--color-dark-blue]">
+<body class="p-4 md:p-10 flex items-center justify-center min-h-screen">
 
-    <div id="app-container" class="max-w-4xl mx-auto p-4 md:p-10">
-        <header class="text-center py-8 mb-10 border-b-4 border-[--color-cogni-light-blue]">
-            <h1 class="text-4xl md:text-5xl font-extrabold text-white tracking-tight">
-                Goalkeeper Data Tracker
+    <div class="max-w-6xl w-full space-y-12">
+        
+        <!-- Header & Branding -->
+        <header class="text-center space-y-2 pb-8 border-b-4 border-blue-600/50">
+            <h1 class="text-6xl font-extrabold text-blue-400" style="font-family: 'Orbitron', sans-serif;">
+                PERFORMANCE MATRIX
             </h1>
-            <p class="text-[--color-cogni-cyan] mt-2 text-lg md:text-xl font-light">CogniverseAI Match Analysis & Reporting Tool</p>
-            <div id="authStatus" class="mt-4 text-sm text-gray-500 font-medium">Initializing secure connection...</div>
+            <p class="text-xl font-medium text-gray-400">
+                <span class="text-blue-500">COGNIVERSEAI</span> | Goalkeeper Data Acquisition System
+            </p>
         </header>
 
-        <main class="grid grid-cols-1 gap-8">
-            <!-- Main Content Card mimicking the reference layout -->
-            <div class="bg-[--color-card-dark] p-6 md:p-10 rounded-xl shadow-2xl border border-gray-800 space-y-8">
-                
-                <!-- Match Details Section -->
-                <div class="space-y-4">
-                    <h2 class="text-2xl font-bold text-[--color-cogni-light-blue] border-b border-gray-700 pb-2 flex items-center">
-                        <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-5m-1.5 1.5l-4-4m4-4h-5V4m1.5-1.5l-4 4"></path></svg>
-                        1. Player & Match Context
-                    </h2>
-                    <div class="space-y-3" id="match-details">
-                        <!-- Player Name -->
-                        <div class="app-input-group">
-                            <label class="app-input-label">Player Name</label>
-                            <input type="text" id="inputPlayer" data-key="player" placeholder="Enter Name" class="app-input-field" required>
-                        </div>
-                        <!-- Team -->
-                        <div class="app-input-group">
-                            <label class="app-input-label">Team Name</label>
-                            <input type="text" id="inputTeam" data-key="team" placeholder="Your Team" class="app-input-field" required>
-                        </div>
-                        <!-- Opposition -->
-                        <div class="app-input-group">
-                            <label class="app-input-label">Opposition</label>
-                            <input type="text" id="inputOpposition" data-key="opposition" placeholder="Opponent" class="app-input-field">
-                        </div>
-                        <!-- Date -->
-                        <div class="app-input-group">
-                            <label class="app-input-label">Match Date</label>
-                            <input type="date" id="inputDate" data-key="date" class="app-input-field" required>
-                        </div>
-                        <!-- Scores -->
-                        <div class="grid grid-cols-2 gap-3">
-                            <div class="app-input-group col-span-1">
-                                <label class="app-input-label">Home Score</label>
-                                <input type="number" data-key="homeScore" placeholder="0" class="app-input-field" min="0">
-                            </div>
-                            <div class="app-input-group col-span-1">
-                                <label class="app-input-label">Away Score</label>
-                                <input type="number" data-key="awayScore" placeholder="0" class="app-input-field" min="0">
-                            </div>
-                        </div>
-                        <!-- Minutes -->
-                        <div class="app-input-group">
-                            <label class="app-input-label">Minutes Played</label>
-                            <input type="number" data-key="minutes" placeholder="90" class="app-input-field" min="0">
-                        </div>
-                    </div>
-                </div>
+        <!-- Form Wrapper -->
+        <form id="tracker-form" class="space-y-12">
 
-                <!-- Actions & Counters Section -->
-                <div class="space-y-4">
-                    <h2 class="text-2xl font-bold text-[--color-cogni-light-blue] border-b border-gray-700 pb-2 flex items-center">
-                        <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6a2 2 0 00-2-2H5a2 2 0 00-2 2v13m7 0h2l2 2m-4-2H9m7 0h2l2 2m-4-2h-2m-2-2H9m-7 2v-4a2 2 0 012-2h4a2 2 0 012 2v4m7-4v-4a2 2 0 00-2-2h-4a2 2 0 00-2 2v4"></path></svg>
-                        2. Actions & Core Counts
-                    </h2>
-                    <div class="space-y-3" id="core-counts">
-                        <div class="app-input-group">
-                            <label class="app-input-label">Shots Faced</label>
-                            <input type="number" data-key="shotsFaced" placeholder="0" class="app-input-field" min="0">
+            <!-- MODULE 1: MATCH CONTEXT & RAW DATA INPUT -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                
+                <!-- COLUMN 1: Context & Key Totals -->
+                <div class="lg:col-span-1 space-y-8">
+                    <section class="data-panel space-y-6">
+                        <h2 class="section-header text-xl">
+                            A. MATCH DATA
+                        </h2>
+                        
+                        <div class="input-group">
+                            <label class="block text-sm font-medium text-gray-400 mb-1">Player Name</label>
+                            <input type="text" value="Brooke Hurry" name="player-name">
                         </div>
-                        <div class="app-input-group">
-                            <label class="app-input-label">Saves Made</label>
-                            <input type="number" data-key="saves" placeholder="0" class="app-input-field" min="0">
-                        </div>
-                        <div class="app-input-group">
-                            <label class="app-input-label font-bold text-red-400">Goals Conceded</label>
-                            <input type="number" data-key="goalsConceded" placeholder="0" class="app-input-field text-red-400" min="0">
-                        </div>
-                        <div class="app-input-group">
-                            <label class="app-input-label">Crosses Claimed</label>
-                            <input type="number" data-key="crossesClaimed" placeholder="0" class="app-input-field" min="0">
-                        </div>
-                        <div class="app-input-group">
-                            <label class="app-input-label">Distribution Success / Attempts</label>
-                            <div class="flex space-x-1 w-1/2">
-                                <input type="number" data-key="distributionSuccess" placeholder="S" class="app-input-field !w-1/2 text-[--color-cogni-cyan]" min="0">
-                                <input type="number" data-key="distributionAttempts" placeholder="A" class="app-input-field !w-1/2" min="0">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="input-group">
+                                <label class="block text-sm font-medium text-gray-400 mb-1">Game Date</label>
+                                <input type="date" name="game-date">
+                            </div>
+                            <div class="input-group">
+                                <label class="block text-sm font-medium text-gray-400 mb-1">Game No</label>
+                                <input type="number" value="1" min="1" name="game-no">
                             </div>
                         </div>
-                        <div class="app-input-group">
-                            <label class="app-input-label">Total High Claims</label>
-                            <input type="number" data-key="highClaims" placeholder="0" class="app-input-field" min="0">
+                        
+                        <div class="input-group">
+                            <label class="block text-sm font-medium text-gray-400 mb-1">Opposition</label>
+                            <input type="text" placeholder="Opponent Name" name="opposition">
                         </div>
-                    </div>
+
+                        <div class="grid grid-cols-3 gap-4">
+                            <div class="input-group">
+                                <label class="block text-sm font-medium text-gray-400 mb-1">H/A</label>
+                                <select name="home-away">
+                                    <option value="H">HOME</option>
+                                    <option value="A">AWAY</option>
+                                </select>
+                            </div>
+                            <div class="input-group col-span-2">
+                                <label class="block text-sm font-medium text-gray-400 mb-1">Score (e.g., 3-1)</label>
+                                <input type="text" placeholder="0-0" name="score">
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label class="block text-sm font-medium text-gray-400 mb-1">W/D/L (Result)</label>
+                            <select name="result">
+                                <option value="W">WIN</option>
+                                <option value="D">DRAW</option>
+                                <option value="L">LOSS</option>
+                            </select>
+                        </div>
+                    </section>
+
+                    <!-- LIVE PERFORMANCE WIDGET -->
+                    <section class="data-panel text-center border-l-4 border-blue-500">
+                        <h3 class="text-xl font-bold text-blue-400 pb-2">LIVE ANALYSIS</h3>
+                        <div class="grid grid-cols-3 gap-4 mt-4">
+                            <div class="border-r border-gray-700">
+                                <p class="text-xs text-gray-500 uppercase">Save %</p>
+                                <p id="live-save-percent" class="stat-value">0%</p>
+                            </div>
+                            <div class="border-r border-gray-700">
+                                <p class="text-xs text-gray-500 uppercase">1v1 Win %</p>
+                                <p id="live-1v1-percent" class="stat-value">0%</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500 uppercase">G.A. / Game</p>
+                                <p id="live-goals-per-game" class="stat-value">0</p>
+                            </div>
+                        </div>
+                    </section>
                 </div>
                 
-                <!-- Zonal Tracking Section -->
-                <div class="space-y-4">
-                    <h2 class="text-2xl font-bold text-[--color-cogni-light-blue] border-b border-gray-700 pb-2 flex items-center">
-                        <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                        3. Zonal Shot & Save Analysis
+                <!-- COLUMN 2 & 3: Raw Data Counters -->
+                <section class="data-panel lg:col-span-2 space-y-6">
+                    <h2 class="section-header text-xl">
+                        B. RAW METRICS INPUT
                     </h2>
-                    <p class="text-sm text-gray-400 mb-4">Enter Shots Faced / Saves / Goals for each critical area.</p>
                     
-                    <div class="space-y-4 p-4 bg-gray-900 rounded-lg border border-gray-700">
-                        <h4 class="text-lg font-semibold text-white">High Danger (Inside 6-Yard Box)</h4>
-                        <div class="grid grid-cols-3 gap-3">
-                            <input type="number" data-key="inside6Shots" placeholder="Shots" class="app-input-field !w-full !text-center bg-gray-800" min="0">
-                            <input type="number" data-key="inside6Saves" placeholder="Saves" class="app-input-field !w-full !text-center bg-gray-800 text-[--color-cogni-cyan]" min="0">
-                            <input type="number" data-key="inside6Goals" placeholder="Goals" class="app-input-field !w-full !text-center bg-gray-800 text-red-400" min="0">
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-6">
+                        
+                        <!-- Core Shots/Goals -->
+                        <div class="space-y-4 p-4 border border-blue-500/20 rounded-lg">
+                            <h3 class="text-lg font-semibold text-gray-200">Shots & Concedes</h3>
+                            <div class="input-group">
+                                <label class="block text-xs font-medium text-gray-400 mb-1">Total Shots Faced</label>
+                                <input type="number" value="0" min="0" name="total-shots-faced" oninput="updatePerformanceSnapshot()">
+                            </div>
+                            <div class="input-group">
+                                <label class="block text-xs font-medium text-gray-400 mb-1">Shots Saved</label>
+                                <input type="number" value="0" min="0" name="shots-saved" oninput="updatePerformanceSnapshot()">
+                            </div>
+                            <div class="input-group">
+                                <label class="block text-xs font-medium text-gray-400 mb-1">Goals Against</label>
+                                <input type="number" value="0" min="0" name="goals-against" oninput="updatePerformanceSnapshot()">
+                            </div>
+                            <div class="input-group">
+                                <label class="block text-xs font-medium text-gray-400 mb-1">Unforced Goal Errors</label>
+                                <input type="number" value="0" min="0" name="unforced-goal-errors">
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div class="space-y-4 p-4 bg-gray-900 rounded-lg border border-gray-700">
-                        <h4 class="text-lg font-semibold text-white">Central Box (18-Yard Box)</h4>
-                        <div class="grid grid-cols-3 gap-3">
-                            <input type="number" data-key="boxCentralShots" placeholder="Shots" class="app-input-field !w-full !text-center bg-gray-800" min="0">
-                            <input type="number" data-key="boxCentralSaves" placeholder="Saves" class="app-input-field !w-full !text-center bg-gray-800 text-[--color-cogni-cyan]" min="0">
-                            <input type="number" data-key="boxCentralGoals" placeholder="Goals" class="app-input-field !w-full !text-center bg-gray-800 text-red-400" min="0">
-                        </div>
-                    </div>
-                    
-                    <div class="space-y-4 p-4 bg-gray-900 rounded-lg border border-gray-700">
-                        <h4 class="text-lg font-semibold text-white">Long Range (Outside Box)</h4>
-                        <div class="grid grid-cols-3 gap-3">
-                            <input type="number" data-key="outsideBoxShots" placeholder="Shots" class="app-input-field !w-full !text-center bg-gray-800" min="0">
-                            <input type="number" data-key="outsideBoxSaves" placeholder="Saves" class="app-input-field !w-full !text-center bg-gray-800 text-[--color-cogni-cyan]" min="0">
-                            <input type="number" data-key="outsideBoxGoals" placeholder="Goals" class="app-input-field !w-full !text-center bg-gray-800 text-red-400" min="0">
-                        </div>
-                    </div>
-                </div>
 
-                <!-- Technical & Decision Section -->
-                <div class="space-y-4">
-                    <h2 class="text-2xl font-bold text-[--color-cogni-light-blue] border-b border-gray-700 pb-2 flex items-center">
-                        <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                        4. Technical Contact & Decisions
-                    </h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div class="space-y-3">
-                            <h3 class="text-lg font-semibold text-gray-300">Save Contact</h3>
-                            <div class="app-input-group">
-                                <label class="app-input-label text-sm">Open Hands (Catch/Parry)</label>
-                                <input type="number" data-key="openHands" placeholder="0" class="app-input-field" min="0">
+                        <!-- 1v1s & Aerial -->
+                        <div class="space-y-4 p-4 border border-blue-500/20 rounded-lg">
+                            <h3 class="text-lg font-semibold text-gray-200">Aerial & Situational</h3>
+                            <div class="input-group">
+                                <label class="block text-xs font-medium text-gray-400 mb-1">1v1 Battles</label>
+                                <input type="number" value="0" min="0" name="1v1-battles" oninput="updatePerformanceSnapshot()">
                             </div>
-                            <div class="app-input-group">
-                                <label class="app-input-label text-sm">Fingertips (Deflection)</label>
-                                <input type="number" data-key="fingertips" placeholder="0" class="app-input-field" min="0">
+                            <div class="input-group">
+                                <label class="block text-xs font-medium text-gray-400 mb-1">1v1s Won</label>
+                                <input type="number" value="0" min="0" name="1v1s-won" oninput="updatePerformanceSnapshot()">
                             </div>
-                            <div class="app-input-group">
-                                <label class="app-input-label text-sm">Body/Legs (Block)</label>
-                                <input type="number" data-key="bodyLegs" placeholder="0" class="app-input-field" min="0">
+                            <div class="input-group">
+                                <label class="block text-xs font-medium text-gray-400 mb-1">Crosses Claimed</label>
+                                <input type="number" value="0" min="0" name="crosses-claimed">
                             </div>
-                            <div class="app-input-group">
-                                <label class="app-input-label text-sm">Fist/Punch (Clearance)</label>
-                                <input type="number" data-key="fistPunch" placeholder="0" class="app-input-field" min="0">
+                            <div class="input-group">
+                                <label class="block text-xs font-medium text-gray-400 mb-1">Punches Completed</label>
+                                <input type="number" value="0" min="0" name="punches-completed">
                             </div>
                         </div>
-                        <div class="space-y-3">
-                            <h3 class="text-lg font-semibold text-gray-300">Decision Making</h3>
-                            <div class="app-input-group">
-                                <label class="app-input-label text-sm text-red-400">Error → Goal</label>
-                                <input type="number" data-key="keeperErrorGoal" placeholder="0" class="app-input-field text-red-400" min="0">
-                            </div>
-                            <div class="app-input-group">
-                                <label class="app-input-label text-sm text-[--color-cogni-cyan]">Successful Intervention</label>
-                                <input type="number" data-key="successfulIntervention" placeholder="0" class="app-input-field text-[--color-cogni-cyan]" min="0">
-                            </div>
-                            <div class="app-input-group">
-                                <label class="app-input-label text-sm">Failed Intervention</label>
-                                <input type="number" data-key="failedIntervention" placeholder="0" class="app-input-field" min="0">
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
-                <!-- Metrics Display & PDF Button (Stuck at the bottom of the card) -->
-                <div class="pt-8 border-t border-gray-700 space-y-4">
-                    <h3 class="text-xl font-bold text-gray-200 mb-3 text-center">Current Performance Snapshot</h3>
-                    <div class="grid grid-cols-3 gap-4 text-center">
-                        <div class="p-3 bg-gray-900 rounded-lg border border-gray-700">
-                            <p class="text-sm text-gray-400">Save %</p>
-                            <strong id="dispSavePct" class="text-2xl font-black text-[--color-cogni-cyan]">--</strong>
+                        <!-- Play-Making & Interception -->
+                        <div class="space-y-4 p-4 border border-blue-500/20 rounded-lg">
+                            <h3 class="text-lg font-semibold text-gray-200">Distribution & Intercept</h3>
+                            <div class="input-group">
+                                <label class="block text-xs font-medium text-gray-400 mb-1">Play-Make (Hands)</label>
+                                <input type="number" value="0" min="0" name="play-make-hands">
+                            </div>
+                            <div class="input-group">
+                                <label class="block text-xs font-medium text-gray-400 mb-1">Play-Make (Feet)</label>
+                                <input type="number" value="0" min="0" name="play-make-feet">
+                            </div>
+                            <div class="input-group">
+                                <label class="block text-xs font-medium text-gray-400 mb-1">Interceptions Made</label>
+                                <input type="number" value="0" min="0" name="interceptions-made">
+                            </div>
                         </div>
-                        <div class="p-3 bg-gray-900 rounded-lg border border-gray-700">
-                            <p class="text-sm text-gray-400">Dist. Success %</p>
-                            <strong id="dispDistPct" class="text-2xl font-black text-[--color-cogni-light-blue]">--</strong>
-                        </div>
-                        <div class="p-3 bg-gray-900 rounded-lg border border-gray-700">
-                            <p class="text-sm text-gray-400">Goals / 10 Shots</p>
-                            <strong id="dispGSRatio" class="text-2xl font-black text-red-400">--</strong>
-                        </div>
+
                     </div>
-                    
-                    <button id="generatePdfButton" 
-                            onclick="generatePDF()" 
-                            class="w-full bg-[--color-cogni-cyan] hover:bg-[--color-cogni-light-blue] text-[--color-dark-blue] font-extrabold text-xl py-4 rounded-xl shadow-lg transition duration-300 transform hover:scale-[1.005] active:scale-[0.99] focus:outline-none focus:ring-4 focus:ring-[--color-cogni-light-blue] mt-6">
-                        <svg class="w-6 h-6 inline mr-2 -mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                        Generate & Download 5-Page PDF Report
-                    </button>
-                    <p class="text-xs text-gray-600 mt-4 text-center">Data automatically syncs to your secure cloud instance.</p>
-                </div>
-                
+                </section>
             </div>
-        </main>
-    </div>
 
-    <!-- Loading Overlay -->
-    <div id="loading" class="loading-overlay hidden">
-        <div class="text-white text-3xl font-bold p-8 bg-[--color-cogni-light-blue] rounded-2xl shadow-2xl flex items-center">
-            <svg class="animate-spin -ml-1 mr-3 h-7 w-7 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            Generating Professional Report...
-        </div>
-    </div>
-    <style>
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(10, 25, 47, 0.98);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            transition: opacity 0.3s;
-        }
-    </style>
-
-    <!-- HIDDEN PDF REPORT CONTAINER (for multi-page PDF generation) -->
-    <div id="report-container">
-        
-        <!-- PAGE 1: Player & Match Context -->
-        <div class="report-page" id="reportPage1">
-            <header class="text-center pb-12 pt-16 flex-grow">
-                <h1 class="text-xl text-gray-700 font-bold mb-4 tracking-wider">GOALKEEPER PERFORMANCE ANALYSIS REPORT</h1>
-                <h2 class="text-7xl font-extrabold text-gray-900 mb-8 tracking-tighter">
-                    <span id="repPlayer" class="border-b-4 border-blue-500 pb-3"></span>
+            <!-- MODULE 2: ZONAL ANALYSIS (Highly Visual) -->
+            <section class="data-panel">
+                <h2 class="section-header text-xl">
+                    C. ZONAL ANALYSIS
                 </h2>
-                <h3 class="text-4xl font-light text-gray-700">
-                    Match Report for <span id="repTeam" class="font-medium text-gray-800"></span>
-                </h3>
-                <div class="mt-16 text-xl text-gray-700 space-y-4 bg-gray-50 p-8 rounded-xl shadow-inner border border-gray-200">
-                    <p>Report Date: <strong id="repReportDate" class="font-extrabold text-gray-900"></strong></p>
-                    <p>Match Date: <strong id="repMatchDate" class="font-extrabold text-gray-900"></strong></p>
-                    <p>vs. Opposition: <strong id="repOpposition" class="font-extrabold text-gray-900"></strong></p>
-                </div>
-            </header>
-            
-            <footer class="mt-auto pt-10 text-center text-sm text-gray-400 border-t border-gray-200">
-                Page 1 of 5 | Player & Match Context
-            </footer>
-        </div>
+                <p class="text-sm text-gray-400 mb-6">Enter Save Counts and Goal Conceded Counts by goal quadrant (Keeper's Perspective).</p>
 
-        <!-- PAGE 2: Match Details & Final Score -->
-        <div class="report-page" id="reportPage2">
-            <h3 class="text-3xl font-bold text-gray-800 mb-8 border-b-4 pb-2 border-blue-500">SECTION 1: Match Details & Final Score</h3>
-            
-            <div class="grid grid-cols-2 gap-10 flex-grow">
-                <div class="bg-blue-50 p-8 rounded-xl shadow-lg border-l-4 border-blue-500 h-full flex flex-col justify-center">
-                    <h4 class="text-2xl font-semibold text-blue-800 mb-5">Match Context</h4>
-                    <ul class="space-y-4 text-gray-700 text-xl">
-                        <li><strong>Minutes Played:</strong> <span id="repMinutes" class="font-black text-blue-700"></span> min</li>
-                        <li><strong>Team Name:</strong> <span id="repTeam2" class="font-black"></span></li>
-                        <li><strong>Opposition:</strong> <span id="repOpposition2" class="font-black"></span></li>
-                    </ul>
-                </div>
-                
-                <div class="bg-gray-100 p-8 rounded-xl shadow-lg text-center border-l-4 border-gray-500 h-full flex flex-col justify-center">
-                    <h4 class="text-2xl font-semibold text-gray-800 mb-5">Final Score Result</h4>
-                    <p class="text-8xl font-extrabold text-gray-900 mb-6">
-                        <span id="repHomeScore">0</span> - <span id="repAwayScore">0</span>
-                    </p>
-                    <p class="text-3xl font-bold text-gray-800">Outcome: <span id="repResult" class="font-extrabold">DRAW</span></p>
-                </div>
-            </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+                    
+                    <!-- SAVE ZONES -->
+                    <div class="space-y-4">
+                        <h3 class="text-xl font-bold text-gray-300 border-b border-gray-600 pb-2">1. Save Zones (TR, TL, BR, BL)</h3>
+                        <div class="zone-grid text-gray-200">
+                            <!-- Top Left (TL) -->
+                            <div class="zone-cell border-r-0 border-b-0">
+                                <label class="text-xs uppercase text-blue-300">TL (Top Left)</label>
+                                <input type="number" value="0" min="0" name="save-zone-tl" class="w-16 text-center text-sm font-bold bg-transparent border-b-2 border-dashed border-gray-500 focus:border-blue-400">
+                            </div>
+                            <!-- Top Right (TR) -->
+                            <div class="zone-cell border-l-0 border-b-0">
+                                <label class="text-xs uppercase text-blue-300">TR (Top Right)</label>
+                                <input type="number" value="0" min="0" name="save-zone-tr" class="w-16 text-center text-sm font-bold bg-transparent border-b-2 border-dashed border-gray-500 focus:border-blue-400">
+                            </div>
+                            <!-- Bottom Left (BL) -->
+                            <div class="zone-cell border-r-0 border-t-0">
+                                <label class="text-xs uppercase text-blue-300">BL (Bottom Left)</label>
+                                <input type="number" value="0" min="0" name="save-zone-bl" class="w-16 text-center text-sm font-bold bg-transparent border-b-2 border-dashed border-gray-500 focus:border-blue-400">
+                            </div>
+                            <!-- Bottom Right (BR) -->
+                            <div class="zone-cell border-l-0 border-t-0">
+                                <label class="text-xs uppercase text-blue-300">BR (Bottom Right)</label>
+                                <input type="number" value="0" min="0" name="save-zone-br" class="w-16 text-center text-sm font-bold bg-transparent border-b-2 border-dashed border-gray-500 focus:border-blue-400">
+                            </div>
+                        </div>
+                    </div>
 
-            <footer class="mt-auto pt-10 text-center text-sm text-gray-400 border-t border-gray-200">
-                Page 2 of 5 | Match Outcome
-            </footer>
-        </div>
+                    <!-- GOALS CONCEDED ZONES -->
+                    <div class="space-y-4">
+                        <h3 class="text-xl font-bold text-gray-300 border-b border-gray-600 pb-2">2. Goals Conceded Zones (Contact Zones)</h3>
+                         <div class="zone-grid text-gray-200" style="border-color: #FF0050;">
+                            <!-- Top Left (TL) -->
+                            <div class="zone-cell border-r-0 border-b-0" style="border-color: #4B5563;">
+                                <label class="text-xs uppercase text-red-400">TL (Goal)</label>
+                                <input type="number" value="0" min="0" name="goals-conceded-tl" class="w-16 text-center text-sm font-bold bg-transparent border-b-2 border-dashed border-gray-500 focus:border-red-400">
+                            </div>
+                            <!-- Top Right (TR) -->
+                            <div class="zone-cell border-l-0 border-b-0" style="border-color: #4B5563;">
+                                <label class="text-xs uppercase text-red-400">TR (Goal)</label>
+                                <input type="number" value="0" min="0" name="goals-conceded-tr" class="w-16 text-center text-sm font-bold bg-transparent border-b-2 border-dashed border-gray-500 focus:border-red-400">
+                            </div>
+                            <!-- Bottom Left (BL) -->
+                            <div class="zone-cell border-r-0 border-t-0" style="border-color: #4B5563;">
+                                <label class="text-xs uppercase text-red-400">BL (Goal)</label>
+                                <input type="number" value="0" min="0" name="goals-conceded-bl" class="w-16 text-center text-sm font-bold bg-transparent border-b-2 border-dashed border-gray-500 focus:border-red-400">
+                            </div>
+                            <!-- Bottom Right (BR) -->
+                            <div class="zone-cell border-l-0 border-t-0" style="border-color: #4B5563;">
+                                <label class="text-xs uppercase text-red-400">BR (Goal)</label>
+                                <input type="number" value="0" min="0" name="goals-conceded-br" class="w-16 text-center text-sm font-bold bg-transparent border-b-2 border-dashed border-gray-500 focus:border-red-400">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-        <!-- PAGE 3: Raw Data Counters & Key Percentages -->
-        <div class="report-page" id="reportPage3">
-            <h3 class="text-3xl font-bold text-gray-800 mb-10 border-b-4 pb-2 border-blue-500">SECTION 2: Raw Data Counters & Key Percentages</h3>
-            
-            <div class="grid grid-cols-3 gap-8">
-                <!-- Using blue/cyan for positive metrics in the PDF report -->
-                <div class="bg-gray-50 p-6 rounded-xl shadow-lg border-b-8 border-cyan-500 h-40 flex flex-col justify-center">
-                    <p class="text-xl font-medium text-gray-600">Save Percentage</p>
-                    <p class="text-5xl font-black text-cyan-600 mt-2" id="repSavePct">--</p>
-                </div>
-                <div class="bg-gray-50 p-6 rounded-xl shadow-lg border-b-8 border-blue-500 h-40 flex flex-col justify-center">
-                    <p class="text-xl font-medium text-gray-600">Distribution Success</p>
-                    <p class="text-5xl font-black text-blue-600 mt-2" id="repDistPct">--</p>
-                </div>
-                <div class="bg-gray-50 p-6 rounded-xl shadow-lg border-b-8 border-red-600 h-40 flex flex-col justify-center">
-                    <p class="text-xl font-medium text-gray-600">Goals Conceded</p>
-                    <p class="text-5xl font-black text-red-700 mt-2" id="repGoalsConceded">0</p>
-                </div>
-            </div>
-
-            <div class="mt-10 grid grid-cols-3 gap-8 flex-grow">
-                <!-- General Counters -->
-                <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-gray-400">
-                    <p class="text-lg font-medium text-gray-500">Total Shots Faced</p>
-                    <p class="text-4xl font-black text-gray-900 mt-2"><span id="repShotsFaced">0</span></p>
-                </div>
-                <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-gray-400">
-                    <p class="text-lg font-medium text-gray-500">Total Saves Made</p>
-                    <p class="text-4xl font-black text-gray-900 mt-2"><span id="repSaves">0</span></p>
-                </div>
-                <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-gray-400">
-                    <p class="text-lg font-medium text-gray-500">High Claims / Crosses</p>
-                    <p class="text-4xl font-black text-gray-900 mt-2"><span id="repHighClaims">0</span> / <span id="repCrossesClaimed">0</span></p>
-                </div>
-            </div>
-
-            <footer class="mt-auto pt-10 text-center text-sm text-gray-400 border-t border-gray-200">
-                Page 3 of 5 | Raw Data Counters
-            </footer>
-        </div>
-
-        <!-- PAGE 4: Zonal Shot Tracking -->
-        <div class="report-page" id="reportPage4">
-            <h3 class="text-3xl font-bold text-gray-800 mb-8 border-b-4 pb-2 border-blue-500">SECTION 3: Zonal Shot Tracking (Shots, Saves, Goals)</h3>
-            
-            <p class="text-gray-700 mb-6 text-lg">Detailed breakdown of **shots**, **saves**, and **goals** based on the opponent's shooting zone.</p>
-
-            <table class="min-w-full divide-y divide-gray-300 rounded-xl overflow-hidden shadow-2xl flex-grow border border-gray-200">
-                <thead class="bg-gray-100 text-gray-800">
-                    <tr>
-                        <th scope="col" class="py-4 px-4 text-left text-sm font-black border-b border-gray-300">Zone</th>
-                        <th scope="col" class="py-4 px-4 text-center text-sm font-black border-b border-gray-300">Shots Faced</th>
-                        <th scope="col" class="py-4 px-4 text-center text-sm font-black border-b border-gray-300">Saves</th>
-                        <th scope="col" class="py-4 px-4 text-center text-sm font-black border-b border-gray-300">Goals Conceded</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200 bg-white text-gray-700">
-                    <tr class="hover:bg-red-50 transition duration-150">
-                        <td class="whitespace-nowrap py-4 px-4 text-md font-extrabold text-left text-red-700">Inside 6-Yard Box</td>
-                        <td class="whitespace-nowrap py-4 px-4 text-md text-center" id="repI6S">0</td>
-                        <td class="whitespace-nowrap py-4 px-4 text-md text-center text-cyan-600 font-semibold" id="repI6Sa">0</td>
-                        <td class="whitespace-nowrap py-4 px-4 text-xl font-black text-red-600 text-center" id="repI6G">0</td>
-                    </tr>
-                    <tr class="hover:bg-blue-50 transition duration-150">
-                        <td class="whitespace-nowrap py-4 px-4 text-md font-extrabold text-left text-blue-700">18-Yard Box (Central)</td>
-                        <td class="whitespace-nowrap py-4 px-4 text-md text-center" id="repBCS">0</td>
-                        <td class="whitespace-nowrap py-4 px-4 text-md text-center text-cyan-600 font-semibold" id="repBCSa">0</td>
-                        <td class="whitespace-nowrap py-4 px-4 text-xl font-black text-red-600 text-center" id="repBCG">0</td>
-                    </tr>
-                    <tr class="hover:bg-amber-50 transition duration-150">
-                        <td class="whitespace-nowrap py-4 px-4 text-md font-extrabold text-left text-amber-700">Outside 18-Yard Box</td>
-                        <td class="whitespace-nowrap py-4 px-4 text-md text-center" id="repOBS">0</td>
-                        <td class="whitespace-nowrap py-4 px-4 text-md text-center text-cyan-600 font-semibold" id="repOBSa">0</td>
-                        <td class="whitespace-nowrap py-4 px-4 text-xl font-black text-red-600 text-center" id="repOBG">0</td>
-                    </tr>
-                </tbody>
-            </table>
-            
-            <div class="mt-10 p-4 bg-gray-100 rounded-xl border border-gray-300 shadow-inner">
-                <p class="text-xl text-gray-800 font-medium">
-                    Overall Zonal Totals: <strong class="text-gray-900 font-black" id="repTotalShots">0</strong> Shots Faced, <strong class="text-red-600 font-black" id="repTotalGoals">0</strong> Goals Conceded.
+            <!-- Final Submission Button -->
+            <div class="pt-8 text-center">
+                <button 
+                    type="submit"
+                    class="action-button"
+                >
+                    INITIATE REPORT GENERATION
+                </button>
+                <p class="mt-3 text-gray-500 text-sm italic">
+                    Securely capture data for your coach. Structured for professional PDF output.
                 </p>
             </div>
-
-            <footer class="mt-auto pt-10 text-center text-sm text-gray-400 border-t border-gray-200">
-                Page 4 of 5 | Zonal Shot Analysis
-            </footer>
-        </div>
-
-        <!-- PAGE 5: Technical & Decision Analysis -->
-        <div class="report-page" id="reportPage5">
-            <h3 class="text-3xl font-bold text-gray-800 mb-8 border-b-4 pb-2 border-blue-500">SECTION 4: Technical & Decision Analysis</h3>
             
-            <p class="text-gray-700 mb-8 text-lg">Analysis of **save technique** and **critical decision-making** incidents during the match.</p>
+        </form>
 
-            <div class="grid grid-cols-2 gap-10 flex-grow">
-                
-                <div class="p-8 bg-blue-50 rounded-xl shadow-lg border-l-4 border-blue-500">
-                    <h4 class="text-2xl font-semibold text-blue-800 mb-4 border-b pb-2 border-blue-200">Save Contact Breakdown</h4>
-                    <ul class="space-y-4 text-lg text-gray-800">
-                        <li>**Open Hands (Catch/Parry):** <span id="repOpenHands" class="font-bold text-xl">0</span></li>
-                        <li>**Fingertips (Deflection):FENNEL):** <span id="repFingertips" class="font-bold text-xl">0</span></li>
-                        <li>**Body/Legs (Block):** <span id="repBodyLegs" class="font-bold text-xl">0</span></li>
-                        <li>**Fist/Punch (Clearance):** <span id="repFistPunch" class="font-bold text-xl">0</span></li>
-                    </ul>
-                </div>
-
-                <div class="p-8 bg-red-50 rounded-xl shadow-lg border-l-4 border-red-600">
-                    <h4 class="text-2xl font-semibold text-red-800 mb-4 border-b pb-2 border-red-200">Decision Making Incidents</h4>
-                    <ul class="space-y-4 text-lg text-gray-800">
-                        <li>**Keeper Error → Goal:** <span id="repKeeperErrorGoal" class="font-bold text-xl text-red-700">0</span></li>
-                        <li>**Successful Intervention:** <span id="repSuccessfulIntervention" class="font-bold text-xl text-cyan-600">0</span></li>
-                        <li>**Failed Intervention/Missed Cross:** <span id="repFailedIntervention" class="font-bold text-xl text-gray-700">0</span></li>
-                    </ul>
-                </div>
-            </div>
-
-            <footer class="mt-auto pt-10 text-center text-sm text-gray-400 border-t border-gray-200">
-                Page 5 of 5 | Technical & Decision Analysis
-            </footer>
-        </div>
     </div>
 
-
-    <script type="module">
-        // Firebase Imports (standard for all apps)
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // Global variables provided by the environment
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
-        let db, auth, userId = null;
-        let isAuthReady = false;
-        let unsubscribeSnapshot = null;
-        const REPORT_ID = 'latest_goalkeeper_data'; // Fixed ID for single-document persistence
-
-        // Default state structure
-        const defaultAppState = {
-            matchData: { player: '', team: '', opposition: '', date: '', result: 'DRAW', homeScore: 0, awayScore: 0, minutes: 0 },
-            counters: { shotsFaced: 0, saves: 0, goalsConceded: 0, crossesClaimed: 0, distributionAttempts: 0, distributionSuccess: 0, highClaims: 0 },
-            zonal: { inside6Shots: 0, inside6Saves: 0, inside6Goals: 0, boxCentralShots: 0, boxCentralSaves: 0, boxCentralGoals: 0, outsideBoxShots: 0, outsideBoxSaves: 0, outsideBoxGoals: 0 },
-            contact: { openHands: 0, fingertips: 0, bodyLegs: 0, fistPunch: 0 },
-            decision: { keeperErrorGoal: 0, successfulIntervention: 0, failedIntervention: 0 },
+    <script>
+        // --- Utility Function to get input value safely ---
+        const getInputValue = (name) => {
+            const input = document.querySelector(`input[name="${name}"]`);
+            return parseInt(input ? input.value : '0') || 0;
         };
-        let appState = { ...defaultAppState };
 
-        // --- FIREBASE INITIALIZATION AND AUTHENTICATION ---
+        // --- Performance Calculation Function (Updates Live Analysis Widget) ---
+        function updatePerformanceSnapshot() {
+            const totalShots = getInputValue('total-shots-faced');
+            const shotsSaved = getInputValue('shots-saved');
+            const battles = getInputValue('1v1-battles');
+            const battlesWon = getInputValue('1v1s-won');
+            const goalsAgainst = getInputValue('goals-against');
 
-        async function initializeFirebase() {
-            try {
-                const app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-                // setLogLevel('Debug'); // Uncomment for detailed logging
+            // 1. Save Percentage
+            const savePercent = totalShots > 0 ? ((shotsSaved / totalShots) * 100).toFixed(1) : '0';
+            document.getElementById('live-save-percent').textContent = `${savePercent}%`;
 
-                const authStatus = document.getElementById('authStatus');
+            // 2. 1v1 Win Percentage
+            const winPercent = battles > 0 ? ((battlesWon / battles) * 100).toFixed(1) : '0';
+            document.getElementById('live-1v1-percent').textContent = `${winPercent}%`;
 
-                onAuthStateChanged(auth, async (user) => {
-                    if (user) {
-                        userId = user.uid;
-                        authStatus.textContent = `Cloud Sync: ON (User ID: ${userId.substring(0, 8)}...)`;
-                        authStatus.classList.remove('text-gray-500', 'text-red-600');
-                        authStatus.classList.add('text-[--color-cogni-cyan]');
-                        isAuthReady = true;
-                        
-                        setupDataListener(); 
-                    } else {
-                        // Attempt sign in with token or anonymously
-                        if (initialAuthToken) {
-                            await signInWithCustomToken(auth, initialAuthToken);
-                        } else {
-                            // Only sign in anonymously if no token is available
-                            await signInAnonymously(auth);
-                        }
-                    }
-                });
-            } catch (error) {
-                console.error("Firebase initialization failed:", error);
-                document.getElementById('authStatus').textContent = 'Error: Sync failed. Check console.';
-                document.getElementById('authStatus').classList.remove('text-gray-500');
-                document.getElementById('authStatus').classList.add('text-red-600');
-            }
+            // 3. Goals Against / Game (Simple: assumes 1 game)
+            document.getElementById('live-goals-per-game').textContent = goalsAgainst;
         }
 
-        // --- FIRESTORE DATA HANDLING ---
-
-        function getReportDocRef() {
-            // Path: /artifacts/{appId}/users/{userId}/goalkeeper_reports/{REPORT_ID}
-            if (!userId) {
-                console.error("User ID not available to create document path.");
-                return null;
-            }
-            return doc(db, 'artifacts', appId, 'users', userId, 'goalkeeper_reports', REPORT_ID);
-        }
-
-        function setupDataListener() {
-            if (unsubscribeSnapshot) {
-                unsubscribeSnapshot();
-            }
-
-            const docRef = getReportDocRef();
-            if (!docRef) return;
-            
-            unsubscribeSnapshot = onSnapshot(docRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    const savedData = docSnap.data();
-                    
-                    // Safely merge saved data with default state structure
-                    appState = {
-                        matchData: { ...defaultAppState.matchData, ...savedData.matchData },
-                        counters: { ...defaultAppState.counters, ...savedData.counters },
-                        zonal: { ...defaultAppState.zonal, ...savedData.zonal },
-                        contact: { ...defaultAppState.contact, ...savedData.contact },
-                        decision: { ...defaultAppState.decision, ...savedData.decision },
-                    };
-                    
-                    updateUIFromState();
-                } else {
-                    console.log("No data found, initializing with default state and saving.");
-                    updateUIFromState();
-                    // Do NOT save defaults here, let the first input trigger the save.
-                }
-            }, (error) => {
-                console.error("Error listening to Firestore:", error);
-            });
-        }
-
-        async function saveStateToFirestore() {
-            if (!isAuthReady || !db) {
-                console.error("Firestore not ready or user not authenticated. Cannot save.");
-                return;
-            }
-            const docRef = getReportDocRef();
-            if (!docRef) return;
-            
-            try {
-                // Calculate match result before saving
-                const { homeScore, awayScore } = appState.matchData;
-                appState.matchData.result = parseInt(homeScore) > parseInt(awayScore) ? 'WIN' : (parseInt(homeScore) < parseInt(awayScore) ? 'LOSS' : 'DRAW');
-
-                await setDoc(docRef, appState);
-            } catch (error) {
-                console.error("Error writing document:", error);
-            }
-        }
-
-        // --- UI SYNCHRONIZATION AND CALCULATIONS ---
-
-        function updateUIFromState() {
-            // 1. Update Input Forms
-            document.querySelectorAll('.app-input-field').forEach(input => {
-                const key = input.dataset.key;
-                const section = Object.keys(appState).find(s => appState[s].hasOwnProperty(key));
-                if (section && key) {
-                    const value = appState[section][key];
-                    // Handle date input specifically
-                    if (input.type === 'date') {
-                         input.value = value || '';
-                    } 
-                    // Handle number inputs
-                    else if (input.type === 'number') {
-                         input.value = value !== null && value !== undefined ? value : 0;
-                    } 
-                    // Handle text inputs
-                    else {
-                        input.value = value || '';
-                    }
-                }
-            });
-
-            // 2. Perform Calculations & Update Real-Time Display
-            calculateAndDisplayStats();
-        }
-
-        function calculateAndDisplayStats() {
-            // Ensure inputs are treated as numbers
-            const shotsFaced = parseInt(appState.counters.shotsFaced) || 0;
-            const saves = parseInt(appState.counters.saves) || 0;
-            const distAttempts = parseInt(appState.counters.distributionAttempts) || 0;
-            const distSuccess = parseInt(appState.counters.distributionSuccess) || 0;
-            
-            // Calculate total shots and goals from zonal data for a more complete metric
-            const totalZonalShots = (parseInt(appState.zonal.inside6Shots) || 0) + (parseInt(appState.zonal.boxCentralShots) || 0) + (parseInt(appState.zonal.outsideBoxShots) || 0);
-            const goalsTotal = (parseInt(appState.zonal.inside6Goals) || 0) + (parseInt(appState.zonal.boxCentralGoals) || 0) + (parseInt(appState.zonal.outsideBoxGoals) || 0);
-            
-            // Prefer shotsFaced from counters if available, otherwise use zonal total
-            const shotsTotal = shotsFaced > 0 ? shotsFaced : totalZonalShots;
-
-            // Save Percentage
-            const savePct = shotsTotal > 0 ? ((saves / shotsTotal) * 100).toFixed(1) + '%' : '0.0%';
-            
-            // Distribution Percentage
-            const distPct = distAttempts > 0 ? ((distSuccess / distAttempts) * 100).toFixed(1) + '%' : '0.0%';
-
-            // Goals/Shots Ratio (Goals conceded per 10 shots faced - using Zonal Total)
-            const gsRatio = shotsTotal > 0 ? ((goalsTotal / shotsTotal) * 10).toFixed(2) : '0.00';
-
-            document.getElementById('dispSavePct').textContent = savePct;
-            document.getElementById('dispDistPct').textContent = distPct;
-            document.getElementById('dispGSRatio').textContent = gsRatio;
-        }
-
-        function handleInputChange(e) {
-            const input = e.target;
-            const key = input.dataset.key;
-            let value = input.value;
-            
-            // Convert numeric inputs
-            if (input.type === 'number') {
-                value = parseInt(value, 10) || 0;
-            }
-
-            // Find which section this key belongs to
-            const section = Object.keys(appState).find(s => defaultAppState[s].hasOwnProperty(key));
-            
-            if (section && key) {
-                appState[section][key] = value;
-                saveStateToFirestore(); 
-                calculateAndDisplayStats(); // Recalculate immediately after input
-            }
-        }
-
-        // --- PDF GENERATION LOGIC (MULTI-PAGE) ---
-
-        /**
-         * Populates the hidden report pages with the current application state data.
-         * The content is the same as the previous version, ensuring continuity of the report structure.
-         */
-        function updateReportContent(state) {
-            // General Date for Report
-            document.getElementById('repReportDate').textContent = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-
-            // --- PAGE 1: Player & Team Information ---
-            document.getElementById('repPlayer').textContent = state.matchData.player || 'N/A';
-            document.getElementById('repTeam').textContent = state.matchData.team || 'N/A';
-            document.getElementById('repOpposition').textContent = state.matchData.opposition || 'N/A';
-            document.getElementById('repMatchDate').textContent = state.matchData.date || 'N/A';
-            
-            // --- PAGE 2: Match Details & Final Score ---
-            document.getElementById('repTeam2').textContent = state.matchData.team || 'N/A';
-            document.getElementById('repOpposition2').textContent = state.matchData.opposition || 'N/A';
-            document.getElementById('repMinutes').textContent = state.matchData.minutes;
-            document.getElementById('repHomeScore').textContent = state.matchData.homeScore;
-            document.getElementById('repAwayScore').textContent = state.matchData.awayScore;
-            
-            const resultElement = document.getElementById('repResult');
-            resultElement.textContent = state.matchData.result;
-            // Use standard Tailwind classes for PDF colors
-            resultElement.className = `font-extrabold ${state.matchData.result === 'WIN' ? 'text-blue-600' : (state.matchData.result === 'LOSS' ? 'text-red-600' : 'text-gray-900')}`;
-
-            // --- PAGE 3: Raw Data Counters ---
-            const shotsTotal = (parseInt(state.counters.shotsFaced) || 0) > 0 ? (parseInt(state.counters.shotsFaced) || 0) : ((parseInt(state.zonal.inside6Shots) || 0) + (parseInt(state.zonal.boxCentralShots) || 0) + (parseInt(state.zonal.outsideBoxShots) || 0));
-            const goalsTotal = (parseInt(state.zonal.inside6Goals) || 0) + (parseInt(state.zonal.boxCentralGoals) || 0) + (parseInt(state.zonal.outsideBoxGoals) || 0);
-            
-            document.getElementById('repShotsFaced').textContent = shotsTotal;
-            document.getElementById('repSaves').textContent = state.counters.saves;
-            document.getElementById('repGoalsConceded').textContent = goalsTotal;
-            document.getElementById('repCrossesClaimed').textContent = state.counters.crossesClaimed;
-            document.getElementById('repHighClaims').textContent = state.counters.highClaims;
-
-            const saves = parseInt(state.counters.saves) || 0;
-            const distributionAttempts = parseInt(state.counters.distributionAttempts) || 0;
-            const distributionSuccess = parseInt(state.counters.distributionSuccess) || 0;
-
-            const savePct = shotsTotal > 0 ? ((saves / shotsTotal) * 100).toFixed(1) + '%' : '0.0%';
-            const distPct = distributionAttempts > 0 ? ((distributionSuccess / distributionAttempts) * 100).toFixed(1) + '%' : '0.0%';
-
-            document.getElementById('repSavePct').textContent = savePct;
-            document.getElementById('repDistPct').textContent = distPct;
-
-            // --- PAGE 4: Zonal Tracking ---
-            const totalZonalShots = (parseInt(state.zonal.inside6Shots) || 0) + (parseInt(state.zonal.boxCentralShots) || 0) + (parseInt(state.zonal.outsideBoxShots) || 0);
-            const totalZonalGoals = (parseInt(state.zonal.inside6Goals) || 0) + (parseInt(state.zonal.boxCentralGoals) || 0) + (parseInt(state.zonal.outsideBoxGoals) || 0);
-
-            document.getElementById('repI6S').textContent = state.zonal.inside6Shots;
-            document.getElementById('repI6Sa').textContent = state.zonal.inside6Saves;
-            document.getElementById('repI6G').textContent = state.zonal.inside6Goals;
-
-            document.getElementById('repBCS').textContent = state.zonal.boxCentralShots;
-            document.getElementById('repBCSa').textContent = state.zonal.boxCentralSaves;
-            document.getElementById('repBCG').textContent = state.zonal.boxCentralGoals;
-            
-            document.getElementById('repOBS').textContent = state.zonal.outsideBoxShots;
-            document.getElementById('repOBSa').textContent = state.zonal.outsideBoxSaves;
-            document.getElementById('repOBG').textContent = state.zonal.outsideBoxGoals;
-
-            document.getElementById('repTotalShots').textContent = totalZonalShots;
-            document.getElementById('repTotalGoals').textContent = totalZonalGoals;
-
-
-            // --- PAGE 5: Contact Zones and Decision Making ---
-            document.getElementById('repOpenHands').textContent = state.contact.openHands;
-            document.getElementById('repFingertips').textContent = state.contact.fingertips;
-            document.getElementById('repBodyLegs').textContent = state.contact.bodyLegs;
-            document.getElementById('repFistPunch').textContent = state.contact.fistPunch;
-
-            document.getElementById('repKeeperErrorGoal').textContent = state.decision.keeperErrorGoal;
-            document.getElementById('repSuccessfulIntervention').textContent = state.decision.successfulIntervention;
-            document.getElementById('repFailedIntervention').textContent = state.decision.failedIntervention;
-        }
-
-
-        async function generatePDF() {
-            if (!isAuthReady) {
-                console.warn("Authentication not ready. Please wait for sync to complete.");
-                // Provide visual feedback instead of console log
-                document.getElementById('authStatus').textContent = 'Please wait for Cloud Sync to finish before generating the report.';
-                return;
-            }
-
-            const loadingElement = document.getElementById('loading');
-            loadingElement.classList.remove('hidden');
-            
-            // 1. Update the hidden report template with the latest data
-            updateReportContent(appState);
-
-            // 2. Make the hidden report content briefly visible for accurate rendering
-            const reportContainer = document.getElementById('report-container');
-            reportContainer.style.position = 'fixed';
-            reportContainer.style.left = '-1000px';
-            reportContainer.style.top = '-1000px';
-
-            const { jsPDF } = window.jspdf;
-            const A4_WIDTH_MM = 210;
-            const doc = new jsPDF('p', 'mm', 'a4');
-            const pages = document.querySelectorAll('.report-page');
-            let firstPage = true;
-
-            // 3. Iterate and convert each page
-            for (const pageElement of pages) {
-                if (!firstPage) {
-                    doc.addPage();
-                }
-
-                try {
-                    // Render the HTML element to a canvas (image)
-                    const canvas = await html2canvas(pageElement, {
-                        scale: 3, 
-                        useCORS: true,
-                        backgroundColor: '#ffffff', // Ensure white background for canvas
-                        logging: false, 
-                    });
-
-                    // Get the image data
-                    const imgData = canvas.toDataURL('image/jpeg', 1.0);
-                    
-                    // Calculate dimensions to fit the canvas image onto the A4 page
-                    const imgWidth = A4_WIDTH_MM;
-                    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-                    // Add the image to the PDF document
-                    doc.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight);
-
-                    firstPage = false; 
-                } catch (error) {
-                    console.error(`Error rendering page ${pageElement.id} to canvas:`, error);
-                }
-            }
-            
-            // 4. Clean up and save
-            reportContainer.style.position = 'absolute';
-            reportContainer.style.left = '-9999px';
-            reportContainer.style.top = '0';
-
-
-            loadingElement.classList.add('hidden');
-            
-            const fileName = `${appState.matchData.player || 'Goalkeeper'}_Match_Report_${appState.matchData.date || 'New'}.pdf`;
-            doc.save(fileName);
-        }
-
-        // --- LIFECYCLE HOOKS ---
-        
+        // --- Initialization and Event Handling ---
         document.addEventListener('DOMContentLoaded', () => {
-            initializeFirebase();
-            
-            // Attach input listener once for all dynamic inputs
-            document.querySelectorAll('.app-input-field').forEach(input => {
-                input.addEventListener('input', handleInputChange);
-            });
-            
-            // Set default date on load
-            const today = new Date().toISOString().split('T')[0];
-            const dateInput = document.getElementById('inputDate');
-            if (!dateInput.value) { // Only set if not already loaded from state
+             // Set default date to today
+             const dateInput = document.querySelector('input[name="game-date"]');
+             if (dateInput) {
+                const today = new Date().toISOString().split('T')[0];
                 dateInput.value = today;
-            }
+             }
+             
+             // Initial calculation run
+             updatePerformanceSnapshot();
         });
 
-        // Expose function globally for the onclick handler
-        window.generatePDF = generatePDF;
+        // Simple function to mock 'alert' with a visible message box (Non-blocking)
+        function customAlert(message, type = 'success') {
+            const container = document.body;
+            let messageBox = document.getElementById('custom-message-box');
+            
+            if (!messageBox) {
+                messageBox = document.createElement('div');
+                messageBox.id = 'custom-message-box';
+                messageBox.className = 'fixed top-4 left-1/2 transform -translate-x-1/2 p-4 rounded-lg shadow-xl z-50 transition-opacity duration-300 opacity-0 font-bold text-gray-900';
+                container.appendChild(messageBox);
+            }
+            
+            // Set styles based on message type
+            if (type === 'success') {
+                messageBox.style.backgroundColor = '#00BFFF';
+            } else if (type === 'error') {
+                messageBox.style.backgroundColor = '#FF0050';
+            }
+            
+            messageBox.textContent = message;
+            messageBox.style.opacity = 1;
 
+            setTimeout(() => {
+                messageBox.style.opacity = 0;
+            }, 4000);
+        }
+
+        // Form submission handler
+        document.getElementById('tracker-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            console.log("Professional Data Acquisition Triggered.");
+            
+            // Collect form data
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+            
+            // Log data for verification (in a real app, this goes to the database/API)
+            console.log("Captured Data for BBGK Pack:", data);
+            
+            customAlert("DATA ACQUISITION COMPLETE. Report Generation Module Activated.");
+        });
     </script>
 </body>
 </html>
