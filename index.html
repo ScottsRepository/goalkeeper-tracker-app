@@ -3,401 +3,766 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Goalkeeper Data Pack - CogniverseAI Pro</title>
-    
-    <!-- Load Tailwind CSS -->
+    <title>Pro Goalkeeper Tracker</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
+    <!-- jsPDF and html2canvas for PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
     <style>
-        /* Base Colors & Fonts */
+        /* Custom Tailwind Configuration for "Inter" font and key variables */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        
         :root {
-            --bg-dark: #070D12; /* Very Dark Blue-Black */
-            --primary-blue: #00BFFF; /* Deep Sky Blue - Bright/Cyan */
-            --accent-gray: #1E293B; /* Slate-700 for panels */
+            --color-neon-blue: #00FFFF; /* Bright Cyan/Neon Blue */
+            --color-accent-green: #34D399; /* Electric Green for success/Saves */
+            --color-danger-red: #F87171; /* High-contrast red for Goals */
         }
 
         body {
             font-family: 'Inter', sans-serif;
-            background-color: var(--bg-dark);
-            color: #E5E7EB; 
+            background-color: #000000; /* Absolute Black Background */
         }
 
-        /* Futuristic Card and Input Styling */
-        .data-panel {
-            background-color: var(--accent-gray);
-            border: 1px solid #334155; /* Subtle border */
-            box-shadow: 0 0 20px rgba(0, 191, 255, 0.1); /* Subtle glow */
-            @apply rounded-xl p-6 lg:p-8;
+        .card {
+            background-color: #0A0A0A; /* Deep Black Surface */
+            border: 1px solid #1F2937; /* Dark metal border */
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.2); /* Neon glow effect */
+            color: #E5E7EB; /* Off-white text */
         }
 
-        .input-group input, 
-        .input-group select {
-            background-color: #0F172A; /* Slate-900 for inputs */
-            border: none;
-            border-bottom: 2px solid var(--primary-blue);
-            color: #E5E7EB;
-            font-family: 'Orbitron', sans-serif; /* Use Orbitron for key data entry */
-            @apply w-full p-2.5 rounded-t-lg transition duration-300 focus:outline-none focus:ring-2 focus:ring-opacity-50 focus:ring-blue-400;
+        /* Module Header Styling */
+        .module-header {
+            border-bottom: 2px solid var(--color-neon-blue);
+            box-shadow: 0 2px 5px rgba(0, 255, 255, 0.1);
         }
 
-        .section-header {
-            font-family: 'Orbitron', sans-serif;
-            @apply text-3xl font-bold text-blue-400 border-b-2 border-blue-400/50 pb-3 mb-6;
-        }
-
-        /* Zonal Grid Styles (Highly visual) */
-        .zone-grid {
+        /* Custom Counter Styling - Digital Display Look */
+        .counter-container {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            grid-template-rows: repeat(2, 1fr);
-            gap: 0;
-            aspect-ratio: 1 / 1;
-            border: 3px solid var(--primary-blue);
-            @apply rounded-xl overflow-hidden shadow-lg shadow-blue-500/20;
+            grid-template-columns: 1fr auto; 
+            align-items: center;
+            gap: 1rem;
         }
 
-        .zone-cell {
-            @apply border-2 border-gray-700 flex flex-col items-center justify-center p-2 text-center;
-            min-height: 80px;
+        .counter-block {
+            display: flex;
+            align-items: center;
+            height: 52px; /* Fixed height for easy tapping */
+        }
+
+        .count-display {
+            background-color: #111827; /* Dark background for display */
+            border: 2px solid var(--color-neon-blue);
+            color: var(--color-accent-green);
+            font-size: 1.6rem; /* Large text for visibility */
+            font-weight: 800;
+            text-shadow: 0 0 5px rgba(52, 211, 153, 0.5); /* Neon text glow */
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.1s;
+        }
+
+        .count-display:active {
+            transform: scale(0.95);
+            opacity: 0.8;
+            box-shadow: none;
+        }
+
+        .reset-button {
+            background-color: #374151; /* Dark reset button */
+            transition: background-color 0.1s;
+            border-right: 1px solid #1F2937;
+        }
+        .reset-button:hover {
+            background-color: #4B5563;
         }
         
-        /* Utility for the floating action button */
-        .action-button {
-            background: linear-gradient(90deg, #00BFFF, #0080FF);
-            @apply text-gray-900 font-extrabold text-lg py-3 px-10 rounded-full shadow-2xl transition transform hover:scale-[1.03] active:scale-95 duration-200 border-b-4 border-blue-900/50;
+        /* Goal Zone Styling - High-contrast grid */
+        .goal-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            aspect-ratio: 1 / 1; 
+            border: 3px solid #1F2937;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.1);
+        }
+        .zone {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            border: 1px solid #1F2937;
+            cursor: pointer;
+            transition: background-color 0.1s, transform 0.1s;
+            color: #E5E7EB;
+        }
+        .zone:active {
+            transform: scale(0.95);
+        }
+        .save-zone {
+            background-color: rgba(0, 255, 255, 0.1); /* Transparent Neon Blue */
+            color: var(--color-neon-blue);
+        }
+        .save-zone:hover {
+            background-color: rgba(0, 255, 255, 0.2);
+        }
+        .goal-zone {
+            background-color: rgba(248, 113, 128, 0.1); /* Transparent Red */
+            color: var(--color-danger-red);
+        }
+        .goal-zone:hover {
+            background-color: rgba(248, 113, 128, 0.2);
         }
 
-        .stat-value {
-            font-family: 'Orbitron', sans-serif;
-            @apply text-4xl font-extrabold text-blue-300;
+        /* Input Styling */
+        input[type="date"], input[type="text"], select {
+            background-color: #1F2937 !important;
+            border: 1px solid #374151 !important;
+            color: #E5E7EB !important;
         }
+        
     </style>
+    <!-- Load Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-<body class="p-4 md:p-10 flex items-center justify-center min-h-screen">
+<body class="p-4 md:p-8 min-h-screen">
 
-    <div class="max-w-6xl w-full space-y-12">
+    <!-- Loading/Auth Indicator -->
+    <div id="loadingIndicator" class="fixed inset-0 bg-gray-900 bg-opacity-90 z-50 flex items-center justify-center hidden">
+        <div class="p-6 rounded-xl bg-gray-800 shadow-2xl flex items-center space-x-3 border-2 border-cyan-500">
+            <svg class="animate-spin h-5 w-5 text-cyan-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span class="text-white font-medium">System Initializing...</span>
+        </div>
+    </div>
+
+    <!-- Main Application Container -->
+    <div id="app-container" class="max-w-7xl mx-auto">
         
-        <!-- Header & Branding -->
-        <header class="text-center space-y-2 pb-8 border-b-4 border-blue-600/50">
-            <h1 class="text-6xl font-extrabold text-blue-400" style="font-family: 'Orbitron', sans-serif;">
-                PERFORMANCE MATRIX
-            </h1>
-            <p class="text-xl font-medium text-gray-400">
-                <span class="text-blue-500">COGNIVERSEAI</span> | Goalkeeper Data Acquisition System
-            </p>
+        <!-- Header -->
+        <header class="text-center mb-10">
+            <h1 class="text-5xl font-extrabold text-cyan-400 mb-2 tracking-widest" style="text-shadow: 0 0 10px #00FFFF;">KEEPER PRO-TRACKER</h1>
+            <p class="text-lg text-gray-500 font-mono">LIVE PERFORMANCE LOGGING INTERFACE MADE BY COGNIVERSEAI</p>
         </header>
 
-        <!-- Form Wrapper -->
-        <form id="tracker-form" class="space-y-12">
+        <!-- Dynamic User/Session Info -->
+        <div class="card p-4 mb-8 rounded-xl text-sm md:text-base border-cyan-500/30">
+            <p class="font-semibold text-gray-400">SESSION ID: <span id="userIdDisplay" class="font-mono text-xs md:text-sm text-yellow-500 break-all">Awaiting Authentication...</span></p>
+        </div>
 
-            <!-- MODULE 1: MATCH CONTEXT & RAW DATA INPUT -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                
-                <!-- COLUMN 1: Context & Key Totals -->
-                <div class="lg:col-span-1 space-y-8">
-                    <section class="data-panel space-y-6">
-                        <h2 class="section-header text-xl">
-                            A. MATCH DATA
-                        </h2>
-                        
-                        <div class="input-group">
-                            <label class="block text-sm font-medium text-gray-400 mb-1">Player Name</label>
-                            <input type="text" value="Brooke Hurry" name="player-name">
-                        </div>
+
+        <!-- Modules A & B: Match Data and Raw Metrics -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
+            
+            <!-- Module A: Match Details & Live Analysis -->
+            <div class="lg:col-span-1 space-y-8">
+                <!-- Match Data -->
+                <div class="card p-6 rounded-xl border-cyan-500/30">
+                    <h2 class="text-2xl font-bold mb-4 pb-2 text-cyan-400 module-header flex items-center">
+                        <i data-lucide="calendar" class="w-6 h-6 mr-3 text-cyan-400"></i> MATCH DATA INPUT
+                    </h2>
+                    <div class="space-y-4">
+                        <!-- --- NEW FIELDS START --- -->
+                        <label class="block">
+                            <span class="text-gray-400">Goalkeeper's Name:</span>
+                            <input type="text" id="goalkeeper_name" placeholder="Enter Goalkeeper Name" class="mt-1 block w-full p-3 rounded-lg focus:ring-cyan-500 focus:border-cyan-500">
+                        </label>
+                        <label class="block">
+                            <span class="text-gray-400">Team Playing For:</span>
+                            <input type="text" id="goalkeeper_team" placeholder="Enter Team Name" class="mt-1 block w-full p-3 rounded-lg focus:ring-cyan-500 focus:border-cyan-500">
+                        </label>
+                        <!-- --- NEW FIELDS END --- -->
+                        <label class="block">
+                            <span class="text-gray-400">Game Date (YYYY-MM-DD):</span>
+                            <input type="date" id="game_date" value="2025-10-19" class="mt-1 block w-full p-3 rounded-lg focus:ring-cyan-500 focus:border-cyan-500">
+                        </label>
+                        <label class="block">
+                            <span class="text-gray-400">Opposition:</span>
+                            <input type="text" id="opposition" placeholder="Enter Team Name" class="mt-1 block w-full p-3 rounded-lg focus:ring-cyan-500 focus:border-cyan-500">
+                        </label>
                         <div class="grid grid-cols-2 gap-4">
-                            <div class="input-group">
-                                <label class="block text-sm font-medium text-gray-400 mb-1">Game Date</label>
-                                <input type="date" name="game-date">
-                            </div>
-                            <div class="input-group">
-                                <label class="block text-sm font-medium text-gray-400 mb-1">Game No</label>
-                                <input type="number" value="1" min="1" name="game-no">
-                            </div>
-                        </div>
-                        
-                        <div class="input-group">
-                            <label class="block text-sm font-medium text-gray-400 mb-1">Opposition</label>
-                            <input type="text" placeholder="Opponent Name" name="opposition">
-                        </div>
-
-                        <div class="grid grid-cols-3 gap-4">
-                            <div class="input-group">
-                                <label class="block text-sm font-medium text-gray-400 mb-1">H/A</label>
-                                <select name="home-away">
+                            <label class="block">
+                                <span class="text-gray-400">H/A:</span>
+                                <select id="home_away" class="mt-1 block w-full p-3 rounded-lg focus:ring-cyan-500 focus:border-cyan-500">
                                     <option value="H">HOME</option>
                                     <option value="A">AWAY</option>
                                 </select>
-                            </div>
-                            <div class="input-group col-span-2">
-                                <label class="block text-sm font-medium text-gray-400 mb-1">Score (e.g., 3-1)</label>
-                                <input type="text" placeholder="0-0" name="score">
-                            </div>
+                            </label>
+                            <label class="block">
+                                <span class="text-gray-400">Score (Final):</span>
+                                <input type="text" id="final_score" placeholder="0-0" class="mt-1 block w-full p-3 rounded-lg focus:ring-cyan-500 focus:border-cyan-500">
+                            </label>
                         </div>
-                        <div class="input-group">
-                            <label class="block text-sm font-medium text-gray-400 mb-1">W/D/L (Result)</label>
-                            <select name="result">
-                                <option value="W">WIN</option>
-                                <option value="D">DRAW</option>
-                                <option value="L">LOSS</option>
-                            </select>
-                        </div>
-                    </section>
-
-                    <!-- LIVE PERFORMANCE WIDGET -->
-                    <section class="data-panel text-center border-l-4 border-blue-500">
-                        <h3 class="text-xl font-bold text-blue-400 pb-2">LIVE ANALYSIS</h3>
-                        <div class="grid grid-cols-3 gap-4 mt-4">
-                            <div class="border-r border-gray-700">
-                                <p class="text-xs text-gray-500 uppercase">Save %</p>
-                                <p id="live-save-percent" class="stat-value">0%</p>
-                            </div>
-                            <div class="border-r border-gray-700">
-                                <p class="text-xs text-gray-500 uppercase">1v1 Win %</p>
-                                <p id="live-1v1-percent" class="stat-value">0%</p>
-                            </div>
-                            <div>
-                                <p class="text-xs text-gray-500 uppercase">G.A. / Game</p>
-                                <p id="live-goals-per-game" class="stat-value">0</p>
-                            </div>
-                        </div>
-                    </section>
+                    </div>
                 </div>
-                
-                <!-- COLUMN 2 & 3: Raw Data Counters -->
-                <section class="data-panel lg:col-span-2 space-y-6">
-                    <h2 class="section-header text-xl">
-                        B. RAW METRICS INPUT
+
+                <!-- Live Analysis Widget -->
+                <div class="card p-6 rounded-xl border-cyan-500/30">
+                    <h2 class="text-2xl font-bold mb-4 pb-2 text-white module-header flex items-center">
+                        <i data-lucide="activity" class="w-6 h-6 mr-3 text-accent-green"></i> LIVE STATS
                     </h2>
-                    
-                    <div class="grid grid-cols-2 md:grid-cols-3 gap-6">
-                        
-                        <!-- Core Shots/Goals -->
-                        <div class="space-y-4 p-4 border border-blue-500/20 rounded-lg">
-                            <h3 class="text-lg font-semibold text-gray-200">Shots & Concedes</h3>
-                            <div class="input-group">
-                                <label class="block text-xs font-medium text-gray-400 mb-1">Total Shots Faced</label>
-                                <input type="number" value="0" min="0" name="total-shots-faced" oninput="updatePerformanceSnapshot()">
-                            </div>
-                            <div class="input-group">
-                                <label class="block text-xs font-medium text-gray-400 mb-1">Shots Saved</label>
-                                <input type="number" value="0" min="0" name="shots-saved" oninput="updatePerformanceSnapshot()">
-                            </div>
-                            <div class="input-group">
-                                <label class="block text-xs font-medium text-gray-400 mb-1">Goals Against</label>
-                                <input type="number" value="0" min="0" name="goals-against" oninput="updatePerformanceSnapshot()">
-                            </div>
-                            <div class="input-group">
-                                <label class="block text-xs font-medium text-gray-400 mb-1">Unforced Goal Errors</label>
-                                <input type="number" value="0" min="0" name="unforced-goal-errors">
-                            </div>
-                        </div>
-
-                        <!-- 1v1s & Aerial -->
-                        <div class="space-y-4 p-4 border border-blue-500/20 rounded-lg">
-                            <h3 class="text-lg font-semibold text-gray-200">Aerial & Situational</h3>
-                            <div class="input-group">
-                                <label class="block text-xs font-medium text-gray-400 mb-1">1v1 Battles</label>
-                                <input type="number" value="0" min="0" name="1v1-battles" oninput="updatePerformanceSnapshot()">
-                            </div>
-                            <div class="input-group">
-                                <label class="block text-xs font-medium text-gray-400 mb-1">1v1s Won</label>
-                                <input type="number" value="0" min="0" name="1v1s-won" oninput="updatePerformanceSnapshot()">
-                            </div>
-                            <div class="input-group">
-                                <label class="block text-xs font-medium text-gray-400 mb-1">Crosses Claimed</label>
-                                <input type="number" value="0" min="0" name="crosses-claimed">
-                            </div>
-                            <div class="input-group">
-                                <label class="block text-xs font-medium text-gray-400 mb-1">Punches Completed</label>
-                                <input type="number" value="0" min="0" name="punches-completed">
-                            </div>
-                        </div>
-
-                        <!-- Play-Making & Interception -->
-                        <div class="space-y-4 p-4 border border-blue-500/20 rounded-lg">
-                            <h3 class="text-lg font-semibold text-gray-200">Distribution & Intercept</h3>
-                            <div class="input-group">
-                                <label class="block text-xs font-medium text-gray-400 mb-1">Play-Make (Hands)</label>
-                                <input type="number" value="0" min="0" name="play-make-hands">
-                            </div>
-                            <div class="input-group">
-                                <label class="block text-xs font-medium text-gray-400 mb-1">Play-Make (Feet)</label>
-                                <input type="number" value="0" min="0" name="play-make-feet">
-                            </div>
-                            <div class="input-group">
-                                <label class="block text-xs font-medium text-gray-400 mb-1">Interceptions Made</label>
-                                <input type="number" value="0" min="0" name="interceptions-made">
-                            </div>
-                        </div>
-
+                    <div class="space-y-3 text-lg font-mono">
+                        <p class="flex justify-between"><span>TOTAL SAVES:</span> <span id="live_saves" class="text-accent-green font-bold">0</span></p>
+                        <p class="flex justify-between"><span>GOALS CONCEDED:</span> <span id="live_goals" class="text-danger-red font-bold">0</span></p>
+                        <p class="flex justify-between border-t border-gray-700 pt-3"><span>SAVE PERCENTAGE:</span> <span id="live_save_pct" class="text-yellow-400 font-bold">0.0%</span></p>
                     </div>
-                </section>
+                </div>
             </div>
 
-            <!-- MODULE 2: ZONAL ANALYSIS (Highly Visual) -->
-            <section class="data-panel">
-                <h2 class="section-header text-xl">
-                    C. ZONAL ANALYSIS
+            <!-- Module B: Raw Metrics Input (Tap Counters) -->
+            <div class="lg:col-span-2 card p-6 rounded-xl border-cyan-500/30">
+                <h2 class="text-2xl font-bold mb-6 pb-2 text-cyan-400 module-header flex items-center">
+                    <i data-lucide="gauge" class="w-6 h-6 mr-3 text-cyan-400"></i> RAW PERFORMANCE METRICS
                 </h2>
-                <p class="text-sm text-gray-400 mb-6">Enter Save Counts and Goal Conceded Counts by goal quadrant (Keeper's Perspective).</p>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+                
+                <div class="space-y-6">
+                    <!-- Shots & Goals -->
+                    <div class="bg-[#111827] p-4 rounded-lg border border-gray-700">
+                        <h3 class="text-xl font-semibold mb-3 text-blue-400">ATTACK STOPPING</h3>
+                        <div class="space-y-3">
+                            <div id="counter_shots_faced" class="counter-container"></div>
+                            <div id="counter_shots_saved" class="counter-container"></div>
+                            <div id="counter_goals_against" class="counter-container"></div>
+                            <div id="counter_unforced_goal_errors" class="counter-container"></div>
+                        </div>
+                    </div>
                     
-                    <!-- SAVE ZONES -->
-                    <div class="space-y-4">
-                        <h3 class="text-xl font-bold text-gray-300 border-b border-gray-600 pb-2">1. Save Zones (TR, TL, BR, BL)</h3>
-                        <div class="zone-grid text-gray-200">
-                            <!-- Top Left (TL) -->
-                            <div class="zone-cell border-r-0 border-b-0">
-                                <label class="text-xs uppercase text-blue-300">TL (Top Left)</label>
-                                <input type="number" value="0" min="0" name="save-zone-tl" class="w-16 text-center text-sm font-bold bg-transparent border-b-2 border-dashed border-gray-500 focus:border-blue-400">
-                            </div>
-                            <!-- Top Right (TR) -->
-                            <div class="zone-cell border-l-0 border-b-0">
-                                <label class="text-xs uppercase text-blue-300">TR (Top Right)</label>
-                                <input type="number" value="0" min="0" name="save-zone-tr" class="w-16 text-center text-sm font-bold bg-transparent border-b-2 border-dashed border-gray-500 focus:border-blue-400">
-                            </div>
-                            <!-- Bottom Left (BL) -->
-                            <div class="zone-cell border-r-0 border-t-0">
-                                <label class="text-xs uppercase text-blue-300">BL (Bottom Left)</label>
-                                <input type="number" value="0" min="0" name="save-zone-bl" class="w-16 text-center text-sm font-bold bg-transparent border-b-2 border-dashed border-gray-500 focus:border-blue-400">
-                            </div>
-                            <!-- Bottom Right (BR) -->
-                            <div class="zone-cell border-l-0 border-t-0">
-                                <label class="text-xs uppercase text-blue-300">BR (Bottom Right)</label>
-                                <input type="number" value="0" min="0" name="save-zone-br" class="w-16 text-center text-sm font-bold bg-transparent border-b-2 border-dashed border-gray-500 focus:border-blue-400">
-                            </div>
+                    <!-- 1v1s & Aerials -->
+                    <div class="bg-[#111827] p-4 rounded-lg border border-gray-700">
+                        <h3 class="text-xl font-semibold mb-3 text-yellow-400">AREA COMMAND</h3>
+                        <div class="space-y-3">
+                            <div id="counter_1v1_battles" class="counter-container"></div>
+                            <div id="counter_1v1s_won" class="counter-container"></div>
+                            <div id="counter_crosses_claimed" class="counter-container"></div>
+                            <div id="counter_punches_completed" class="counter-container"></div>
+                            <div id="counter_interceptions_made" class="counter-container"></div>
                         </div>
                     </div>
 
-                    <!-- GOALS CONCEDED ZONES -->
-                    <div class="space-y-4">
-                        <h3 class="text-xl font-bold text-gray-300 border-b border-gray-600 pb-2">2. Goals Conceded Zones (Contact Zones)</h3>
-                         <div class="zone-grid text-gray-200" style="border-color: #FF0050;">
-                            <!-- Top Left (TL) -->
-                            <div class="zone-cell border-r-0 border-b-0" style="border-color: #4B5563;">
-                                <label class="text-xs uppercase text-red-400">TL (Goal)</label>
-                                <input type="number" value="0" min="0" name="goals-conceded-tl" class="w-16 text-center text-sm font-bold bg-transparent border-b-2 border-dashed border-gray-500 focus:border-red-400">
-                            </div>
-                            <!-- Top Right (TR) -->
-                            <div class="zone-cell border-l-0 border-b-0" style="border-color: #4B5563;">
-                                <label class="text-xs uppercase text-red-400">TR (Goal)</label>
-                                <input type="number" value="0" min="0" name="goals-conceded-tr" class="w-16 text-center text-sm font-bold bg-transparent border-b-2 border-dashed border-gray-500 focus:border-red-400">
-                            </div>
-                            <!-- Bottom Left (BL) -->
-                            <div class="zone-cell border-r-0 border-t-0" style="border-color: #4B5563;">
-                                <label class="text-xs uppercase text-red-400">BL (Goal)</label>
-                                <input type="number" value="0" min="0" name="goals-conceded-bl" class="w-16 text-center text-sm font-bold bg-transparent border-b-2 border-dashed border-gray-500 focus:border-red-400">
-                            </div>
-                            <!-- Bottom Right (BR) -->
-                            <div class="zone-cell border-l-0 border-t-0" style="border-color: #4B5563;">
-                                <label class="text-xs uppercase text-red-400">BR (Goal)</label>
-                                <input type="number" value="0" min="0" name="goals-conceded-br" class="w-16 text-center text-sm font-bold bg-transparent border-b-2 border-dashed border-gray-500 focus:border-red-400">
-                            </div>
+                    <!-- Distribution -->
+                    <div class="bg-[#111827] p-4 rounded-lg border border-gray-700">
+                        <h3 class="text-xl font-semibold mb-3 text-green-400">DISTRIBUTION QUALITY</h3>
+                        <div class="space-y-3">
+                            <div id="counter_playmake_hands" class="counter-container"></div>
+                            <div id="counter_playmake_feet" class="counter-container"></div>
                         </div>
                     </div>
                 </div>
-            </section>
-
-            <!-- Final Submission Button -->
-            <div class="pt-8 text-center">
-                <button 
-                    type="submit"
-                    class="action-button"
-                >
-                    INITIATE REPORT GENERATION
-                </button>
-                <p class="mt-3 text-gray-500 text-sm italic">
-                    Securely capture data for your coach. Structured for professional PDF output.
-                </p>
             </div>
-            
-        </form>
+        </div>
+
+        <!-- Module C: Zonal Analysis -->
+        <div class="card p-6 rounded-xl mb-10 border-cyan-500/30">
+            <h2 class="text-2xl font-bold mb-6 pb-2 text-cyan-400 module-header flex items-center">
+                <i data-lucide="target" class="w-6 h-6 mr-3 text-cyan-400"></i> ZONAL ANALYSIS (TAP TO LOG)
+            </h2>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Save Zones -->
+                <div>
+                    <h3 class="text-xl font-semibold mb-4 text-gray-300">SAVE LOCATION (ATTEMPTS SAVED)</h3>
+                    <div id="save_zones_grid" class="goal-grid rounded-xl overflow-hidden shadow-lg shadow-cyan-500/10">
+                        <!-- Zones created dynamically -->
+                    </div>
+                </div>
+
+                <!-- Goals Conceded Zones -->
+                <div>
+                    <h3 class="text-xl font-semibold mb-4 text-gray-300">GOAL LOCATION (GOALS CONCEDED)</h3>
+                    <div id="goals_conceded_grid" class="goal-grid rounded-xl overflow-hidden shadow-lg shadow-red-500/10">
+                        <!-- Zones created dynamically -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Action Button -->
+        <div class="text-center p-6 card rounded-xl border-cyan-500/30">
+            <button id="generateReportBtn" class="w-full md:w-auto px-10 py-4 bg-cyan-600 hover:bg-cyan-500 text-black font-extrabold text-xl rounded-xl shadow-lg shadow-cyan-500/50 transition-all transform hover:scale-105 active:scale-95 disabled:bg-gray-700 disabled:shadow-none disabled:text-gray-400" disabled>
+                <i data-lucide="save" class="w-6 h-6 mr-2 inline-block"></i> SAVE & GENERATE REPORT (PDF)
+            </button>
+            <p id="statusMessage" class="mt-4 text-base font-mono text-cyan-400 hidden"></p>
+        </div>
 
     </div>
 
-    <script>
-        // --- Utility Function to get input value safely ---
-        const getInputValue = (name) => {
-            const input = document.querySelector(`input[name="${name}"]`);
-            return parseInt(input ? input.value : '0') || 0;
+    <!-- Modals (Custom Alerts) -->
+    <div id="successModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 z-50 items-center justify-center hidden">
+        <div class="card p-8 rounded-xl max-w-sm mx-auto text-center border-green-500/50">
+            <i data-lucide="check-circle" class="w-12 h-12 mx-auto text-green-500 mb-4"></i>
+            <h3 class="text-xl font-bold mb-2 text-white">SUCCESS! DATA SECURED.</h3>
+            <p id="successMessage" class="text-gray-300 text-sm font-mono">Data saved successfully.</p>
+            <button onclick="closeModal('successModal')" class="mt-4 px-6 py-2 bg-cyan-600 rounded-lg text-black font-semibold hover:bg-cyan-500">PROCEED</button>
+        </div>
+    </div>
+
+    <div id="errorModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 z-50 items-center justify-center hidden">
+        <div class="card p-8 rounded-xl max-w-sm mx-auto text-center border-red-500/50">
+            <i data-lucide="x-octagon" class="w-12 h-12 mx-auto text-red-500 mb-4"></i>
+            <h3 class="text-xl font-bold mb-2 text-white">SYSTEM ERROR</h3>
+            <p id="errorMessage" class="text-gray-300 text-sm font-mono">An unknown error occurred.</p>
+            <button onclick="closeModal('errorModal')" class="mt-4 px-6 py-2 bg-cyan-600 rounded-lg text-black font-semibold hover:bg-cyan-500">DISMISS</button>
+        </div>
+    </div>
+
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        // --- GLOBAL STATE & FIREBASE SETUP ---
+        setLogLevel('debug');
+
+        const { jsPDF } = window.jspdf;
+        
+        let db;
+        let auth;
+        let userId = null;
+        let isAuthReady = false;
+        
+        // Ensure globals are defined or use defaults
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        const STATE = {
+            rawMetrics: {
+                shots_faced: 0, shots_saved: 0, goals_against: 0, unforced_goal_errors: 0,
+                '1v1_battles': 0, '1v1s_won': 0, crosses_claimed: 0, punches_completed: 0,
+                interceptions_made: 0, playmake_hands: 0, playmake_feet: 0,
+            },
+            saveZones: { TL: 0, TC: 0, TR: 0, ML: 0, MC: 0, MR: 0, BL: 0, BC: 0, BR: 0 },
+            goalsConceded: { TL: 0, TC: 0, TR: 0, ML: 0, MC: 0, MR: 0, BL: 0, BC: 0, BR: 0 },
         };
 
-        // --- Performance Calculation Function (Updates Live Analysis Widget) ---
-        function updatePerformanceSnapshot() {
-            const totalShots = getInputValue('total-shots-faced');
-            const shotsSaved = getInputValue('shots-saved');
-            const battles = getInputValue('1v1-battles');
-            const battlesWon = getInputValue('1v1s-won');
-            const goalsAgainst = getInputValue('goals-against');
-
-            // 1. Save Percentage
-            const savePercent = totalShots > 0 ? ((shotsSaved / totalShots) * 100).toFixed(1) : '0';
-            document.getElementById('live-save-percent').textContent = `${savePercent}%`;
-
-            // 2. 1v1 Win Percentage
-            const winPercent = battles > 0 ? ((battlesWon / battles) * 100).toFixed(1) : '0';
-            document.getElementById('live-1v1-percent').textContent = `${winPercent}%`;
-
-            // 3. Goals Against / Game (Simple: assumes 1 game)
-            document.getElementById('live-goals-per-game').textContent = goalsAgainst;
+        // Mapping for display names in the PDF
+        const METRIC_DISPLAY_NAMES = {
+            shots_faced: 'Total Shots Faced', shots_saved: 'Shots Saved', goals_against: 'Goals Conceded', unforced_goal_errors: 'Unforced Goal Errors',
+            '1v1_battles': '1v1 Battles', '1v1s_won': '1v1s Won', crosses_claimed: 'Crosses Claimed', punches_completed: 'Punches Completed',
+            interceptions_made: 'Interceptions Made', playmake_hands: 'Play-Make (Hands)', playmake_feet: 'Play-Make (Feet)',
+        };
+        
+        // --- UTILITY FUNCTIONS ---
+        
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+            document.getElementById(id).classList.remove('flex');
         }
 
-        // --- Initialization and Event Handling ---
+        /** Shows a custom modal with a message. */
+        function showModal(id, message) {
+            const modal = document.getElementById(id);
+            const msgElement = document.getElementById(`${id === 'successModal' ? 'success' : 'error'}Message`);
+            msgElement.textContent = message;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        /** Simple UUID generator */
+        function generateUUID() {
+            return crypto.randomUUID();
+        }
+        
+        /** Updates the Live Analysis Widget */
+        function updateLiveMetrics() {
+            const saves = STATE.rawMetrics.shots_saved + Object.values(STATE.saveZones).reduce((a, b) => a + b, 0);
+            const goals = STATE.rawMetrics.goals_against + Object.values(STATE.goalsConceded).reduce((a, b) => a + b, 0);
+            
+            // Total opportunities based on logged counts
+            const totalOpportunities = saves + goals;
+            
+            const savePct = totalOpportunities > 0 ? (saves / totalOpportunities) * 100 : 0;
+
+            document.getElementById('live_saves').textContent = saves;
+            document.getElementById('live_goals').textContent = goals;
+            document.getElementById('live_save_pct').textContent = `${savePct.toFixed(1)}%`;
+        }
+
+        /** Creates and sets up a tap-based counter for raw metrics. */
+        function setupCounter(containerId, metricName, stateKey) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = `
+                <div class="text-gray-300 font-medium text-lg">${metricName}</div>
+                <div class="counter-block">
+                    <button class="reset-button text-cyan-400 px-4 h-full rounded-l-lg hover:bg-[#203040]" data-key="${stateKey}" data-action="reset">
+                        <i data-lucide="rotate-ccw" class="w-5 h-5"></i>
+                    </button>
+                    <div id="${stateKey}_display" class="count-display text-center flex-grow p-2" data-key="${stateKey}" data-action="increment">
+                        0
+                    </div>
+                </div>
+            `;
+            
+            const display = document.getElementById(`${stateKey}_display`);
+            const resetButton = container.querySelector('.reset-button');
+
+            const updateDisplay = () => {
+                display.textContent = STATE.rawMetrics[stateKey];
+                updateLiveMetrics();
+            };
+
+            const handleAction = (e) => {
+                const key = e.currentTarget.dataset.key;
+                const action = e.currentTarget.dataset.action;
+
+                if (action === 'increment') {
+                    STATE.rawMetrics[key]++;
+                } else if (action === 'reset') {
+                    STATE.rawMetrics[key] = 0;
+                }
+                updateDisplay();
+            };
+
+            display.addEventListener('click', handleAction);
+            resetButton.addEventListener('click', handleAction);
+
+            lucide.createIcons();
+        }
+
+        /** Creates and sets up the 3x3 zonal analysis grid. */
+        function setupZonalGrid(containerId, stateObject, prefix) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = ''; 
+
+            const zones = ['TL', 'TC', 'TR', 'ML', 'MC', 'MR', 'BL', 'BC', 'BR'];
+            
+            zones.forEach(zone => {
+                const div = document.createElement('div');
+                div.id = `${prefix}_${zone}`;
+                div.className = `zone p-2 ${prefix === 'save' ? 'save-zone' : 'goal-zone'}`;
+                div.textContent = stateObject[zone];
+                div.dataset.zone = zone;
+                
+                div.addEventListener('click', () => {
+                    stateObject[zone]++;
+                    div.textContent = stateObject[zone];
+                    updateLiveMetrics();
+                });
+
+                // Long press/Right click for reset
+                div.addEventListener('contextmenu', (e) => {
+                    e.preventDefault(); 
+                    stateObject[zone] = 0;
+                    div.textContent = stateObject[zone];
+                    updateLiveMetrics();
+                });
+                
+                container.appendChild(div);
+            });
+        }
+        
+        // --- DATA INITIALIZATION ---
+
+        function initializeUI() {
+            // Raw Metrics Counters
+            setupCounter('counter_shots_faced', 'SHOTS FACED', 'shots_faced');
+            setupCounter('counter_shots_saved', 'SHOTS SAVED', 'shots_saved');
+            setupCounter('counter_goals_against', 'GOALS CONCEDED', 'goals_against');
+            setupCounter('counter_unforced_goal_errors', 'UNFORCED GOAL ERRORS', 'unforced_goal_errors');
+            setupCounter('counter_1v1_battles', '1v1 BATTLES', '1v1_battles');
+            setupCounter('counter_1v1s_won', '1v1s WON', '1v1s_won');
+            setupCounter('counter_crosses_claimed', 'CROSSES CLAIMED', 'crosses_claimed');
+            setupCounter('counter_punches_completed', 'PUNCHES COMPLETED', 'punches_completed');
+            setupCounter('counter_interceptions_made', 'INTERCEPTIONS MADE', 'interceptions_made');
+            setupCounter('counter_playmake_hands', 'PLAY-MAKE (HANDS)', 'playmake_hands');
+            setupCounter('counter_playmake_feet', 'PLAY-MAKE (FEET)', 'playmake_feet');
+
+            // Zonal Grids
+            setupZonalGrid('save_zones_grid', STATE.saveZones, 'save');
+            setupZonalGrid('goals_conceded_grid', STATE.goalsConceded, 'goal');
+            
+            // Set today's date
+            document.getElementById('game_date').valueAsDate = new Date();
+
+            updateLiveMetrics();
+        }
+        
+        // --- FIREBASE FUNCTIONS ---
+
+        async function initFirebase() {
+            document.getElementById('loadingIndicator').classList.remove('hidden');
+            document.getElementById('loadingIndicator').classList.add('flex');
+            
+            if (!firebaseConfig) {
+                 showModal('errorModal', 'System configuration not found. Data persistence disabled.');
+                 document.getElementById('loadingIndicator').classList.add('hidden');
+                 return;
+            }
+
+            try {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        document.getElementById('userIdDisplay').textContent = userId;
+                        isAuthReady = true;
+                        document.getElementById('generateReportBtn').disabled = false;
+                        console.log("Firebase Auth Ready. User ID:", userId);
+                    } else {
+                        if (initialAuthToken) {
+                            await signInWithCustomToken(auth, initialAuthToken);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    }
+                    document.getElementById('loadingIndicator').classList.add('hidden');
+                });
+
+            } catch (error) {
+                console.error("Firebase Initialization Error:", error);
+                showModal('errorModal', `System connection error: ${error.message}`);
+                document.getElementById('loadingIndicator').classList.add('hidden');
+            }
+        }
+        
+        /**
+         * Compiles data, saves to Firestore, and generates the PDF report.
+         */
+        async function saveAndGenerateReport() {
+            if (!isAuthReady || !userId) {
+                showModal('errorModal', 'Authentication is not ready. Please wait a moment.');
+                return;
+            }
+            
+            const statusMsg = document.getElementById('statusMessage');
+            const saveBtn = document.getElementById('generateReportBtn');
+            statusMsg.classList.remove('hidden');
+            statusMsg.textContent = 'Executing save and report generation sequence...';
+            saveBtn.disabled = true;
+
+            const gameId = generateUUID();
+            // --- CAPTURE NEW FIELDS ---
+            const gkName = document.getElementById('goalkeeper_name').value.trim() || 'N/A';
+            const gkTeam = document.getElementById('goalkeeper_team').value.trim() || 'N/A';
+            // --------------------------
+            const gameDate = document.getElementById('game_date').value;
+            const opposition = document.getElementById('opposition').value.trim() || 'UNKNOWN OPPONENT';
+            const homeAway = document.getElementById('home_away').value;
+            const finalScore = document.getElementById('final_score').value.trim() || 'N/A';
+            
+            const gameData = {
+                gameId: gameId,
+                timestamp: new Date().toISOString(),
+                userId: userId,
+                // --- ADD NEW FIELDS TO DATA ---
+                goalkeeperName: gkName,
+                goalkeeperTeam: gkTeam,
+                // ------------------------------
+                gameDate: gameDate,
+                opposition: opposition,
+                homeAway: homeAway,
+                finalScore: finalScore,
+                rawMetrics: JSON.parse(JSON.stringify(STATE.rawMetrics)), // Deep copy state
+                saveZones: JSON.parse(JSON.stringify(STATE.saveZones)),
+                goalsConceded: JSON.parse(JSON.stringify(STATE.goalsConceded)),
+            };
+
+            try {
+                // 1. Save to Firestore
+                const collectionPath = `/artifacts/${appId}/users/${userId}/goalkeeper_games`;
+                await setDoc(doc(db, collectionPath, gameId), gameData);
+                statusMsg.textContent = 'Data secured in database. Generating PDF...';
+
+                // 2. Generate PDF using current gameData
+                generatePDF(gameData);
+                
+                // 3. Success feedback & Reset
+                showModal('successModal', `Match data for "${opposition}" saved successfully and PDF downloaded!`);
+                resetState();
+                
+            } catch (e) {
+                console.error("Error in Save or PDF generation: ", e);
+                statusMsg.textContent = 'Operation failed. Check console for details.';
+                showModal('errorModal', `Critical Failure: ${e.message}`);
+            } finally {
+                saveBtn.disabled = false;
+            }
+        }
+        
+        /**
+         * Generates a comprehensive PDF report using jsPDF and the game data.
+         * @param {object} data - The compiled game data object.
+         */
+        function generatePDF(data) {
+            try {
+                // Initialize PDF
+                const doc = new jsPDF('p', 'mm', 'a4'); // Portrait, mm units, A4 size
+                let y = 15; // Starting Y position
+
+                // --- HEADER ---
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(24);
+                doc.setTextColor(0, 102, 204); // Blue color
+                doc.text('BBGK PERFORMANCE REPORT', 105, y, null, null, 'center');
+                y += 8;
+                
+                doc.setFontSize(10);
+                doc.setTextColor(100, 100, 100); // Gray color
+                doc.text(`Generated: ${new Date().toLocaleString()}`, 105, y, null, null, 'center');
+                y += 10;
+
+                // --- MATCH DETAILS ---
+                doc.setFontSize(14);
+                doc.setTextColor(0, 0, 0); // Black text
+                doc.text('MATCH DATA', 20, y);
+                doc.line(20, y + 1, 190, y + 1); // Separator line
+                y += 8;
+
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'normal');
+                
+                // --- ADDED GOALKEEPER & TEAM ---
+                doc.text(`Goalkeeper: ${data.goalkeeperName}`, 20, y);
+                doc.text(`Team: ${data.goalkeeperTeam}`, 110, y);
+                y += 5;
+                // --------------------------------
+
+                doc.text(`Opponent: ${data.opposition} (${data.homeAway})`, 20, y);
+                doc.text(`Date: ${data.gameDate}`, 110, y);
+                y += 5;
+                doc.text(`Final Score: ${data.finalScore}`, 20, y);
+                doc.text(`Report ID: ${data.gameId.substring(0, 12)}...`, 110, y);
+                y += 10;
+                
+                // --- LIVE METRICS SUMMARY ---
+                const totalSaves = data.rawMetrics.shots_saved + Object.values(data.saveZones).reduce((a, b) => a + b, 0);
+                const totalGoals = data.rawMetrics.goals_against + Object.values(data.goalsConceded).reduce((a, b) => a + b, 0);
+                const totalOpportunities = totalSaves + totalGoals;
+                const savePct = totalOpportunities > 0 ? (totalSaves / totalOpportunities) * 100 : 0;
+                
+                doc.setFontSize(14);
+                doc.text('PERFORMANCE SUMMARY', 20, y);
+                doc.line(20, y + 1, 190, y + 1); 
+                y += 8;
+                
+                doc.setFontSize(12);
+                doc.setFont('helvetica', 'bold');
+                doc.text(`TOTAL SAVES: ${totalSaves}`, 20, y);
+                doc.text(`GOALS CONCEDED: ${totalGoals}`, 110, y);
+                y += 6;
+                doc.text(`SAVE PERCENTAGE: ${savePct.toFixed(1)}%`, 20, y);
+                y += 10;
+                
+                // --- RAW PERFORMANCE METRICS TABLE ---
+                doc.setFontSize(14);
+                doc.text('RAW METRICS BREAKDOWN', 20, y);
+                doc.line(20, y + 1, 190, y + 1);
+                y += 8;
+                
+                const tableData = Object.entries(data.rawMetrics).map(([key, value]) => [
+                    METRIC_DISPLAY_NAMES[key] || key.replace(/_/g, ' ').toUpperCase(),
+                    value
+                ]);
+
+                window.jspdf.autoTable(doc, {
+                    startY: y,
+                    head: [['METRIC', 'COUNT']],
+                    body: tableData,
+                    theme: 'striped',
+                    styles: { fontSize: 10, cellPadding: 2, textColor: [0, 0, 0] },
+                    headStyles: { fillColor: [0, 102, 204], textColor: [255, 255, 255] },
+                    margin: { left: 20, right: 20 }
+                });
+
+                y = doc.autoTable.previous.finalY + 10;
+
+                // --- ZONAL ANALYSIS ---
+                doc.setFontSize(14);
+                doc.text('ZONAL ANALYSIS', 20, y);
+                doc.line(20, y + 1, 190, y + 1);
+                y += 8;
+
+                // Function to draw a 3x3 grid with data
+                const drawZoneGrid = (x, y, title, zonesData, color) => {
+                    doc.setFontSize(12);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setTextColor(color[0], color[1], color[2]);
+                    doc.text(title, x + 35, y);
+                    y += 5;
+                    
+                    const zones = ['TL', 'TC', 'TR', 'ML', 'MC', 'MR', 'BL', 'BC', 'BR'];
+                    const gridSide = 30;
+                    const cellSide = gridSide / 3;
+
+                    doc.setLineWidth(0.3);
+                    doc.setDrawColor(150, 150, 150); // Gray grid lines
+
+                    zones.forEach((zone, index) => {
+                        const row = Math.floor(index / 3);
+                        const col = index % 3;
+                        const cellX = x + col * cellSide;
+                        const cellY = y + row * cellSide;
+
+                        // Draw cell box
+                        doc.rect(cellX, cellY, cellSide, cellSide);
+                        
+                        // Add count text
+                        doc.setFontSize(10);
+                        doc.setFont('helvetica', 'normal');
+                        doc.setTextColor(0, 0, 0);
+                        doc.text(String(zonesData[zone] || 0), cellX + cellSide / 2, cellY + cellSide / 2, null, null, 'center');
+                        
+                        // Add zone label (subtler)
+                        doc.setFontSize(6);
+                        doc.setTextColor(150, 150, 150);
+                        doc.text(zone, cellX + 1, cellY + 3);
+                    });
+                    
+                    return y + gridSide;
+                };
+
+                // Draw Save Zones (Blue)
+                drawZoneGrid(30, y, 'SAVE LOCATIONS', data.saveZones, [0, 102, 204]);
+
+                // Draw Goals Conceded Zones (Red)
+                drawZoneGrid(120, y, 'GOALS CONCEDED', data.goalsConceded, [255, 0, 0]);
+                
+                // Final save/download
+                doc.save(`BBGK_Report_${data.opposition}_${data.gameDate}.pdf`);
+            
+            } catch (error) {
+                console.error("PDF Generation Error:", error);
+                showModal('errorModal', `PDF generation failed: ${error.message}. Data was still saved to Firestore.`);
+            }
+        }
+
+
+        /** Resets all counters and fields to start a new game */
+        function resetState() {
+            // Reset STATE object
+            Object.keys(STATE.rawMetrics).forEach(key => STATE.rawMetrics[key] = 0);
+            Object.keys(STATE.saveZones).forEach(key => STATE.saveZones[key] = 0);
+            Object.keys(STATE.goalsConceded).forEach(key => STATE.goalsConceded[key] = 0);
+
+            // Re-render the UI to reflect reset
+            initializeUI();
+
+            // Reset match info fields
+            document.getElementById('goalkeeper_name').value = ''; // NEW
+            document.getElementById('goalkeeper_team').value = ''; // NEW
+            document.getElementById('opposition').value = '';
+            document.getElementById('final_score').value = '';
+            document.getElementById('game_date').valueAsDate = new Date();
+        }
+
+        // --- EVENT LISTENERS ---
         document.addEventListener('DOMContentLoaded', () => {
-             // Set default date to today
-             const dateInput = document.querySelector('input[name="game-date"]');
-             if (dateInput) {
-                const today = new Date().toISOString().split('T')[0];
-                dateInput.value = today;
-             }
-             
-             // Initial calculation run
-             updatePerformanceSnapshot();
+            initializeUI();
+            initFirebase();
+            
+            document.getElementById('generateReportBtn').addEventListener('click', saveAndGenerateReport);
         });
 
-        // Simple function to mock 'alert' with a visible message box (Non-blocking)
-        function customAlert(message, type = 'success') {
-            const container = document.body;
-            let messageBox = document.getElementById('custom-message-box');
-            
-            if (!messageBox) {
-                messageBox = document.createElement('div');
-                messageBox.id = 'custom-message-box';
-                messageBox.className = 'fixed top-4 left-1/2 transform -translate-x-1/2 p-4 rounded-lg shadow-xl z-50 transition-opacity duration-300 opacity-0 font-bold text-gray-900';
-                container.appendChild(messageBox);
-            }
-            
-            // Set styles based on message type
-            if (type === 'success') {
-                messageBox.style.backgroundColor = '#00BFFF';
-            } else if (type === 'error') {
-                messageBox.style.backgroundColor = '#FF0050';
-            }
-            
-            messageBox.textContent = message;
-            messageBox.style.opacity = 1;
-
-            setTimeout(() => {
-                messageBox.style.opacity = 0;
-            }, 4000);
-        }
-
-        // Form submission handler
-        document.getElementById('tracker-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            console.log("Professional Data Acquisition Triggered.");
-            
-            // Collect form data
-            const formData = new FormData(e.target);
-            const data = Object.fromEntries(formData.entries());
-            
-            // Log data for verification (in a real app, this goes to the database/API)
-            console.log("Captured Data for BBGK Pack:", data);
-            
-            customAlert("DATA ACQUISITION COMPLETE. Report Generation Module Activated.");
-        });
     </script>
 </body>
 </html>
