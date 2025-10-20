@@ -191,7 +191,7 @@
 
         <!-- Control Buttons -->
         <div class="flex flex-col sm:flex-row gap-4">
-            <!-- Save to Cloud is now disabled and repurposed as a status indicator -->
+            <!-- Save to Cloud is disabled/repurposed -->
             <button id="save-data-btn" disabled class="flex-1 py-4 bg-gray-600 cursor-not-allowed text-white font-bold rounded-xl shadow-lg">
                 <span class="text-xl">Cloud Saving Disabled (Local Only)</span>
             </button>
@@ -310,7 +310,6 @@
         // --- PDF Generation Logic ---
         function generatePDFReport() {
             try {
-                // No prompt required now, executes instantly
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF({
                     orientation: 'portrait',
@@ -318,7 +317,9 @@
                     format: 'a4'
                 });
 
-                doc.setFont('Helvetica');
+                const FONT_FAMILY = 'Helvetica'; // Define the font family used
+
+                doc.setFont(FONT_FAMILY);
                 doc.setTextColor(30, 30, 30); 
 
                 // --- Header ---
@@ -367,14 +368,16 @@
                 const col1X = 10, col2X = 80;
                 let tableY = y;
                 
-                doc.setFontStyle('bold');
+                // FIX: Use doc.setFont(family, style) to set bold
+                doc.setFont(FONT_FAMILY, 'bold');
                 doc.text(summaryData[0][0], col1X, tableY);
                 doc.text(summaryData[0][1], col2X, tableY);
                 tableY += 2;
                 doc.line(col1X, tableY, 120, tableY); // Separator line
                 tableY += 5;
 
-                doc.setFontStyle('normal');
+                // FIX: Use doc.setFont(family, style) to set normal
+                doc.setFont(FONT_FAMILY, 'normal');
                 summaryData.slice(1).forEach(row => {
                     doc.text(row[0], col1X, tableY);
                     doc.text(String(row[1]), col2X, tableY);
@@ -410,7 +413,8 @@
                 const zonalCol1X = 10, zonalCol2X = 40, zonalCol3X = 75, zonalCol4X = 115;
                 tableY = y;
                 
-                doc.setFontStyle('bold');
+                // FIX: Use doc.setFont(family, style) to set bold
+                doc.setFont(FONT_FAMILY, 'bold');
                 doc.text(zonalTableData[0][0], zonalCol1X, tableY);
                 doc.text(zonalTableData[0][1], zonalCol2X, tableY);
                 doc.text(zonalTableData[0][2], zonalCol3X, tableY);
@@ -419,7 +423,8 @@
                 doc.line(zonalCol1X, tableY, 150, tableY); // Separator line
                 tableY += 5;
                 
-                doc.setFontStyle('normal');
+                // FIX: Use doc.setFont(family, style) to set normal
+                doc.setFont(FONT_FAMILY, 'normal');
                 zonalTableData.slice(1).forEach(row => {
                     doc.text(row[0], zonalCol1X, tableY);
                     doc.text(String(row[1]), zonalCol2X, tableY);
@@ -465,7 +470,7 @@
             });
 
             // 4. Setup Control Buttons
-            // The save button is now disabled (no listener needed)
+            // The save button is disabled
             document.getElementById('generate-pdf-btn').addEventListener('click', generatePDFReport);
 
             document.getElementById('reset-btn').addEventListener('click', () => {
