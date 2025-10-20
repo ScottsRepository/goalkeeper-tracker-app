@@ -76,7 +76,7 @@
             box-shadow: 0 6px 12px rgba(229, 57, 53, 0.6);
         }
 
-        /* Zonal Grid */
+        /* Zonal Grid (Save/Goal) */
         .zone-grid-item {
             cursor: pointer;
             transition: background-color 0.1s;
@@ -84,6 +84,22 @@
             color: var(--color-text-light);
         }
         .zone-grid-item:hover {
+            background-color: #383838;
+        }
+
+        /* NEW: Contact Zones Grid (4x4) */
+        .contact-zone-item {
+            cursor: pointer;
+            transition: background-color 0.1s;
+            background-color: #242424;
+            color: var(--color-text-light);
+            display: flex; 
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative; 
+        }
+        .contact-zone-item:hover {
             background-color: #383838;
         }
         
@@ -164,7 +180,6 @@
         <header class="text-center mb-8">
             <!-- BRANDING: Enhanced Header with Logo Placeholder -->
             <div class="flex items-center justify-center mb-2">
-                <!-- NOTE: Replace this div with your <img> tag for Company Logo.jpg -->
                 <div class="logo-placeholder">BB</div> 
                 <h1 class="text-6xl font-extrabold tracking-tight uppercase" style="color: var(--color-accent-green);">BBGK</h1>
             </div>
@@ -176,7 +191,7 @@
         <!-- Game Metadata Input Panel -->
         <div class="container-panel p-6 mb-6">
             <h2 class="text-2xl font-semibold mb-4 border-b border-gray-700 pb-2 text-gray-200">Game Information</h2>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
                 <div>
                     <label for="gk-name" class="block text-sm font-medium text-gray-400">Goalkeeper Name</label>
                     <input type="text" id="gk-name" value="Brooke Hurry" class="mt-1 block w-full rounded-md bg-[#242424] border-gray-600 text-white p-3 shadow-inner">
@@ -208,6 +223,13 @@
                         <option value="L">Loss</option>
                     </select>
                 </div>
+            </div>
+            
+            <!-- NEW: Comment Section -->
+            <div>
+                <label for="game-comments" class="block text-sm font-medium text-gray-400">Game Notes / Key Observations</label>
+                <textarea id="game-comments" rows="3" placeholder="Enter notes on shot quality, match intensity, weather conditions, or tactical setup..." 
+                          class="mt-1 block w-full rounded-md bg-[#242424] border-gray-600 text-white p-3 shadow-inner resize-none"></textarea>
             </div>
         </div>
 
@@ -256,7 +278,7 @@
 
         <!-- Zonal Analysis Section (Goalkeeper View) -->
         <div class="container-panel p-6 mb-8">
-            <h2 class="text-2xl font-semibold mb-4 border-b border-gray-700 pb-2 text-gray-200">Zonal Analysis</h2>
+            <h2 class="text-2xl font-semibold mb-4 border-b border-gray-700 pb-2 text-gray-200">3. Shot & Goal Zonal Analysis</h2>
 
             <div class="flex flex-col md:flex-row gap-6">
                 <!-- Save Zones Grid (Green themed) -->
@@ -294,6 +316,42 @@
                 </div>
             </div>
         </div>
+        
+        <!-- Contact Zones Section (18-Yard Box Top-Down View) -->
+        <div class="container-panel p-6 mb-8">
+            <h2 class="text-2xl font-semibold mb-4 border-b border-gray-700 pb-2 text-gray-200">4. Contact Zones (18-Yard Box)</h2>
+            <p class="text-sm text-gray-400 mb-4">Click the zone where the GK made contact with the ball (e.g., claim, punch, clearance, 1v1 dive).</p>
+
+            <!-- 4x4 Grid representing the 18-yard box -->
+            <div id="contact-zones-grid" class="grid grid-cols-4 grid-rows-4 h-96 w-full mx-auto border-4 border-solid border-gray-500 rounded-lg overflow-hidden relative">
+                <!-- Visual markers for pitch layout (Goal line, 6-yard box, etc.) -->
+                <div class="absolute inset-x-0 bottom-0 h-1 bg-gray-500 z-10"></div>
+                <!-- 6-yard box markings (approx. 1/4 of the height from the bottom) -->
+                <div class="absolute inset-x-1/4 bottom-0 h-1/4 border-t-2 border-l-2 border-r-2 border-gray-500 z-10"></div>
+                
+                <!-- Grid Items (C1 to C16, C1 is top-left, C16 is bottom-right) -->
+                <!-- Row 1 (Furthest from goal) -->
+                <div data-zone="C1" class="contact-zone-item border border-[#383838]">C1<span class="text-sm text-gray-500"> (0)</span></div>
+                <div data-zone="C2" class="contact-zone-item border border-[#383838]">C2<span class="text-sm text-gray-500"> (0)</span></div>
+                <div data-zone="C3" class="contact-zone-item border border-[#383838]">C3<span class="text-sm text-gray-500"> (0)</span></div>
+                <div data-zone="C4" class="contact-zone-item border border-[#383838]">C4<span class="text-sm text-gray-500"> (0)</span></div>
+                <!-- Row 2 -->
+                <div data-zone="C5" class="contact-zone-item border border-[#383838]">C5<span class="text-sm text-gray-500"> (0)</span></div>
+                <div data-zone="C6" class="contact-zone-item border border-[#383838]">C6<span class="text-sm text-gray-500"> (0)</span></div>
+                <div data-zone="C7" class="contact-zone-item border border-[#383838]">C7<span class="text-sm text-gray-500"> (0)</span></div>
+                <div data-zone="C8" class="contact-zone-item border border-[#383838]">C8<span class="text-sm text-gray-500"> (0)</span></div>
+                <!-- Row 3 -->
+                <div data-zone="C9" class="contact-zone-item border border-[#383838]">C9<span class="text-sm text-gray-500"> (0)</span></div>
+                <div data-zone="C10" class="contact-zone-item border border-[#383838]">C10<span class="text-sm text-gray-500"> (0)</span></div>
+                <div data-zone="C11" class="contact-zone-item border border-[#383838]">C11<span class="text-sm text-gray-500"> (0)</span></div>
+                <div data-zone="C12" class="contact-zone-item border border-[#383838]">C12<span class="text-sm text-gray-500"> (0)</span></div>
+                <!-- Row 4 (Closest to goal) -->
+                <div data-zone="C13" class="contact-zone-item border border-[#383838]">C13<span class="text-sm text-gray-500"> (0)</span></div>
+                <div data-zone="C14" class="contact-zone-item border border-[#383838]">C14<span class="text-sm text-gray-500"> (0)</span></div>
+                <div data-zone="C15" class="contact-zone-item border border-[#383838]">C15<span class="text-sm text-gray-500"> (0)</span></div>
+                <div data-zone="C16" class="contact-zone-item border border-[#383838]">C16<span class="text-sm text-gray-500"> (0)</span></div>
+            </div>
+        </div>
 
         <!-- Control Buttons -->
         <div class="flex flex-col sm:flex-row gap-4">
@@ -321,8 +379,12 @@
             "1v1s Won", "Punches Completed", "Interceptions Made"
         ];
         
-        // Zonal areas (Top Left, Middle Center, etc.)
-        const ZONES = ["TL", "TC", "TR", "ML", "MC", "MR", "BL", "BC", "BR"];
+        // Zonal areas (Top Left, Middle Center, etc.) for Saves/Goals
+        const SAVE_GOAL_ZONES = ["TL", "TC", "TR", "ML", "MC", "MR", "BL", "BC", "BR"];
+        
+        // Contact Zones (C1 to C16, 4x4 grid) for ball touches in the 18-yard box
+        const CONTACT_ZONES = Array.from({ length: 16 }, (_, i) => `C${i + 1}`);
+
 
         // --- Branding Colors for jsPDF ---
         const BBGK_GREEN = [50, 205, 50]; // #32cd32
@@ -361,10 +423,18 @@
 
             sessionData.saveZones = {};
             sessionData.goalsZones = {};
-            ZONES.forEach(zone => {
+            SAVE_GOAL_ZONES.forEach(zone => {
                 sessionData.saveZones[zone] = 0;
                 sessionData.goalsZones[zone] = 0;
             });
+            
+            // NEW: Contact Zones initialization
+            sessionData.contactZones = {};
+            CONTACT_ZONES.forEach(zone => {
+                sessionData.contactZones[zone] = 0;
+            });
+            
+            sessionData.comments = ""; // Initialize comments
             sessionData.timestamp = new Date(); // Local timestamp
             
             // Set today's date correctly on initialization
@@ -375,6 +445,12 @@
                 const day = String(today.getDate()).padStart(2, '0');
                 const year = today.getFullYear();
                 dateInput.value = `${year}-${month}-${day}`;
+            }
+            
+            // Reset the comments textarea in the UI
+            const commentsInput = document.getElementById('game-comments');
+            if (commentsInput) {
+                commentsInput.value = "";
             }
         }
         
@@ -412,6 +488,12 @@
             }
             updateDisplay();
         }
+        
+        // NEW: Contact Zone Handler
+        function handleContactZoneClick(zone) {
+            sessionData.contactZones[zone] = (sessionData.contactZones[zone] || 0) + 1;
+            updateDisplay();
+        }
 
         // Fetches all user input from the Game Information section
         function getGameMetadata() {
@@ -422,8 +504,16 @@
                 gameNo: document.getElementById('game-no').value || 'N/A',
                 hA: document.getElementById('h-a').value || 'N/A',
                 result: document.getElementById('final-score').value || 'N/A',
+                comments: document.getElementById('game-comments').value || 'No specific notes recorded.',
             };
         }
+
+        // Event listener for comments to update sessionData in real-time
+        document.addEventListener('DOMContentLoaded', () => {
+             document.getElementById('game-comments').addEventListener('input', (e) => {
+                sessionData.comments = e.target.value;
+             });
+        });
 
 
         // Updates the HTML display with the latest sessionData
@@ -444,7 +534,7 @@
             document.getElementById('stat-goals').innerText = goals;
             document.getElementById('stat-save-pct').innerText = `${savePct}%`;
 
-            // 2. Update Zonal Grid Visuals
+            // 2. Update Zonal Grid Visuals (Saves/Goals)
             const updateZonalGrid = (gridId, zonalData) => {
                 const grid = document.getElementById(gridId);
                 if (!grid) return;
@@ -454,7 +544,7 @@
                     const count = zonalData[zone] || 0;
 
                     // Reset styling
-                    item.classList.remove('bg-green-800', 'bg-red-800', 'font-bold', 'bg-lime-900', 'bg-gray-800', 'text-gray-400', 'bg-[#242424]');
+                    item.classList.remove('bg-green-900', 'bg-opacity-50', 'bg-red-900', 'bg-opacity-50', 'font-bold', 'bg-[#242424]');
                     item.classList.add('bg-[#242424]');
 
                     // Apply count and visual feedback
@@ -472,6 +562,31 @@
 
             updateZonalGrid('save-zones-grid', sessionData.saveZones);
             updateZonalGrid('goals-zones-grid', sessionData.goalsZones);
+            
+            // 3. Update Contact Zones Grid Visuals
+            const updateContactGrid = (zonalData) => {
+                const grid = document.getElementById('contact-zones-grid');
+                if (!grid) return;
+                
+                grid.querySelectorAll('.contact-zone-item').forEach(item => {
+                    const zone = item.getAttribute('data-zone');
+                    const count = zonalData[zone] || 0;
+
+                    // Reset styling
+                    item.classList.remove('bg-green-900', 'bg-opacity-50', 'bg-[#242424]');
+                    item.classList.add('bg-[#242424]');
+
+                    // Apply count and visual feedback
+                    item.innerHTML = `${zone}<br><span class="text-sm ${count > 0 ? 'stat-value font-bold' : 'text-gray-500'}">(${count})</span>`;
+                    
+                    if (count > 0) {
+                        // Use a green color for Contact Zones (BBGK requested)
+                        item.classList.add('bg-green-900', 'bg-opacity-50'); 
+                    }
+                });
+            };
+            
+            updateContactGrid(sessionData.contactZones);
         }
 
         // --- PDF Generation Logic (Professional & Branded) ---
@@ -568,7 +683,6 @@
                 doc.setFontSize(14);
                 doc.setFont(FONT_FAMILY, 'bold');
                 doc.setTextColor(...BBGK_DARK); 
-                // Removed the extra text here: (GOLD DATA PACK)
                 doc.text('3. Key Performance Indicators', 10, y); 
                 y += 5;
 
@@ -661,11 +775,11 @@
                 y += 15;
 
 
-                // --- 4. Zonal Analysis ---
+                // --- 4. Shot & Goal Zonal Distribution Table ---
                 doc.setFontSize(14);
                 doc.setFont(FONT_FAMILY, 'bold');
                 doc.setTextColor(...BBGK_DARK); 
-                doc.text('4. Zonal Distribution', 10, y);
+                doc.text('4. Shot & Goal Zonal Distribution', 10, y);
                 y += 5;
                 
                 doc.setFontSize(10);
@@ -676,7 +790,7 @@
                     ['Zone', 'Saves', 'Goals Conceded', 'Total Shots'],
                 ];
 
-                ZONES.forEach(zone => {
+                SAVE_GOAL_ZONES.forEach(zone => {
                     const savesCount = sessionData.saveZones[zone] || 0;
                     const goalsCount = sessionData.goalsZones[zone] || 0;
                     const totalShotsZone = savesCount + goalsCount;
@@ -691,7 +805,7 @@
                 let zTableY = y;
                 
                 // Draw Zonal Header
-                doc.setFillColor(...BBGK_DARK); 
+                doc.setFillColor(BBGK_DARK[0] + 50, BBGK_DARK[1] + 50, BBGK_DARK[2] + 50); 
                 doc.rect(zTableX, zTableY, zTableWidth, zRowHeight, 'F');
                 doc.setFont(FONT_FAMILY, 'bold');
                 doc.setTextColor(255, 255, 255); // White text
@@ -733,6 +847,128 @@
                 });
                 doc.line(zTableX, zTableY, zTableX + zTableWidth, zTableY); // Final bottom line
 
+                // --- 5. Contact Zones Grid (4x4 Visual) ---
+                y = zTableY + 15;
+
+                doc.setFontSize(14);
+                doc.setFont(FONT_FAMILY, 'bold');
+                doc.setTextColor(...BBGK_DARK); 
+                doc.text('5. Contact Zones Map (18-Yard Box)', 10, y);
+                y += 5;
+
+                // Define the 4x4 grid drawing area
+                const gridStartX = 15;
+                const gridStartY = y;
+                const gridTotalSize = 100; // 100mm wide x 100mm high
+                const zoneSize = gridTotalSize / 4; // 25mm per zone
+
+                doc.setFontSize(9);
+                doc.setFont(FONT_FAMILY, 'bold');
+                doc.setLineWidth(0.2);
+                doc.setDrawColor(50, 50, 50); // Dark gray lines
+
+                // Draw the bounding box (18-yard box)
+                doc.rect(gridStartX, gridStartY, gridTotalSize, gridTotalSize, 'S');
+
+                // Draw the 6-yard box marker (approx. 1/4 of the way up from the bottom of the grid)
+                const sixYardMarkerY = gridStartY + (zoneSize * 3);
+                doc.setDrawColor(BBGK_DARK[0], BBGK_DARK[1], BBGK_DARK[2]);
+                doc.setLineWidth(0.5);
+                // Horizontal line for the 6-yard box
+                doc.line(gridStartX, sixYardMarkerY, gridStartX + gridTotalSize, sixYardMarkerY);
+
+                // Draw the 4x4 grid and fill values
+                const [rG, gG, bG] = BBGK_GREEN;
+                const maxIntensity = 120; // Max intensity for the fill
+                
+                CONTACT_ZONES.forEach((zone, index) => {
+                    const count = sessionData.contactZones[zone] || 0;
+                    
+                    // Calculate row and column
+                    const col = index % 4;
+                    const row = Math.floor(index / 4);
+                    
+                    const xPos = gridStartX + (col * zoneSize);
+                    const yPos = gridStartY + (row * zoneSize);
+                    
+                    // Draw internal cell borders
+                    doc.setDrawColor(150, 150, 150); 
+                    doc.rect(xPos, yPos, zoneSize, zoneSize, 'S');
+                    
+                    // Shade based on count (Higher count = darker fill using BBGK Green)
+                    if (count > 0) {
+                        // Calculate shading: 255 - (min(count, 3) * 50) -> max 105 for 3+ touches
+                        // Blend more of the background color (white paper) to the green
+                        const shadeFactor = Math.min(count * 50, maxIntensity); 
+                        
+                        // Inverse Green blending (closer to white/light green for low counts, darker for high)
+                        // A simple way to get a gradient from light grey to BBGK Green:
+                        const fillR = Math.min(255, 255 - shadeFactor);
+                        const fillG = Math.min(255, 255 - shadeFactor); 
+                        const fillB = Math.min(255, 255 - shadeFactor); 
+                        
+                        // We use the raw RGB values of BBGK_GREEN and blend with white
+                        const blendRatio = Math.min(count / 5.0, 1.0); // 5 touches max saturation
+                        const blendedR = 255 - Math.floor((255 - rG) * blendRatio);
+                        const blendedG = 255 - Math.floor((255 - gG) * blendRatio);
+                        const blendedB = 255 - Math.floor((255 - bG) * blendRatio);
+
+                        doc.setFillColor(blendedR, blendedG, blendedB); 
+                        doc.rect(xPos, yPos, zoneSize, zoneSize, 'F');
+                        
+                        // Text color: Black if light background, White if dark background (simple check)
+                        doc.setTextColor(blendRatio > 0.6 ? 255 : TEXT_DARK[0], blendRatio > 0.6 ? 255 : TEXT_DARK[1], blendRatio > 0.6 ? 255 : TEXT_DARK[2]);
+                        
+                    } else {
+                        doc.setTextColor(50, 50, 50); // Dark text on white background
+                    }
+
+                    // Zone label (e.g., C1)
+                    doc.setFontSize(12);
+                    doc.setFont(FONT_FAMILY, 'bold');
+                    doc.text(zone, xPos + (zoneSize / 2), yPos + (zoneSize / 2) - 3, { align: 'center' });
+                    
+                    // Count
+                    doc.setFontSize(10);
+                    doc.setFont(FONT_FAMILY, 'normal');
+                    doc.text(`(${count})`, xPos + (zoneSize / 2), yPos + (zoneSize / 2) + 3, { align: 'center' });
+                });
+
+                y = gridStartY + gridTotalSize + 10; // Move Y below the grid
+
+                // --- 6. Game Notes / Observations (NEW SECTION) ---
+                if (y > 250) { // Check if we need a new page
+                    doc.addPage();
+                    y = 20;
+                }
+                
+                doc.setFontSize(14);
+                doc.setFont(FONT_FAMILY, 'bold');
+                doc.setTextColor(...BBGK_DARK); 
+                doc.text('6. Game Notes / Observations', 10, y);
+                y += 5;
+                
+                doc.setFontSize(10);
+                doc.setFont(FONT_FAMILY, 'normal');
+                doc.setTextColor(...TEXT_DARK);
+                
+                // Draw a box for the comments
+                const commentBoxX = 10;
+                const commentBoxWidth = 190;
+                const commentBoxHeight = 30;
+                
+                doc.setDrawColor(BBGK_DARK[0], BBGK_DARK[1], BBGK_DARK[2]);
+                doc.rect(commentBoxX, y, commentBoxWidth, commentBoxHeight, 'S');
+                
+                // Add the comments text
+                const comments = safeText(meta.comments);
+                // Text wrapping
+                const textLines = doc.splitTextToSize(comments, commentBoxWidth - 4);
+                doc.text(textLines, commentBoxX + 2, y + 4);
+                
+                y += commentBoxHeight + 15;
+
+
                 // --- Footer ---
                 doc.setFontSize(8);
                 doc.setTextColor(100, 100, 100);
@@ -764,7 +1000,7 @@
                 });
             });
 
-            // 3. Setup Zonal Grid Listeners
+            // 3. Setup Shot/Goal Zonal Grid Listeners
             document.getElementById('save-zones-grid').addEventListener('click', (e) => {
                 const zoneDiv = e.target.closest('.zone-grid-item');
                 if (zoneDiv) handleZoneClick('save', zoneDiv.getAttribute('data-zone'), zoneDiv);
@@ -774,8 +1010,15 @@
                 const zoneDiv = e.target.closest('.zone-grid-item');
                 if (zoneDiv) handleZoneClick('goals', zoneDiv.getAttribute('data-zone'), zoneDiv);
             });
+            
+            // 4. Setup Contact Zones Listener
+            document.getElementById('contact-zones-grid').addEventListener('click', (e) => {
+                const zoneDiv = e.target.closest('.contact-zone-item');
+                if (zoneDiv) handleContactZoneClick(zoneDiv.getAttribute('data-zone'));
+            });
 
-            // 4. Setup Control Buttons
+
+            // 5. Setup Control Buttons
             document.getElementById('generate-pdf-btn').addEventListener('click', generatePDFReport);
 
             document.getElementById('reset-btn').addEventListener('click', () => {
