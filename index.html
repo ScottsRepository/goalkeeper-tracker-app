@@ -63,13 +63,13 @@
             transform: scale(0.98);
         }
 
-        /* Specific override for Goal Conceded/Error button (Danger Red) */
-        #goal-btn, #unforced-error-btn {
+        /* Specific override for Goal Conceded/Error/1v1 Lost button (Danger Red) */
+        #goal-btn, #unforced-error-btn, #1v1-lost-btn {
             background-color: var(--color-danger-red);
             box-shadow: 0 4px 8px rgba(229, 57, 53, 0.4);
             color: var(--color-text-light);
         }
-        #goal-btn:hover, #unforced-error-btn:hover {
+        #goal-btn:hover, #unforced-error-btn:hover, #1v1-lost-btn:hover {
             background-color: #c62828;
             box-shadow: 0 6px 12px rgba(229, 57, 53, 0.6);
         }
@@ -339,6 +339,7 @@
                 <button id="interception-made-btn" data-type="Interceptions Made" class="action-button p-4 text-lg">Interception Made</button>
                 
                 <button id="1v1-won-btn" data-type="1v1s Won" class="action-button p-4 text-lg">1v1 Won</button>
+                <button id="1v1-lost-btn" data-type="1v1s Lost" class="action-button p-4 text-lg">1v1 Lost</button>
                 <button id="play-make-hands-btn" data-type="Play Make (Hands)" class="action-button p-4 text-lg">Play Make (Hands)</button>
                 <button id="play-make-feet-btn" data-type="Play Make (Feet)" class="action-button p-4 text-lg">Play Make (Feet)</button>
             </div>
@@ -452,6 +453,7 @@
                 'Punches Completed': 0,
                 'Interceptions Made': 0,
                 '1v1s Won': 0,
+                '1v1s Lost': 0, // NEW ENTRY
                 'Play Make (Hands)': 0,
                 'Play Make (Feet)': 0,
             };
@@ -503,13 +505,11 @@
 
         // Action Button Handler (Only for off-target shots and other GK actions)
         function handleCounterClick(type, button) {
-            // Note: Saves and Goals Conceded are intended to be logged via the Zonal grids now.
-            // If the user clicks these buttons, they are logged as quick actions.
             sessionData[type]++;
             updateDisplay();
 
-            // Add visual feedback
-            if (type.includes('Goal') || type.includes('Error')) {
+            // Add visual feedback (Negative metrics get a red flash)
+            if (['Goals Conceded', 'Unforced Goal Errors', '1v1s Lost'].includes(type)) { // Added '1v1s Lost'
                 button.classList.add('flash-fail');
                 setTimeout(() => button.classList.remove('flash-fail'), 300);
             } else {
@@ -518,7 +518,7 @@
             }
         }
 
-        // FIX: Zonal click now updates both the zonal detail AND the Match Overview stat (Saves Made/Goals Conceded)
+        // Zonal click now updates both the zonal detail AND the Match Overview stat (Saves Made/Goals Conceded)
         function handleZoneClick(type, zone, element) {
             if (type === 'save') {
                 // 1. Log to Zonal Detail
@@ -562,7 +562,7 @@
         }
 
 
-        // 3. PDF Generation Logic (C2/C3 Border Fix is also in the PDF Logic)
+        // 3. PDF Generation Logic 
         function generatePDFReport() {
             try {
                 // Ensure jsPDF is available
@@ -674,8 +674,10 @@
                 drawHeader('Other Goalkeeping Actions');
                 
                 doc.setFillColor(secondaryColor);
-                // Calculate required height based on number of logged items
-                const actionsToLog = Object.entries(sessionData).filter(([key, value]) => !['Shots Faced', 'Saves Made', 'Goals Conceded'].includes(key) && value > 0);
+                // Filter out the core stats, keep all other actions (including '1v1s Lost')
+                const excludedKeys = ['Shots Faced', 'Saves Made', 'Goals Conceded'];
+                const actionsToLog = Object.entries(sessionData).filter(([key, value]) => !excludedKeys.includes(key) && value > 0);
+                
                 const rows = Math.ceil(actionsToLog.length / 3) || 1;
                 const blockHeight = rows * lineHeight + lineHeight; 
                 doc.rect(margin, y, 190, blockHeight, 'F');
@@ -780,12 +782,13 @@
                 doc.text('Contact Zones (18-Yard Box)', margin, y);
                 y += lineHeight;
 
-                // Draw the 4x4 Grid for Contact Zones
+                // Define dimensions
                 const startYContact = y;
                 const zoneWidthContact = 190 / 4;
                 const zoneHeightContact = 90 / 4;
                 const contactZones = Object.keys(zoneCounts.contact); // C1 to C16
 
+                // 1. Draw all cells (Fill, Text, and Thin Borders)
                 contactZones.forEach((zone, index) => {
                     const col = index % 4;
                     const row = Math.floor(index / 4);
@@ -793,42 +796,39 @@
                     const yPos = startYContact + row * zoneHeightContact;
                     const count = zoneCounts.contact[zone];
                     
-                    // 1. Draw Fill
+                    // Draw Fill
                     doc.setFillColor(secondaryColor);
                     doc.rect(x, yPos, zoneWidthContact, zoneHeightContact, 'F'); 
 
-                    // 2. Draw Text
+                    // Draw Text
                     doc.setTextColor(count > 0 ? '#20c997' : '#666'); // Teal for contact
                     doc.setFontSize(8);
                     doc.text(`${zone} (${count})`, x + zoneWidthContact / 2, yPos + zoneHeightContact / 2 + 1, { align: 'center' });
                     
-                    // 3. Draw Standard Borders (Handling C2/C3 internal line removal)
+                    // Draw Standard Borders (thin, dark, for all cells)
                     doc.setDrawColor('#333');
                     doc.setLineWidth(0.2); 
-                    
-                    // Only draw standard borders if not C2 or C3
-                    if (zone !== 'C2' && zone !== 'C3') {
-                        doc.rect(x, yPos, zoneWidthContact, zoneHeightContact, 'S');
-                    }
-                    
-                    // 4. FIX: Draw C2/C3 THICK BORDER OVERRIDE (Draws the outer wrapper)
-                    if (zone === 'C2') {
-                        doc.setDrawColor(headerColor); // Green
-                        doc.setLineWidth(1.5); // Thicker line
-                        
-                        const rectX = x; 
-                        const rectY = yPos; 
-                        const rectW = zoneWidthContact * 2; // Width of C2 + C3
-                        const rectH = zoneHeightContact; 
-                        
-                        // Draw the border of the combined box (C2/C3)
-                        doc.rect(rectX, rectY, rectW, rectH, 'S');
-                        
-                        // Reset line width
-                        doc.setLineWidth(0.2); 
-                    }
+                    doc.rect(x, yPos, zoneWidthContact, zoneHeightContact, 'S'); 
                 });
-                y = startYContact + 90 + 5;
+
+                // 2. FIX: Draw the combined C2/C3 (6-Yard Box) thick border LAST (over the thin borders)
+                
+                // C2 is col 1, row 0. C3 is col 2, row 0.
+                const c2X = margin + 1 * zoneWidthContact; 
+                const c2Y = startYContact + 0 * zoneHeightContact; 
+                const combinedWidth = zoneWidthContact * 2;
+                const combinedHeight = zoneHeightContact; 
+                
+                doc.setDrawColor(headerColor); // Green
+                doc.setLineWidth(1.5); // Thicker line
+                
+                // Draw the border of the combined C2/C3 box
+                doc.rect(c2X, c2Y, combinedWidth, combinedHeight, 'S');
+                
+                // Reset line width
+                doc.setLineWidth(0.2); 
+
+                y = startYContact + 90 + 5; // Update Y position
 
                 // Save PDF
                 doc.save(`BBGK_Report_${gkName.replace(/\s/g, '_')}_${gameDate}.pdf`);
