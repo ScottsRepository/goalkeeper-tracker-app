@@ -107,36 +107,29 @@
             background-color: #383838;
         }
         
-        /* --- CRITICAL FINAL FIX: Thicker border for C14 and C15 only (The 6-yard box) --- */
-        
-        /* 1. Apply visual emphasis (glow) and default thick borders */
-        [data-zone="C14"], [data-zone="C15"] {
+        /* --- CRITICAL FINAL FIX: Thicker border for C2 and C3 (The new furthest zone) --- */
+
+        /* 1. Apply visual emphasis (glow) and default thick borders to the new zones */
+        [data-zone="C2"], [data-zone="C3"] {
             box-shadow: 0 0 8px var(--color-accent-green); 
             border-color: var(--color-accent-green) !important;
             border-width: 3px; /* Start with thick borders all around */
         }
-        
-        /* 2. C14: Keep Left, Top, Bottom thick. Hide the Right edge (internal line) */
-        [data-zone="C14"] {
+
+        /* 2. C2 (Left side of the pair): Keep Left, Top, Bottom thick. Hide the Right edge (internal line) */
+        [data-zone="C2"] {
             border-right-width: 0.5px !important; 
             /* Match the background color to visually eliminate the separation */
             border-right-color: var(--color-secondary-bg) !important; 
         }
 
-        /* 3. C15: Keep Right, Top, Bottom thick. Hide the Left edge (internal line) */
-        [data-zone="C15"] {
+        /* 3. C3 (Right side of the pair): Keep Right, Top, Bottom thick. Hide the Left edge (internal line) */
+        [data-zone="C3"] {
             border-left-width: 0.5px !important;
             /* Match the background color to visually eliminate the separation */
             border-left-color: var(--color-secondary-bg) !important;
         }
         
-        /* 4. Ensure C13 and C16 revert to thin dark borders, overriding the top block */
-        [data-zone="C13"], [data-zone="C16"] {
-            border-color: #383838 !important;
-            border-width: 1px !important;
-            box-shadow: none !important;
-        }
-
         /* --- VISUAL FEEDBACK ANIMATIONS --- */
         .action-button.flash-success {
             animation: success-flash 0.2s ease-out;
@@ -588,10 +581,12 @@
                 let y = 15;
                 const lineHeight = 7;
                 const margin = 10;
-                const headerColor = "#32cd32"; // Lawn Green
+                // --- CORE COLORS ---
+                const headerColor = "#32cd32"; // Lawn Green (BBGK Green)
                 const secondaryColor = "#1A1A1A";
                 const darkTextColor = "#0A0A0A";
                 const lightTextColor = "#f5f5f5";
+                // ---
 
                 // Utility function to draw a section header
                 function drawHeader(title) {
