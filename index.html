@@ -3,874 +3,603 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BBGK Pro Goalkeeper Tracker</title>
+    <title>BBGK Pro-Tracker</title>
     <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- jsPDF and html2canvas for PDF generation -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <!-- jspdf-autotable plugin for professional tables -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.21/jspdf.plugin.autotable.min.js"></script> 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    
-    <style>
-        /* Custom Tailwind Configuration for "Inter" font and key variables */
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
-        
-        :root {
-            --color-neon-blue: #00FFFF; /* Bright Cyan/Neon Blue */
-            --color-accent-green: #34D399; /* Electric Green for success/Saves */
-            --color-danger-red: #F87171; /* High-contrast red for Goals */
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #000000; /* Absolute Black Background */
-        }
-
-        .card {
-            background-color: #0A0A0A; /* Deep Black Surface */
-            border: 1px solid #1F2937; /* Dark metal border */
-            box-shadow: 0 0 15px rgba(0, 255, 255, 0.2); /* Neon glow effect */
-            color: #E5E7EB; /* Off-white text */
-        }
-
-        /* Module Header Styling */
-        .module-header {
-            border-bottom: 2px solid var(--color-neon-blue);
-            box-shadow: 0 2px 5px rgba(0, 255, 255, 0.1);
-        }
-
-        /* Custom Counter Styling - Digital Display Look */
-        .counter-container {
-            display: grid;
-            grid-template-columns: 1fr auto; 
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .counter-block {
-            display: flex;
-            align-items: center;
-            height: 52px; /* Fixed height for easy tapping */
-        }
-
-        .count-display {
-            background-color: #111827; /* Dark background for display */
-            border: 2px solid var(--color-neon-blue);
-            color: var(--color-accent-green);
-            font-size: 1.6rem; /* Large text for visibility */
-            font-weight: 800;
-            text-shadow: 0 0 5px rgba(52, 211, 153, 0.5); /* Neon text glow */
-            cursor: pointer;
-            user-select: none;
-            transition: all 0.1s;
-        }
-
-        .count-display:active {
-            transform: scale(0.95);
-            opacity: 0.8;
-            box-shadow: none;
-        }
-
-        .reset-button {
-            background-color: #374151; /* Dark reset button */
-            transition: background-color 0.1s;
-            border-right: 1px solid #1F2937;
-        }
-        .reset-button:hover {
-            background-color: #4B5563;
-        }
-        
-        /* Goal Zone Styling - High-contrast grid */
-        .goal-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            grid-template-rows: repeat(3, 1fr);
-            aspect-ratio: 1 / 1; 
-            border: 3px solid #1F2937;
-            box-shadow: 0 0 10px rgba(0, 255, 255, 0.1);
-        }
-        .zone {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 1.5rem;
-            font-weight: 700;
-            border: 1px solid #1F2937;
-            cursor: pointer;
-            transition: background-color 0.1s, transform 0.1s;
-            color: #E5E7EB;
-        }
-        .zone:active {
-            transform: scale(0.95);
-        }
-        .save-zone {
-            background-color: rgba(0, 255, 255, 0.1); /* Transparent Neon Blue */
-            color: var(--color-neon-blue);
-        }
-        .save-zone:hover {
-            background-color: rgba(0, 255, 255, 0.2);
-        }
-        .goal-zone {
-            background-color: rgba(248, 113, 128, 0.1); /* Transparent Red */
-            color: var(--color-danger-red);
-        }
-        .goal-zone:hover {
-            background-color: rgba(248, 113, 128, 0.2);
-        }
-
-        /* Input Styling */
-        input[type="date"], input[type="text"], select {
-            background-color: #1F2937 !important;
-            border: 1px solid #374151 !important;
-            color: #E5E7EB !important;
-        }
-        
-    </style>
-    <!-- Load Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-</head>
-<body class="p-4 md:p-8 min-h-screen">
-
-    <!-- Loading/Auth Indicator -->
-    <div id="loadingIndicator" class="fixed inset-0 bg-gray-900 bg-opacity-90 z-50 flex items-center justify-center hidden">
-        <div class="card p-6 rounded-xl bg-gray-800 shadow-2xl flex items-center space-x-3 border-2 border-cyan-500">
-            <svg class="animate-spin h-5 w-5 text-cyan-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            <span class="text-white font-medium">System Initializing...</span>
-        </div>
-    </div>
-
-    <!-- Main Application Container -->
-    <div id="app-container" class="max-w-7xl mx-auto">
-        
-        <!-- Header -->
-        <header class="text-center mb-10">
-            <h1 class="text-5xl font-extrabold text-cyan-400 mb-2 tracking-widest" style="text-shadow: 0 0 10px #00FFFF;">BBGK PRO-TRACKER</h1>
-            <p class="text-lg text-gray-500 font-mono">LIVE PERFORMANCE LOGGING INTERFACE</p>
-        </header>
-
-        <!-- Dynamic User/Session Info -->
-        <div class="card p-4 mb-8 rounded-xl text-sm md:text-base border-cyan-500/30">
-            <p class="font-semibold text-gray-400">SESSION ID: <span id="userIdDisplay" class="font-mono text-xs md:text-sm text-yellow-500 break-all">Awaiting Authentication...</span></p>
-        </div>
-
-
-        <!-- Modules A & B: Match Data and Raw Metrics -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
-            
-            <!-- Module A: Match Details & Live Analysis -->
-            <div class="lg:col-span-1 space-y-8">
-                <!-- Match Data -->
-                <div class="card p-6 rounded-xl border-cyan-500/30">
-                    <h2 class="text-2xl font-bold mb-4 pb-2 text-cyan-400 module-header flex items-center">
-                        <i data-lucide="calendar" class="w-6 h-6 mr-3 text-cyan-400"></i> MATCH DATA INPUT
-                    </h2>
-                    <div class="space-y-4">
-                        <!-- Goalkeeper Details -->
-                        <label class="block">
-                            <span class="text-gray-400">Goalkeeper's Name:</span>
-                            <input type="text" id="goalkeeper_name" placeholder="Enter Goalkeeper Name" class="mt-1 block w-full p-3 rounded-lg focus:ring-cyan-500 focus:border-cyan-500">
-                        </label>
-                        <label class="block">
-                            <span class="text-gray-400">Team Playing For:</span>
-                            <input type="text" id="goalkeeper_team" placeholder="Enter Team Name" class="mt-1 block w-full p-3 rounded-lg focus:ring-cyan-500 focus:border-cyan-500">
-                        </label>
-                        
-                        <!-- Match Details -->
-                        <label class="block">
-                            <span class="text-gray-400">Game Date (YYYY-MM-DD):</span>
-                            <input type="date" id="game_date" class="mt-1 block w-full p-3 rounded-lg focus:ring-cyan-500 focus:border-cyan-500">
-                        </label>
-                        <label class="block">
-                            <span class="text-gray-400">Opposition:</span>
-                            <input type="text" id="opposition" placeholder="Enter Team Name" class="mt-1 block w-full p-3 rounded-lg focus:ring-cyan-500 focus:border-cyan-500">
-                        </label>
-                        <div class="grid grid-cols-2 gap-4">
-                            <label class="block">
-                                <span class="text-gray-400">H/A:</span>
-                                <select id="home_away" class="mt-1 block w-full p-3 rounded-lg focus:ring-cyan-500 focus:border-cyan-500">
-                                    <option value="H">HOME</option>
-                                    <option value="A">AWAY</option>
-                                </select>
-                            </label>
-                            <label class="block">
-                                <span class="text-gray-400">Score (Final):</span>
-                                <input type="text" id="final_score" placeholder="0-0" class="mt-1 block w-full p-3 rounded-lg focus:ring-cyan-500 focus:border-cyan-500">
-                            </label>
-                        </div>
-                        <label class="block">
-                            <span class="text-gray-400">Result (W/D/L):</span>
-                            <select id="result_wdl" class="mt-1 block w-full p-3 rounded-lg focus:ring-cyan-500 focus:border-cyan-500">
-                                <option value="W">Win</option>
-                                <option value="D">Draw</option>
-                                <option value="L">Loss</option>
-                                <option value="-">N/A</option>
-                            </select>
-                        </label>
-                    </div>
-                </div>
-
-                <!-- Live Analysis Widget -->
-                <div class="card p-6 rounded-xl border-cyan-500/30">
-                    <h2 class="text-2xl font-bold mb-4 pb-2 text-white module-header flex items-center">
-                        <i data-lucide="activity" class="w-6 h-6 mr-3 text-accent-green"></i> LIVE STATS
-                    </h2>
-                    <div class="space-y-3 text-lg font-mono">
-                        <p class="flex justify-between"><span>TOTAL SAVES:</span> <span id="live_saves" class="text-accent-green font-bold">0</span></p>
-                        <p class="flex justify-between"><span>GOALS CONCEDED:</span> <span id="live_goals" class="text-danger-red font-bold">0</span></p>
-                        <p class="flex justify-between border-t border-gray-700 pt-3"><span>SAVE PERCENTAGE:</span> <span id="live_save_pct" class="text-yellow-400 font-bold">0.0%</span></p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Module B: Raw Metrics Input (Tap Counters) -->
-            <div class="lg:col-span-2 card p-6 rounded-xl border-cyan-500/30">
-                <h2 class="text-2xl font-bold mb-6 pb-2 text-cyan-400 module-header flex items-center">
-                    <i data-lucide="gauge" class="w-6 h-6 mr-3 text-cyan-400"></i> RAW PERFORMANCE METRICS
-                </h2>
-                
-                <div class="space-y-6">
-                    <!-- Shots & Goals -->
-                    <div class="bg-[#111827] p-4 rounded-lg border border-gray-700">
-                        <h3 class="text-xl font-semibold mb-3 text-blue-400">ATTACK STOPPING</h3>
-                        <div class="space-y-3">
-                            <div id="counter_shots_faced" class="counter-container"></div>
-                            <div id="counter_shots_saved" class="counter-container"></div>
-                            <div id="counter_goals_against" class="counter-container"></div>
-                            <div id="counter_unforced_goal_errors" class="counter-container"></div>
-                        </div>
-                    </div>
-                    
-                    <!-- 1v1s & Aerials -->
-                    <div class="bg-[#111827] p-4 rounded-lg border border-gray-700">
-                        <h3 class="text-xl font-semibold mb-3 text-yellow-400">AREA COMMAND</h3>
-                        <div class="space-y-3">
-                            <div id="counter_1v1_battles" class="counter-container"></div>
-                            <div id="counter_1v1s_won" class="counter-container"></div>
-                            <div id="counter_crosses_claimed" class="counter-container"></div>
-                            <div id="counter_punches_completed" class="counter-container"></div>
-                            <div id="counter_interceptions_made" class="counter-container"></div>
-                        </div>
-                    </div>
-
-                    <!-- Distribution -->
-                    <div class="bg-[#111827] p-4 rounded-lg border border-gray-700">
-                        <h3 class="text-xl font-semibold mb-3 text-green-400">DISTRIBUTION QUALITY</h3>
-                        <div class="space-y-3">
-                            <div id="counter_playmake_hands" class="counter-container"></div>
-                            <div id="counter_playmake_feet" class="counter-container"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Module C: Zonal Analysis -->
-        <div class="card p-6 rounded-xl mb-10 border-cyan-500/30">
-            <h2 class="text-2xl font-bold mb-6 pb-2 text-cyan-400 module-header flex items-center">
-                <i data-lucide="target" class="w-6 h-6 mr-3 text-cyan-400"></i> ZONAL ANALYSIS (TAP TO LOG)
-            </h2>
-
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <!-- Save Zones -->
-                <div id="saveZoneContainer">
-                    <h3 class="text-xl font-semibold mb-4 text-gray-300">SAVE LOCATION (ATTEMPTS SAVED)</h3>
-                    <!-- Canvas will be created here for PDF generation -->
-                    <div id="save_zones_grid" class="goal-grid rounded-xl overflow-hidden shadow-lg shadow-cyan-500/10">
-                        <!-- Zones created dynamically -->
-                    </div>
-                </div>
-
-                <!-- Goals Conceded Zones -->
-                <div id="goalZoneContainer">
-                    <h3 class="text-xl font-semibold mb-4 text-gray-300">GOAL LOCATION (GOALS CONCEDED)</h3>
-                     <!-- Canvas will be created here for PDF generation -->
-                    <div id="goals_conceded_grid" class="goal-grid rounded-xl overflow-hidden shadow-lg shadow-red-500/10">
-                        <!-- Zones created dynamically -->
-                    </div>
-                </div>
-            </div>
-        </div>
-
-
-        <!-- Action Button -->
-        <div class="text-center p-6 card rounded-xl border-cyan-500/30">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <button id="generateReportBtn" class="w-full md:w-auto px-10 py-4 bg-cyan-600 hover:bg-cyan-500 text-black font-extrabold text-xl rounded-xl shadow-lg shadow-cyan-500/50 transition-all transform hover:scale-105 active:scale-95 disabled:bg-gray-700 disabled:shadow-none disabled:text-gray-400" disabled>
-                    <i data-lucide="save" class="w-6 h-6 mr-2 inline-block"></i> SAVE & GENERATE REPORT (PDF)
-                </button>
-                
-                <!-- NEW RESET BUTTON -->
-                <button id="resetAppBtn" class="w-full md:w-auto px-10 py-4 bg-gray-700 hover:bg-gray-600 text-white font-extrabold text-xl rounded-xl shadow-lg shadow-white/10 transition-all transform hover:scale-105 active:scale-95">
-                    <i data-lucide="power" class="w-6 h-6 mr-2 inline-block"></i> RESET ALL DATA
-                </button>
-            </div>
-
-            <p id="statusMessage" class="mt-4 text-base font-mono text-cyan-400 hidden"></p>
-        </div>
-
-        <!-- Modals for messages (Custom Alerts) -->
-        <div id="successModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 z-50 items-center justify-center hidden">
-            <div class="card p-8 rounded-xl max-w-sm mx-auto text-center border-green-500/50">
-                <i data-lucide="check-circle" class="w-12 h-12 mx-auto text-green-500 mb-4"></i>
-                <h3 class="text-xl font-bold mb-2 text-white">SUCCESS! DATA SECURED.</h3>
-                <p id="successMessage" class="text-gray-300 text-sm font-mono">Data saved successfully.</p>
-                <button onclick="closeModal('successModal')" class="mt-4 px-6 py-2 bg-cyan-600 rounded-lg text-black font-semibold hover:bg-cyan-500">PROCEED</button>
-            </div>
-        </div>
-
-        <div id="errorModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 z-50 items-center justify-center hidden">
-            <div class="card p-8 rounded-xl max-w-sm mx-auto text-center border-red-500/50">
-                <i data-lucide="x-octagon" class="w-12 h-12 mx-auto text-red-500 mb-4"></i>
-                <h3 class="text-xl font-bold mb-2 text-white">SYSTEM ERROR</h3>
-                <p id="errorMessage" class="text-gray-300 text-sm font-mono">An unknown error occurred.</p>
-                <button onclick="closeModal('errorModal')" class="mt-4 px-6 py-2 bg-cyan-600 rounded-lg text-black font-semibold hover:bg-cyan-500">DISMISS</button>
-            </div>
-        </div>
-    </div>
-
-
+    <!-- Load Firebase Imports -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, onSnapshot, collection, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
-        // --- GLOBAL STATE & FIREBASE SETUP ---
-        setLogLevel('debug');
+        // Expose Firebase objects globally for use in the script
+        window.FirebaseServices = { initializeApp, getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, getFirestore, doc, setDoc, onSnapshot, collection, query, serverTimestamp, setLogLevel };
+    </script>
+    <!-- Load jsPDF for PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-        const { jsPDF } = window.jspdf;
-        
-        let db;
-        let auth;
-        let userId = null;
-        let isAuthReady = false;
-        
-        // Ensure globals are defined or use defaults
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
-        const STATE = {
-            rawMetrics: {
-                shots_faced: 0, shots_saved: 0, goals_against: 0, unforced_goal_errors: 0,
-                '1v1_battles': 0, '1v1s_won': 0, crosses_claimed: 0, punches_completed: 0,
-                interceptions_made: 0, playmake_hands: 0, playmake_feet: 0,
-            },
-            saveZones: { TL: 0, TC: 0, TR: 0, ML: 0, MC: 0, MR: 0, BL: 0, BC: 0, BR: 0 },
-            goalsConceded: { TL: 0, TC: 0, TR: 0, ML: 0, MC: 0, MR: 0, BL: 0, BC: 0, BR: 0 },
-        };
-
-        // Mapping for display names in the PDF
-        const METRIC_DISPLAY_NAMES = {
-            shots_faced: 'Total Shots Faced', shots_saved: 'Shots Saved', goals_against: 'Goals Conceded', unforced_goal_errors: 'Unforced Goal Errors',
-            '1v1_battles': '1v1 Battles', '1v1s_won': '1v1s Won', crosses_claimed: 'Crosses Claimed', punches_completed: 'Punches Completed',
-            interceptions_made: 'Interceptions Made', playmake_hands: 'Play-Make (Hands)', playmake_feet: 'Play-Make (Feet)',
-        };
-        
-        // --- UTILITY FUNCTIONS ---
-        
-        window.closeModal = function(id) {
-            document.getElementById(id).classList.add('hidden');
-            document.getElementById(id).classList.remove('flex');
+    <style>
+        /* --- DEFINITIVE ORIGINAL AESTHETICS (Matching Reference Site) --- */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #121212; /* Very dark background */
+            color: #ffffff;
+        }
+        .container-panel {
+            background-color: #1f1f1f; /* Slightly lighter panel background */
+            border: 1px solid #333;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+        }
+        .stat-box {
+            background-color: #2a2a2a;
+            border-radius: 0.5rem;
+            border: 1px solid #3a3a3a;
+        }
+        .stat-value {
+            color: #00bcd4; /* Primary bright accent color (Cyan/Aqua) */
+            text-shadow: 0 0 5px rgba(0, 188, 212, 0.5);
+        }
+        .action-button {
+            transition: all 0.1s ease-in-out;
+            background-color: #00bcd4; /* Primary accent color for buttons */
+            color: #1f1f1f;
+            font-weight: 700;
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+        .action-button:hover {
+            background-color: #0097a7; /* Darker on hover */
+            transform: translateY(-1px);
+        }
+        .action-button:active {
+            transform: scale(0.98);
+        }
+        /* Specific override for Goal Conceded button */
+        #goal-btn {
+            background-color: #e53935; /* Red */
+        }
+        #goal-btn:hover {
+            background-color: #c62828;
         }
 
-        /** Shows a custom modal with a message. */
-        function showModal(id, message) {
-            const modal = document.getElementById(id);
-            const msgElement = document.getElementById(`${id === 'successModal' ? 'success' : 'error'}Message`);
-            msgElement.textContent = message;
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
+        .zone-grid-item {
+            cursor: pointer;
+            transition: background-color 0.1s;
+            background-color: #333;
+            color: #ccc;
         }
-
-        /** Simple UUID generator */
-        function generateUUID() {
-            return crypto.randomUUID();
+        .zone-grid-item:hover {
+            background-color: #444;
         }
         
-        /** Updates the Live Analysis Widget */
-        function updateLiveMetrics() {
-            // Get combined counts from raw metrics and zonal counts
-            const totalZonalSaves = Object.values(STATE.saveZones).reduce((a, b) => a + b, 0);
-            const totalZonalGoals = Object.values(STATE.goalsConceded).reduce((a, b) => a + b, 0);
-            
-            // Total saves is raw metric + zonal count.
-            const saves = STATE.rawMetrics.shots_saved + totalZonalSaves;
-            const goals = STATE.rawMetrics.goals_against + totalZonalGoals;
-            
-            // Total opportunities: shots_faced should ideally include all shots, but for a calculated Save % 
-            // from the app's logged saves/goals, we use (saves + goals).
-            const totalOpportunities = saves + goals;
-            
-            const savePct = totalOpportunities > 0 ? (saves / totalOpportunities) * 100 : 0;
-
-            document.getElementById('live_saves').textContent = saves;
-            document.getElementById('live_goals').textContent = goals;
-            document.getElementById('live_save_pct').textContent = `${savePct.toFixed(1)}%`;
+        /* Custom Modal for Error/System Messages (Non-disruptive) */
+        .custom-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.85);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
         }
+        .modal-content {
+            background-color: #1f1f1f;
+            padding: 24px;
+            border-radius: 12px;
+            max-width: 400px;
+            width: 90%;
+            border: 2px solid #00bcd4;
+            box-shadow: 0 0 20px rgba(0, 188, 212, 0.5);
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-8">
 
-        /** Creates and sets up a tap-based counter for raw metrics. */
-        function setupCounter(containerId, metricName, stateKey) {
-            const container = document.getElementById(containerId);
-            container.innerHTML = `
-                <div class="text-gray-300 font-medium text-lg">${metricName}</div>
-                <div class="counter-block">
-                    <button class="reset-button text-cyan-400 px-4 h-full rounded-l-lg hover:bg-[#203040]" data-key="${stateKey}" data-action="reset">
-                        <i data-lucide="rotate-ccw" class="w-5 h-5"></i>
-                    </button>
-                    <div id="${stateKey}_display" class="count-display text-center flex-grow p-2" data-key="${stateKey}" data-action="increment">
-                        0
+    <!-- Custom Error/Confirmation Modal -->
+    <div id="custom-error-modal" class="custom-modal">
+        <div class="modal-content">
+            <h3 id="modal-title" class="text-xl font-bold mb-4 text-red-400">System Message</h3>
+            <p id="modal-message" class="text-gray-300"></p>
+            <button onclick="document.getElementById('custom-error-modal').style.display = 'none';"
+                    class="mt-6 w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-lg">
+                Close
+            </button>
+        </div>
+    </div>
+
+    <div id="app-container" class="max-w-4xl mx-auto">
+        <header class="text-center mb-6">
+            <!-- Title matching the reference -->
+            <h1 class="text-5xl font-extrabold tracking-tight uppercase" style="color: #00bcd4;">GOALKEEPER TRACKER</h1>
+            <p class="text-gray-400 mt-2 text-lg">Live Performance Analysis Tool</p>
+        </header>
+
+        <!-- Dynamic Match Stats Overview -->
+        <div class="container-panel p-5 mb-6">
+            <h2 class="text-xl font-semibold mb-4 border-b border-gray-600 pb-2 text-gray-300">Match Overview</h2>
+            <div id="match-stats-output" class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+                <div class="stat-box p-3">
+                    <p class="text-3xl font-extrabold stat-value" id="stat-saves">0</p>
+                    <p class="text-sm text-gray-400">Saves Made</p>
+                </div>
+                <div class="stat-box p-3">
+                    <p class="text-3xl font-extrabold stat-value" id="stat-goals">0</p>
+                    <p class="text-sm text-gray-400">Goals Conceded</p>
+                </div>
+                <div class="stat-box p-3">
+                    <p class="text-3xl font-extrabold stat-value" id="stat-save-pct">0%</p>
+                    <p class="text-sm text-gray-400">Save %</p>
+                </div>
+                <div class="stat-box p-3">
+                    <p class="text-3xl font-extrabold stat-value" id="stat-total-shots">0</p>
+                    <p class="text-sm text-gray-400">Shots Faced</p>
+                </div>
+            </div>
+            <p id="user-id-display" class="text-xs text-gray-500 mt-4 text-right">User ID: N/A</p>
+        </div>
+
+        <!-- Counter Grid (Main Action Buttons) -->
+        <div class="container-panel p-5 mb-6">
+            <h2 class="text-xl font-semibold mb-4 border-b border-gray-600 pb-2 text-gray-300">Log Actions</h2>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <!-- Each counter button, using the action-button style -->
+                <button id="shot-faced-btn" data-type="Shots Faced" class="action-button p-4 text-lg">Shot Faced</button>
+                <button id="save-btn" data-type="Saves Made" class="action-button p-4 text-lg">Save</button>
+                <button id="goal-btn" data-type="Goals Conceded" class="action-button p-4 text-lg">Goal Conceded</button>
+                <button id="cross-claimed-btn" data-type="Crosses Claimed" class="action-button p-4 text-lg">Cross Claimed</button>
+                <button id="play-make-hands-btn" data-type="Play Make (Hands)" class="action-button p-4 text-lg">Play Make (Hands)</button>
+                <button id="play-make-feet-btn" data-type="Play Make (Feet)" class="action-button p-4 text-lg">Play Make (Feet)</button>
+                <!-- Adding a couple more popular metrics from the data pack for completeness -->
+                <button id="1v1-won-btn" data-type="1v1s Won" class="action-button p-4 text-lg">1v1 Won</button>
+                <button id="unforced-error-btn" data-type="Unforced Goal Errors" class="action-button p-4 text-lg">Unforced Error</button>
+            </div>
+        </div>
+
+        <!-- Zonal Analysis Section (Goalkeeper View) -->
+        <div class="container-panel p-5 mb-8">
+            <h2 class="text-xl font-semibold mb-4 border-b border-gray-600 pb-2 text-gray-300">Zonal Analysis</h2>
+
+            <div class="flex flex-col md:flex-row gap-6">
+                <!-- Save Zones Grid -->
+                <div class="flex-1">
+                    <h3 class="text-lg text-center text-green-400 mb-2 font-bold">Save Zones</h3>
+                    <div id="save-zones-grid" class="grid grid-cols-3 grid-rows-3 h-64 w-full border-2 border-green-500 rounded-lg overflow-hidden">
+                        <!-- Zones TL, TC, TR, ML, MC, MR, BL, BC, BR -->
+                        <div data-zone="TL" class="zone-grid-item flex items-center justify-center border border-gray-600">TL</div>
+                        <div data-zone="TC" class="zone-grid-item flex items-center justify-center border border-gray-600">TC</div>
+                        <div data-zone="TR" class="zone-grid-item flex items-center justify-center border border-gray-600">TR</div>
+                        <div data-zone="ML" class="zone-grid-item flex items-center justify-center border border-gray-600">ML</div>
+                        <div data-zone="MC" class="zone-grid-item flex items-center justify-center border border-gray-600">MC</div>
+                        <div data-zone="MR" class="zone-grid-item flex items-center justify-center border border-gray-600">MR</div>
+                        <div data-zone="BL" class="zone-grid-item flex items-center justify-center border border-gray-600">BL</div>
+                        <div data-zone="BC" class="zone-grid-item flex items-center justify-center border border-gray-600">BC</div>
+                        <div data-zone="BR" class="zone-grid-item flex items-center justify-center border border-gray-600">BR</div>
                     </div>
                 </div>
-            `;
-            
-            const display = document.getElementById(`${stateKey}_display`);
-            const resetButton = container.querySelector('.reset-button');
 
-            const updateDisplay = () => {
-                display.textContent = STATE.rawMetrics[stateKey];
-                updateLiveMetrics();
-            };
-            
-            // Initial display update
-            updateDisplay();
+                <!-- Goals Conceded Zones Grid -->
+                <div class="flex-1">
+                    <h3 class="text-lg text-center text-red-400 mb-2 font-bold">Goals Conceded Zones</h3>
+                    <div id="goals-zones-grid" class="grid grid-cols-3 grid-rows-3 h-64 w-full border-2 border-red-500 rounded-lg overflow-hidden">
+                        <!-- Zones TL, TC, TR, ML, MC, MR, BL, BC, BR -->
+                        <div data-zone="TL" class="zone-grid-item flex items-center justify-center border border-gray-600">TL</div>
+                        <div data-zone="TC" class="zone-grid-item flex items-center justify-center border border-gray-600">TC</div>
+                        <div data-zone="TR" class="zone-grid-item flex items-center justify-center border border-gray-600">TR</div>
+                        <div data-zone="ML" class="zone-grid-item flex items-center justify-center border border-gray-600">ML</div>
+                        <div data-zone="MC" class="zone-grid-item flex items-center justify-center border border-gray-600">MC</div>
+                        <div data-zone="MR" class="zone-grid-item flex items-center justify-center border border-gray-600">MR</div>
+                        <div data-zone="BL" class="zone-grid-item flex items-center justify-center border border-gray-600">BL</div>
+                        <div data-zone="BC" class="zone-grid-item flex items-center justify-center border border-gray-600">BC</div>
+                        <div data-zone="BR" class="zone-grid-item flex items-center justify-center border border-gray-600">BR</div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-            const handleAction = (e) => {
-                const key = e.currentTarget.dataset.key;
-                const action = e.currentTarget.dataset.action;
+        <!-- Control Buttons -->
+        <div class="flex flex-col sm:flex-row gap-4">
+            <button id="save-data-btn" class="flex-1 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg transition-colors">
+                <span class="text-xl">Save to Cloud</span>
+            </button>
+            <button id="generate-pdf-btn" class="flex-1 py-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl shadow-lg transition-colors">
+                <span class="text-xl">Generate PDF Report</span>
+            </button>
+            <button id="reset-btn" class="py-4 px-6 bg-gray-500 hover:bg-gray-600 text-white font-bold rounded-xl shadow-lg transition-colors">
+                Reset Session
+            </button>
+        </div>
+    </div>
 
-                if (action === 'increment') {
-                    STATE.rawMetrics[key]++;
-                } else if (action === 'reset') {
-                    STATE.rawMetrics[key] = 0;
-                }
-                updateDisplay();
-            };
+    <script type="module">
+        // Global variables for Firebase access
+        let app, db, auth;
+        let userId = 'anonymous'; // Default until authenticated
+        let dataRef; // Reference to the user's data document
 
-            display.addEventListener('click', handleAction);
-            resetButton.addEventListener('click', handleAction);
+        // Central data structure for the session
+        let sessionData = {};
 
-            // Important: Re-create icons for the newly added buttons
-            lucide.createIcons();
-        }
-
-        /** Creates and sets up the 3x3 zonal analysis grid. */
-        function setupZonalGrid(containerId, stateObject, prefix) {
-            const container = document.getElementById(containerId);
-            container.innerHTML = ''; 
-
-            const zones = ['TL', 'TC', 'TR', 'ML', 'MC', 'MR', 'BL', 'BC', 'BR'];
-            
-            zones.forEach(zone => {
-                const div = document.createElement('div');
-                div.id = `${prefix}_${zone}`;
-                div.className = `zone p-2 ${prefix === 'save' ? 'save-zone' : 'goal-zone'}`;
-                
-                // Click to increment
-                div.addEventListener('click', () => {
-                    stateObject[zone]++;
-                    div.textContent = stateObject[zone];
-                    updateLiveMetrics();
-                });
-
-                // Long press/Right click for reset
-                div.addEventListener('contextmenu', (e) => {
-                    e.preventDefault(); 
-                    stateObject[zone] = 0;
-                    div.textContent = stateObject[zone];
-                    updateLiveMetrics();
-                });
-
-                // Initial display update
-                div.textContent = stateObject[zone];
-                
-                container.appendChild(div);
-            });
-        }
+        // Configuration for all counters
+        const COUNTER_CONFIG = [
+            "Shots Faced", "Saves Made", "Goals Conceded", "Crosses Claimed",
+            "Play Make (Hands)", "Play Make (Feet)", "Unforced Goal Errors", "1v1 Battles", "1v1s Won"
+        ];
         
-        /** Initializes all dynamic UI elements (counters and zones). */
-        function initializeUI() {
-             // 1. Setup Raw Metrics Counters
-            setupCounter('counter_shots_faced', 'Shots Faced (Raw)', 'shots_faced');
-            setupCounter('counter_shots_saved', 'Shots Saved (Raw)', 'shots_saved');
-            setupCounter('counter_goals_against', 'Goals Against (Raw)', 'goals_against');
-            setupCounter('counter_unforced_goal_errors', 'Unforced Goal Errors', 'unforced_goal_errors');
+        // Zonal areas (Top Left, Middle Center, etc.)
+        const ZONES = ["TL", "TC", "TR", "ML", "MC", "MR", "BL", "BC", "BR"];
 
-            setupCounter('counter_1v1_battles', '1v1 Battles', '1v1_battles');
-            setupCounter('counter_1v1s_won', '1v1s Won', '1v1s_won');
-            setupCounter('counter_crosses_claimed', 'Crosses Claimed', 'crosses_claimed');
-            setupCounter('counter_punches_completed', 'Punches Completed', 'punches_completed');
-            setupCounter('counter_interceptions_made', 'Interceptions Made', 'interceptions_made');
-
-            setupCounter('counter_playmake_hands', 'Play-Make (Hands)', 'playmake_hands');
-            setupCounter('counter_playmake_feet', 'Play-Make (Feet)', 'playmake_feet');
-
-            // 2. Setup Zonal Grids
-            setupZonalGrid('save_zones_grid', STATE.saveZones, 'save');
-            setupZonalGrid('goals_conceded_grid', STATE.goalsConceded, 'goal');
-            
-            // 3. Update Live Metrics Display
-            updateLiveMetrics();
+        // --- Custom Error/Message Display Function (Robust alternative to alert/confirm) ---
+        function showCustomMessage(message, isError = true) {
+            console.log(isError ? "Application Message/Error:" : "Application Message:", message);
+            document.getElementById('modal-title').innerText = isError ? "System Message" : "Success!";
+            document.getElementById('modal-title').classList.toggle('text-red-400', isError);
+            document.getElementById('modal-title').classList.toggle('text-green-400', !isError);
+            document.getElementById('modal-message').innerText = message;
+            document.getElementById('custom-error-modal').style.display = 'flex';
         }
 
-        /** Resets all UI inputs and the application STATE */
-        function resetState() {
-            // Reset Raw Metrics
-            Object.keys(STATE.rawMetrics).forEach(key => {
-                STATE.rawMetrics[key] = 0;
-                // Use a try-catch for safety in case the element hasn't loaded yet
-                try { document.getElementById(`${key}_display`).textContent = 0; } catch (e) {}
-            });
-
-            // Reset Zonal Data and UI
-            const zones = ['TL', 'TC', 'TR', 'ML', 'MC', 'MR', 'BL', 'BC', 'BR'];
-            zones.forEach(zone => {
-                STATE.saveZones[zone] = 0;
-                STATE.goalsConceded[zone] = 0;
-                try { 
-                    document.getElementById(`save_${zone}`).textContent = 0;
-                    document.getElementById(`goal_${zone}`).textContent = 0;
-                } catch (e) {}
-            });
-
-            // Reset Input Fields
+        // --- Firebase/Firestore Initialization (Stable Logic) ---
+        async function initializeFirebase() {
             try {
-                document.getElementById('goalkeeper_name').value = '';
-                document.getElementById('goalkeeper_team').value = '';
-                document.getElementById('game_date').valueAsDate = new Date(); // Reset to today
-                document.getElementById('opposition').value = '';
-                document.getElementById('final_score').value = '';
-                document.getElementById('home_away').value = 'H';
-                document.getElementById('result_wdl').value = '-';
-            } catch (e) {
-                console.error("Error resetting input fields:", e);
-            }
+                const { initializeApp, getAuth, signInAnonymously, signInWithCustomToken, getFirestore } = window.FirebaseServices;
 
-
-            updateLiveMetrics();
-            showModal('successModal', 'All app data and counters have been successfully reset. Ready for a new match log.');
-        }
-
-        // --- PDF GENERATION ---
-
-        function getMatchData() {
-             const totalZonalSaves = Object.values(STATE.saveZones).reduce((a, b) => a + b, 0);
-             const totalZonalGoals = Object.values(STATE.goalsConceded).reduce((a, b) => a + b, 0);
-             const totalSaves = STATE.rawMetrics.shots_saved + totalZonalSaves;
-             const totalGoals = STATE.rawMetrics.goals_against + totalZonalGoals;
-             const totalOpportunities = totalSaves + totalGoals;
-             const savePct = totalOpportunities > 0 ? (totalSaves / totalOpportunities) * 100 : 0;
-            
-            return {
-                matchDetails: {
-                    name: document.getElementById('goalkeeper_name').value || 'N/A',
-                    team: document.getElementById('goalkeeper_team').value || 'N/A',
-                    date: document.getElementById('game_date').value || 'N/A',
-                    opposition: document.getElementById('opposition').value || 'N/A',
-                    homeAway: document.getElementById('home_away').value || 'N/A',
-                    score: document.getElementById('final_score').value || 'N/A',
-                    result: document.getElementById('result_wdl').value || 'N/A',
-                    gameId: generateUUID(),
-                },
-                performanceSummary: {
-                    totalSaves: totalSaves,
-                    totalGoals: totalGoals,
-                    savePercentage: `${savePct.toFixed(1)}%`,
-                },
-                rawMetrics: STATE.rawMetrics,
-                saveZones: STATE.saveZones,
-                goalsConceded: STATE.goalsConceded,
-            };
-        }
-
-        /**
-         * Main PDF report generation function.
-         */
-        async function generatePDFReport() {
-            const data = getMatchData();
-            const doc = new jsPDF();
-            let y = 10;
-            const pageWidth = doc.internal.pageSize.getWidth();
-            const margin = 15;
-
-            // --- 1. HEADER & LOGO ---
-            doc.setFontSize(22);
-            doc.setFont(undefined, 'bold');
-            doc.setTextColor(0, 150, 255); // Blue
-            doc.text("BBGK PERFORMANCE DATA PACK", margin, y);
-            y += 8;
-
-            doc.setFontSize(10);
-            doc.setFont(undefined, 'normal');
-            doc.setTextColor(100, 100, 100);
-            doc.text(`Report Generated: ${new Date().toLocaleString()}`, margin, y);
-            y += 5;
-            
-            // Placeholder for Logo (using a simple bounding box as we cannot load external images)
-            doc.setDrawColor(0, 150, 255);
-            doc.rect(pageWidth - 40, 10, 25, 20); // Placeholder box for logo
-            doc.setTextColor(0, 150, 255);
-            doc.text('BBGK', pageWidth - 35, 20, { align: 'center' });
-            doc.setTextColor(0, 0, 0); // Reset text color to black
-            y = 40; 
-
-            // --- 2. MATCH DETAILS TABLE ---
-            doc.setFontSize(14);
-            doc.setFont(undefined, 'bold');
-            doc.text("MATCH DETAILS", margin, y);
-            y += 3;
-
-            const matchDataArray = [
-                ['Goalkeeper', data.matchDetails.name, 'Team', data.matchDetails.team],
-                ['Date', data.matchDetails.date, 'Opposition', data.matchDetails.opposition],
-                ['H/A', data.matchDetails.homeAway, 'Final Score', data.matchDetails.score],
-                ['Result (W/D/L)', data.matchDetails.result, 'Game ID', data.matchDetails.gameId.substring(0, 8) + '...'],
-            ];
-
-            doc.autoTable({
-                startY: y + 2,
-                head: [],
-                body: matchDataArray,
-                theme: 'grid',
-                styles: { cellPadding: 2, fontSize: 10, textColor: [0, 0, 0] },
-                headStyles: { fillColor: [240, 240, 240] },
-                margin: { left: margin, right: margin },
-                columnStyles: {
-                    0: { fontStyle: 'bold', fillColor: [240, 240, 240], cellWidth: 30 },
-                    2: { fontStyle: 'bold', fillColor: [240, 240, 240], cellWidth: 30 },
-                    1: { cellWidth: 60 },
-                    3: { cellWidth: 60 },
-                }
-            });
-            y = doc.autoTable.previous.finalY + 10;
-            
-            // --- 3. PERFORMANCE SUMMARY ---
-            doc.setFontSize(14);
-            doc.setFont(undefined, 'bold');
-            doc.text("PERFORMANCE SUMMARY", margin, y);
-            y += 3;
-            
-            const summaryData = [
-                ['Total Saves', data.performanceSummary.totalSaves.toString()],
-                ['Goals Conceded', data.performanceSummary.totalGoals.toString()],
-                ['Save Percentage', data.performanceSummary.savePercentage],
-            ];
-            
-            doc.autoTable({
-                startY: y + 2,
-                head: [],
-                body: summaryData,
-                theme: 'grid',
-                styles: { cellPadding: 2, fontSize: 10, textColor: [0, 0, 0] },
-                headStyles: { fillColor: [240, 240, 240] },
-                margin: { left: margin, right: pageWidth - (pageWidth / 3) }, // Keep this table narrow
-                columnStyles: {
-                    0: { fontStyle: 'bold', fillColor: [240, 240, 240], cellWidth: 40 },
-                    1: { cellWidth: 40, halign: 'center' },
-                }
-            });
-            y = doc.autoTable.previous.finalY + 10;
-            
-            // --- 4. RAW METRICS BREAKDOWN ---
-            doc.setFontSize(14);
-            doc.setFont(undefined, 'bold');
-            doc.text("RAW METRICS BREAKDOWN", margin, y);
-            y += 3;
-
-            // Prepare Raw Metrics for a nice 2-column table
-            const rawMetricsTableData = [];
-            let keys = Object.keys(data.rawMetrics);
-            
-            for (let i = 0; i < keys.length; i += 2) {
-                const key1 = keys[i];
-                const key2 = keys[i + 1];
+                // MANDATORY Global Variables Check
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+                const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
                 
-                const row = [
-                    METRIC_DISPLAY_NAMES[key1] || key1,
-                    data.rawMetrics[key1].toString(),
-                ];
-
-                if (key2) {
-                    row.push(METRIC_DISPLAY_NAMES[key2] || key2);
-                    row.push(data.rawMetrics[key2].toString());
-                } else {
-                    row.push('', ''); // Pad the row if odd number of metrics
+                if (!firebaseConfig) {
+                    throw new Error("Firebase configuration (__firebase_config) is missing.");
                 }
-                rawMetricsTableData.push(row);
-            }
-            
-            doc.autoTable({
-                startY: y + 2,
-                head: [['Metric', 'Count', 'Metric', 'Count']],
-                body: rawMetricsTableData,
-                theme: 'grid',
-                styles: { cellPadding: 2, fontSize: 10, textColor: [0, 0, 0] },
-                headStyles: { fillColor: [240, 240, 240], fontStyle: 'bold' },
-                margin: { left: margin, right: margin },
-                columnStyles: {
-                    0: { fontStyle: 'bold', cellWidth: 50 },
-                    1: { halign: 'center', cellWidth: 40 },
-                    2: { fontStyle: 'bold', cellWidth: 50 },
-                    3: { halign: 'center', cellWidth: 40 },
-                }
-            });
-            y = doc.autoTable.previous.finalY + 10;
 
-
-            // --- 5. ZONAL ANALYSIS (Using HTML2Canvas for visual capture) ---
-            doc.setFontSize(14);
-            doc.setFont(undefined, 'bold');
-            doc.text("ZONAL ANALYSIS", margin, y);
-            y += 5;
-            
-            // Get the container elements
-            const saveContainer = document.getElementById('saveZoneContainer');
-            const goalContainer = document.getElementById('goalZoneContainer');
-            
-            // CRITICAL: Ensure elements are visible for html2canvas
-            saveContainer.style.display = 'block';
-            goalContainer.style.display = 'block';
-
-            // 1. Capture Save Zones
-            const saveCanvas = await html2canvas(saveContainer.querySelector('#save_zones_grid'), { scale: 2 });
-            const saveImgData = saveCanvas.toDataURL('image/png');
-            const saveImgWidth = 85; // Slightly wider for better visual
-            const saveImgHeight = saveCanvas.height * saveImgWidth / saveCanvas.width;
-
-            // 2. Capture Goal Zones
-            const goalCanvas = await html2canvas(goalContainer.querySelector('#goals_conceded_grid'), { scale: 2 });
-            const goalImgData = goalCanvas.toDataURL('image/png');
-            const goalImgWidth = 85;
-            const goalImgHeight = goalCanvas.height * goalImgWidth / goalCanvas.width;
-            
-            // Check for new page if necessary
-            if (y + saveImgHeight + 20 > doc.internal.pageSize.getHeight()) {
-                doc.addPage();
-                y = 20;
-            }
-
-            // Draw Titles
-            doc.setFontSize(10);
-            doc.text("SAVE LOCATION (Saves)", margin, y);
-            doc.text("GOAL LOCATION (Goals)", pageWidth / 2 + 5, y); 
-            y += 2;
-
-            // Draw Images side by side
-            doc.addImage(saveImgData, 'PNG', margin, y, saveImgWidth, saveImgHeight);
-            doc.addImage(goalImgData, 'PNG', pageWidth / 2 + 5, y, goalImgWidth, goalImgHeight);
-            
-            y += saveImgHeight + 5;
-
-
-            // --- 6. SAVE FILE ---
-            const filename = `BBGK_Report_${data.matchDetails.name.replace(/\s/g, '_')}_${data.matchDetails.date}.pdf`;
-            doc.save(filename);
-
-            showModal('successModal', `Report saved and PDF generated successfully as: ${filename}`);
-        }
-
-
-        // --- FIREBASE FUNCTIONS ---
-
-        async function initFirebase() {
-            document.getElementById('loadingIndicator').classList.remove('hidden');
-            document.getElementById('loadingIndicator').classList.add('flex');
-            
-            if (!firebaseConfig) {
-                 showModal('errorModal', 'System configuration not found. Data persistence disabled.');
-                 document.getElementById('loadingIndicator').classList.add('hidden');
-                 return;
-            }
-
-            try {
-                const app = initializeApp(firebaseConfig);
+                // 1. Initialize Firebase
+                app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 auth = getAuth(app);
-                
-                onAuthStateChanged(auth, async (user) => {
-                    if (user) {
-                        userId = user.uid;
-                        document.getElementById('userIdDisplay').textContent = userId;
-                        isAuthReady = true;
-                        document.getElementById('generateReportBtn').disabled = false;
-                        console.log("Firebase Auth Ready. User ID:", userId);
-                    } else {
-                        if (initialAuthToken) {
-                            await signInWithCustomToken(auth, initialAuthToken);
-                        } else {
-                            await signInAnonymously(auth);
-                        }
-                    }
-                    document.getElementById('loadingIndicator').classList.add('hidden');
+
+                // 2. Authenticate User
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                // 3. Wait for Auth State to be ready
+                const user = await new Promise((resolve) => {
+                    const unsubscribe = window.FirebaseServices.onAuthStateChanged(auth, (user) => {
+                        unsubscribe();
+                        resolve(user);
+                    });
                 });
 
+                userId = user ? user.uid : crypto.randomUUID();
+                document.getElementById('user-id-display').innerText = `User ID: ${userId}`;
+
+                // 4. Set up data reference and listener
+                dataRef = window.FirebaseServices.doc(db, `artifacts/${appId}/users/${userId}/gk_tracker_data/current_session`);
+                setupDataListener();
+                
             } catch (error) {
-                console.error("Firebase Initialization Error:", error);
-                showModal('errorModal', `System connection error: ${error.message}`);
-                document.getElementById('loadingIndicator').classList.add('hidden');
+                showCustomMessage(`Firebase Setup Failed: ${error.message}`);
             }
         }
         
-        /**
-         * Compiles data, saves to Firestore, and generates the PDF report.
-         */
-        async function saveAndGenerateReport() {
-            if (!isAuthReady || !userId) {
-                showModal('errorModal', 'Authentication is not ready. Please wait a moment.');
+        // --- Data Handling ---
+        function initializeSessionData() {
+            sessionData.counters = {};
+            COUNTER_CONFIG.forEach(key => sessionData.counters[key] = 0);
+
+            sessionData.saveZones = {};
+            sessionData.goalsZones = {};
+            ZONES.forEach(zone => {
+                sessionData.saveZones[zone] = 0;
+                sessionData.goalsZones[zone] = 0;
+            });
+            sessionData.timestamp = window.FirebaseServices.serverTimestamp();
+        }
+
+        // Sets up real-time listener for session data
+        function setupDataListener() {
+            if (!dataRef) {
+                showCustomMessage("Data reference not set up. Cannot listen for updates.");
                 return;
             }
-            
-            const statusMsg = document.getElementById('statusMessage');
-            const saveBtn = document.getElementById('generateReportBtn');
-            const resetBtn = document.getElementById('resetAppBtn');
 
-            statusMsg.textContent = 'Saving data and preparing report...';
-            statusMsg.classList.remove('hidden');
-            saveBtn.disabled = true;
-            resetBtn.disabled = true;
+            window.FirebaseServices.onSnapshot(dataRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const cloudData = docSnap.data();
+                    // Merge and ensure structure integrity
+                    sessionData.counters = cloudData.counters || {};
+                    sessionData.saveZones = cloudData.saveZones || {};
+                    sessionData.goalsZones = cloudData.goalsZones || {};
+                    
+                    // Fill in any missing counter/zone keys with 0 if they exist in config but not cloud
+                    COUNTER_CONFIG.forEach(key => sessionData.counters[key] = sessionData.counters[key] || 0);
+                    ZONES.forEach(zone => {
+                        sessionData.saveZones[zone] = sessionData.saveZones[zone] || 0;
+                        sessionData.goalsZones[zone] = sessionData.goalsZones[zone] || 0;
+                    });
+                    
+                    updateDisplay();
+                } else {
+                    // Document doesn't exist, initialize and create it in the cloud
+                    initializeSessionData();
+                    saveDataToCloud(false); // Save the initial state, no success message here
+                }
+            }, (error) => {
+                // Ignore 'permission-denied' if user is unauthenticated during setup, otherwise show error
+                if (error.code !== 'permission-denied') {
+                    showCustomMessage(`Firestore Listener Error: ${error.message}. Please check network connection.`);
+                }
+            });
+        }
 
-            const data = getMatchData();
-            const documentId = data.matchDetails.gameId;
-            
+        // Saves current session data to Firestore
+        async function saveDataToCloud(showSuccess = true) {
+            if (!dataRef) {
+                showCustomMessage("Cannot save: Database reference is missing.");
+                return;
+            }
             try {
-                // Firestore path: /artifacts/{appId}/users/{userId}/match_logs/{documentId}
-                const docRef = doc(db, 'artifacts', appId, 'users', userId, 'match_logs', documentId);
-                
-                await setDoc(docRef, data);
-                
-                statusMsg.textContent = 'Data saved to cloud. Generating PDF...';
-                await generatePDFReport(); 
-
-                statusMsg.textContent = 'Report generated successfully!';
-
+                // Use setDoc to overwrite the document with the current state
+                await window.FirebaseServices.setDoc(dataRef, {
+                    counters: sessionData.counters,
+                    saveZones: sessionData.saveZones,
+                    goalsZones: sessionData.goalsZones,
+                    timestamp: window.FirebaseServices.serverTimestamp() // Update timestamp on save
+                });
+                if (showSuccess) {
+                    showCustomMessage("Data saved successfully to cloud!", false);
+                }
             } catch (error) {
-                console.error("Save or PDF Error:", error);
-                showModal('errorModal', `Error during save/PDF generation: ${error.message}`);
-            } finally {
-                saveBtn.disabled = false;
-                resetBtn.disabled = false;
-                statusMsg.classList.add('hidden');
+                showCustomMessage(`Failed to save data to cloud: ${error.message}`);
             }
         }
-        
-        // --- EVENT LISTENERS & MAIN INIT ---
 
+        // --- Core Application Logic ---
+        function handleCounterClick(type) {
+            sessionData.counters[type] = (sessionData.counters[type] || 0) + 1;
+            saveDataToCloud(false); // Auto-save silently on every click
+        }
+
+        function handleZoneClick(gridType, zone) {
+            if (gridType === 'save') {
+                sessionData.saveZones[zone] = (sessionData.saveZones[zone] || 0) + 1;
+            } else if (gridType === 'goals') {
+                sessionData.goalsZones[zone] = (sessionData.goalsZones[zone] || 0) + 1;
+            }
+            saveDataToCloud(false); // Auto-save silently on every click
+        }
+
+        // Updates the HTML display with the latest sessionData
+        function updateDisplay() {
+            if (!sessionData.counters) return;
+
+            // 1. Update Match Stats Output
+            const totalShots = (sessionData.counters["Saves Made"] || 0) + (sessionData.counters["Goals Conceded"] || 0);
+            sessionData.counters["Shots Faced"] = totalShots; // Enforce shots faced is sum of Saves and Goals
+            const saves = sessionData.counters["Saves Made"] || 0;
+            const goals = sessionData.counters["Goals Conceded"] || 0;
+
+            const savePct = totalShots > 0 ? ((saves / totalShots) * 100).toFixed(1) : 0;
+
+            document.getElementById('stat-total-shots').innerText = totalShots;
+            document.getElementById('stat-saves').innerText = saves;
+            document.getElementById('stat-goals').innerText = goals;
+            document.getElementById('stat-save-pct').innerText = `${savePct}%`;
+
+            // 2. Update Zonal Grid Visuals
+            const updateZonalGrid = (gridId, zonalData) => {
+                const grid = document.getElementById(gridId);
+                if (!grid) return;
+                
+                grid.querySelectorAll('.zone-grid-item').forEach(item => {
+                    const zone = item.getAttribute('data-zone');
+                    const count = zonalData[zone] || 0;
+
+                    // Reset styling
+                    item.classList.remove('bg-green-800', 'bg-red-800', 'font-bold');
+                    item.classList.add('bg-gray-800', 'text-gray-400');
+
+                    // Apply count and visual feedback
+                    item.innerHTML = `${zone}<br><span class="text-xs ${count > 0 ? 'stat-value font-bold' : 'text-gray-500'}">(${count})</span>`;
+                    
+                    if (count > 0) {
+                        // Color based on grid type
+                        if (gridId === 'save-zones-grid') {
+                            item.classList.add('bg-green-800');
+                        } else {
+                            item.classList.add('bg-red-800');
+                        }
+                    }
+                });
+            };
+
+            updateZonalGrid('save-zones-grid', sessionData.saveZones);
+            updateZonalGrid('goals-zones-grid', sessionData.goalsZones);
+        }
+
+        // --- PDF Generation Logic ---
+        function generatePDFReport() {
+            // Use a custom prompt for confirmation
+            const isConfirmed = window.prompt("Type 'REPORT' in capital letters to confirm generating the PDF report:");
+            if (isConfirmed !== 'REPORT') {
+                showCustomMessage("PDF generation cancelled.", false);
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({
+                orientation: 'portrait',
+                unit: 'mm',
+                format: 'a4'
+            });
+
+            doc.setFont('Helvetica');
+            doc.setTextColor(30, 30, 30); 
+
+            // --- Header ---
+            doc.setFillColor(0, 188, 212); // Cyan color
+            doc.rect(0, 0, 210, 15, 'F');
+            doc.setFontSize(18);
+            doc.setTextColor(31, 31, 31);
+            doc.text('BBGK GOALKEEPER TRACKER REPORT', 105, 10, { align: 'center' });
+
+            // --- User ID and Timestamp ---
+            doc.setFontSize(10);
+            doc.setTextColor(50, 50, 50);
+            const timestamp = sessionData.timestamp && sessionData.timestamp.toDate ? sessionData.timestamp.toDate().toLocaleString() : new Date().toLocaleString();
+            doc.text(`User Session ID: ${userId}`, 10, 20);
+            doc.text(`Report Generated: ${timestamp}`, 200, 20, { align: 'right' });
+
+            // --- Match Summary Section (Start Y: 25) ---
+            let y = 30;
+            doc.setFontSize(14);
+            doc.setTextColor(0, 188, 212);
+            doc.text('1. Match Summary', 10, y);
+            y += 5;
+            
+            doc.setFontSize(12);
+            doc.setTextColor(50, 50, 50);
+
+            const totalShots = sessionData.counters["Shots Faced"] || 0;
+            const saves = sessionData.counters["Saves Made"] || 0;
+            const goals = sessionData.counters["Goals Conceded"] || 0;
+            const savePct = totalShots > 0 ? ((saves / totalShots) * 100).toFixed(1) : 0;
+
+            const summaryData = [
+                ['Metric', 'Value'],
+                ['Total Shots Faced', totalShots],
+                ['Saves Made', saves],
+                ['Goals Conceded', goals],
+                ['Save Percentage', `${savePct}%`],
+                ['Crosses Claimed', sessionData.counters["Crosses Claimed"] || 0],
+                ['Play Make (Hands)', sessionData.counters["Play Make (Hands)"] || 0],
+                ['Play Make (Feet)', sessionData.counters["Play Make (Feet)"] || 0],
+                ['1v1s Won', sessionData.counters["1v1s Won"] || 0],
+                ['Unforced Goal Errors', sessionData.counters["Unforced Goal Errors"] || 0],
+            ];
+            
+            // Manual table drawing for Summary
+            const col1X = 10, col2X = 80;
+            let tableY = y;
+            
+            doc.setFontStyle('bold');
+            doc.text(summaryData[0][0], col1X, tableY);
+            doc.text(summaryData[0][1], col2X, tableY);
+            tableY += 2;
+            doc.line(col1X, tableY, 120, tableY); // Separator line
+            tableY += 5;
+
+            doc.setFontStyle('normal');
+            summaryData.slice(1).forEach(row => {
+                doc.text(row[0], col1X, tableY);
+                doc.text(String(row[1]), col2X, tableY);
+                tableY += 5;
+            });
+
+            // Update Y position after summary
+            y = tableY + 5;
+
+            // --- Zonal Analysis Section ---
+            doc.addPage();
+            y = 15;
+            doc.setFontSize(14);
+            doc.setTextColor(0, 188, 212);
+            doc.text('2. Zonal Data Breakdown', 10, y);
+            y += 5;
+            
+            doc.setFontSize(10);
+            doc.setTextColor(50, 50, 50);
+            
+            const zonalTableData = [
+                ['Zone', 'Saves', 'Goals Conceded', 'Total Shots'],
+            ];
+
+            ZONES.forEach(zone => {
+                const savesCount = sessionData.saveZones[zone] || 0;
+                const goalsCount = sessionData.goalsZones[zone] || 0;
+                const totalShotsZone = savesCount + goalsCount;
+                zonalTableData.push([zone, savesCount, goalsCount, totalShotsZone]);
+            });
+
+            // Manual table drawing for Zonal Data
+            const zonalCol1X = 10, zonalCol2X = 40, zonalCol3X = 75, zonalCol4X = 115;
+            tableY = y;
+            
+            doc.setFontStyle('bold');
+            doc.text(zonalTableData[0][0], zonalCol1X, tableY);
+            doc.text(zonalTableData[0][1], zonalCol2X, tableY);
+            doc.text(zonalTableData[0][2], zonalCol3X, tableY);
+            doc.text(zonalTableData[0][3], zonalCol4X, tableY);
+            tableY += 2;
+            doc.line(zonalCol1X, tableY, 150, tableY); // Separator line
+            tableY += 5;
+            
+            doc.setFontStyle('normal');
+            zonalTableData.slice(1).forEach(row => {
+                doc.text(row[0], zonalCol1X, tableY);
+                doc.text(String(row[1]), zonalCol2X, tableY);
+                doc.text(String(row[2]), zonalCol3X, tableY);
+                doc.text(String(row[3]), zonalCol4X, tableY);
+                tableY += 5;
+            });
+
+            // Final save
+            doc.save(`BBGK_Tracker_Report_${new Date().toISOString().slice(0, 10)}.pdf`);
+        }
+
+        // --- Event Listeners and Initialization ---
         document.addEventListener('DOMContentLoaded', () => {
-            // Setup UI first - THIS FIXES THE REFERENCE ERROR
-            initializeUI(); 
             
-            // Set up main buttons
-            document.getElementById('generateReportBtn').addEventListener('click', saveAndGenerateReport);
-            document.getElementById('resetAppBtn').addEventListener('click', resetState);
+            // 1. Initialize Firebase and Data Listener
+            initializeFirebase();
 
-            // Create Icons for UI updates 
-            lucide.createIcons();
+            // 2. Setup Button Listeners
+            const counterButtons = document.querySelectorAll('.action-button');
+            counterButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    handleCounterClick(button.getAttribute('data-type'));
+                });
+            });
+
+            // 3. Setup Zonal Grid Listeners
+            document.getElementById('save-zones-grid').addEventListener('click', (e) => {
+                const zoneDiv = e.target.closest('.zone-grid-item');
+                if (zoneDiv) handleZoneClick('save', zoneDiv.getAttribute('data-zone'));
+            });
+
+            document.getElementById('goals-zones-grid').addEventListener('click', (e) => {
+                const zoneDiv = e.target.closest('.zone-grid-item');
+                if (zoneDiv) handleZoneClick('goals', zoneDiv.getAttribute('data-zone'));
+            });
+
+            // 4. Setup Control Buttons
+            document.getElementById('save-data-btn').addEventListener('click', () => {
+                saveDataToCloud(true); // Show success message when manually saving
+            });
+            document.getElementById('generate-pdf-btn').addEventListener('click', generatePDFReport);
+
+            document.getElementById('reset-btn').addEventListener('click', () => {
+                // Use a custom prompt for confirmation
+                const isConfirmed = window.prompt("Type 'RESET' in capital letters to confirm erasing all current session data:");
+                if (isConfirmed === 'RESET') {
+                    // Re-initialize local data and save to cloud to wipe the document
+                    initializeSessionData();
+                    saveDataToCloud(true); // Show success message
+                    showCustomMessage("Session data has been successfully reset.", false);
+                } else {
+                    showCustomMessage("Reset cancelled.", false);
+                }
+            });
             
-            // Then initialize Firebase
-            initFirebase();
+            // Initial render of the display
+            updateDisplay();
         });
     </script>
 </body>
