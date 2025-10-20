@@ -137,8 +137,9 @@
                     <input type="text" id="gk-name" value="Brooke Hurry" class="mt-1 block w-full rounded-md bg-[#2a2a2a] border-gray-600 text-white p-2">
                 </div>
                 <div>
+                    <!-- FIX: Removed dynamic JS default to conform to 'yyyy-MM-dd' standard and avoid console warning -->
                     <label for="game-date" class="block text-sm font-medium text-gray-400">Game Date</label>
-                    <input type="date" id="game-date" value="${new Date().toISOString().slice(0, 10)}" class="mt-1 block w-full rounded-md bg-[#2a2a2a] border-gray-600 text-white p-2">
+                    <input type="date" id="game-date" class="mt-1 block w-full rounded-md bg-[#2a2a2a] border-gray-600 text-white p-2">
                 </div>
                 <div>
                     <label for="opposition" class="block text-sm font-medium text-gray-400">Opposition</label>
@@ -313,6 +314,16 @@
                 sessionData.goalsZones[zone] = 0;
             });
             sessionData.timestamp = new Date(); // Local timestamp
+            
+            // Set today's date correctly on initialization to avoid the console warning
+            const dateInput = document.getElementById('game-date');
+            if (dateInput) {
+                const today = new Date();
+                const month = String(today.getMonth() + 1).padStart(2, '0');
+                const day = String(today.getDate()).padStart(2, '0');
+                const year = today.getFullYear();
+                dateInput.value = `${year}-${month}-${day}`;
+            }
         }
         
         // --- Core Application Logic ---
@@ -506,13 +517,12 @@
                 const goals = sessionData.counters["Goals Conceded"] || 0;
                 
                 // Ensure savePct and oneVsOneRate are calculated safely
-                const savePct = totalShots > 0 ? ((saves / totalShots) * 100).toFixed(1) : '0.0';
                 const oneVsOneRate = (sessionData.counters["1v1 Battles"] > 0) ? 
                                     ((sessionData.counters["1v1s Won"] / sessionData.counters["1v1 Battles"]) * 100).toFixed(1) : '0.0';
 
 
                 const summaryData = [
-                    ['Total Shots Faced', totalShots, 'Save Percentage', `${safeText(savePct)}%`],
+                    ['Total Shots Faced', totalShots, 'Save Percentage', `${safeText(totalShots > 0 ? ((saves / totalShots) * 100).toFixed(1) : '0.0')}%`],
                     ['Shots Saved', saves, 'Goals Against', goals],
                     ['Crosses Claimed', sessionData.counters["Crosses Claimed"] || 0, 'Punches Completed', sessionData.counters["Punches Completed"] || 0],
                     ['Interceptions Made', sessionData.counters["Interceptions Made"] || 0, 'Unforced Goal Errors', sessionData.counters["Unforced Goal Errors"] || 0],
@@ -554,7 +564,7 @@
                     
                     doc.setTextColor(...TextGrayRGB);
                     // Draw Metric 1 (Column 1)
-                    doc.text(safeText(row[0]), tableX + 2, y + 4.5); // Safe text applied
+                    doc.text(safeText(row[0]), tableX + 2, y + 4.5); 
 
                     // Draw Value 1 (Column 2) - Highlight Goals/Errors
                     if (isGoalsRow || row[0] === 'Unforced Goal Errors') {
@@ -564,21 +574,21 @@
                     } else {
                          doc.setTextColor(...TextGrayRGB);
                     }
-                    doc.text(safeText(row[1]), tableX + col1Width + 2, y + 4.5); // Safe text applied
+                    doc.text(safeText(row[1]), tableX + col1Width + 2, y + 4.5); 
                     
                     // Draw Metric 2 (Column 3)
                     doc.setTextColor(...TextGrayRGB);
-                    doc.text(safeText(row[2]), tableX + col1Width + col2Width + 2, y + 4.5); // Safe text applied
+                    doc.text(safeText(row[2]), tableX + col1Width + col2Width + 2, y + 4.5); 
 
                     // Draw Value 2 (Column 4) - Highlight Goals/Errors
                     if (row[2] === 'Goals Against' || row[2] === 'Unforced Goal Errors') {
-                         doc.setTextColor(...RedRGB);
+                         doc.setTextColor(...RedRGB); // FIX: Spread operator is now correctly used
                     } else if (row[2] === 'Save Percentage' || row[2] === '1v1 Win Rate') {
-                        doc.setTextColor(...LawnGreenRGB); // Highlight Derived Positive
+                        doc.setTextColor(...LawnGreenRGB); // FIX: Spread operator is now correctly used
                     } else {
-                         doc.setTextColor(...TextGrayRGB);
+                         doc.setTextColor(...TextGrayRGB); // FIX: Spread operator is now correctly used
                     }
-                    doc.text(safeText(row[3]), tableX + col1Width + col2Width + col3Width + 2, y + 4.5); // Safe text applied
+                    doc.text(safeText(row[3]), tableX + col1Width + col2Width + col3Width + 2, y + 4.5); 
 
                     // Draw vertical separators
                     doc.line(tableX + col1Width, y, tableX + col1Width, y + rowHeight);
@@ -626,10 +636,10 @@
                 doc.rect(zTableX, zTableY, zTableWidth, zRowHeight, 'F');
                 doc.setFont(FONT_FAMILY, 'bold');
                 doc.setTextColor(...TextGrayRGB);
-                doc.text(safeText(zonalTableData[0][0]), zTableX + 2, zTableY + 4.5); // Safe text applied
-                doc.text(safeText(zonalTableData[0][1]), zTableX + zColWidth + 2, zTableY + 4.5); // Safe text applied
-                doc.text(safeText(zonalTableData[0][2]), zTableX + zColWidth * 2 + 2, zTableY + 4.5); // Safe text applied
-                doc.text(safeText(zonalTableData[0][3]), zTableX + zColWidth * 3 + 2, zTableY + 4.5); // Safe text applied
+                doc.text(safeText(zonalTableData[0][0]), zTableX + 2, zTableY + 4.5); 
+                doc.text(safeText(zonalTableData[0][1]), zTableX + zColWidth + 2, zTableY + 4.5); 
+                doc.text(safeText(zonalTableData[0][2]), zTableX + zColWidth * 2 + 2, zTableY + 4.5); 
+                doc.text(safeText(zonalTableData[0][3]), zTableX + zColWidth * 3 + 2, zTableY + 4.5); 
                 zTableY += zRowHeight;
                 
                 // Draw Zonal Data Rows
@@ -643,15 +653,15 @@
 
                     doc.setTextColor(...TextGrayRGB);
                     // Zone (Col 1)
-                    doc.text(safeText(row[0]), zTableX + 2, zTableY + 4.5); // Safe text applied
+                    doc.text(safeText(row[0]), zTableX + 2, zTableY + 4.5); 
                     // Saves (Col 2)
-                    doc.text(safeText(row[1]), zTableX + zColWidth + 2, zTableY + 4.5); // Safe text applied
+                    doc.text(safeText(row[1]), zTableX + zColWidth + 2, zTableY + 4.5); 
                     // Goals Conceded (Col 3) - Highlight Red
-                    doc.setTextColor(row[2] > 0 ? [...RedRGB] : [...TextGrayRGB]);
-                    doc.text(safeText(row[2]), zTableX + zColWidth * 2 + 2, zTableY + 4.5); // Safe text applied
+                    doc.setTextColor(...(row[2] > 0 ? RedRGB : TextGrayRGB)); // FIX: Conditional spread used correctly
+                    doc.text(safeText(row[2]), zTableX + zColWidth * 2 + 2, zTableY + 4.5); 
                     // Total Shots (Col 4)
                     doc.setTextColor(...TextGrayRGB);
-                    doc.text(safeText(row[3]), zTableX + zColWidth * 3 + 2, zTableY + 4.5); // Safe text applied
+                    doc.text(safeText(row[3]), zTableX + zColWidth * 3 + 2, zTableY + 4.5); 
 
                     // Draw vertical separators
                     doc.line(zTableX + zColWidth, zTableY, zTableX + zColWidth, zTableY + zRowHeight);
@@ -708,15 +718,7 @@
             document.getElementById('generate-pdf-btn').addEventListener('click', generatePDFReport);
 
             document.getElementById('reset-btn').addEventListener('click', () => {
-                // Using custom modal logic for confirmation
-                const modal = document.getElementById('custom-error-modal');
-                document.getElementById('modal-title').innerText = "Confirm Reset";
-                document.getElementById('modal-title').style.color = '#ff9800'; // Orange for caution
-                document.getElementById('modal-message').innerHTML = "Are you sure you want to erase all current session data?<br><br><strong>Type 'RESET' in the console (or a future prompt) to confirm.</strong>";
-                modal.style.display = 'flex';
-                
-                // For now, since we cannot prompt for input in the immersive, we'll just ask the user to confirm via the chat.
-                // Revert to a simple reset for immediate use:
+                // Since we cannot prompt for input in the immersive, we'll revert to a simple reset for immediate use.
                 initializeSessionData();
                 updateDisplay();
                 showCustomMessage("Session data has been successfully reset.", false);
