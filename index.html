@@ -98,11 +98,47 @@
             align-items: center;
             justify-content: center;
             position: relative; 
+            z-index: 20;
+            
+            /* Default thin border for all cells */
+            border-width: 1px;
+            border-style: solid;
+            border-color: #383838;
         }
         .contact-zone-item:hover {
             background-color: #383838;
         }
         
+        /* --- CRITICAL FINAL FIX: Thicker border for C14 and C15 only (The 6-yard box) --- */
+        
+        /* 1. Apply visual emphasis (glow) and default thick borders */
+        [data-zone="C14"], [data-zone="C15"] {
+            box-shadow: 0 0 8px var(--color-accent-green); 
+            border-color: var(--color-accent-green) !important;
+            border-width: 3px; /* Start with thick borders all around */
+        }
+        
+        /* 2. C14: Keep Left, Top, Bottom thick. Hide the Right edge (internal line) */
+        [data-zone="C14"] {
+            border-right-width: 0.5px !important; 
+            /* Match the background color to visually eliminate the separation */
+            border-right-color: var(--color-secondary-bg) !important; 
+        }
+
+        /* 3. C15: Keep Right, Top, Bottom thick. Hide the Left edge (internal line) */
+        [data-zone="C15"] {
+            border-left-width: 0.5px !important;
+            /* Match the background color to visually eliminate the separation */
+            border-left-color: var(--color-secondary-bg) !important;
+        }
+        
+        /* 4. Ensure C13 and C16 revert to thin dark borders, overriding the top block */
+        [data-zone="C13"], [data-zone="C16"] {
+            border-color: #383838 !important;
+            border-width: 1px !important;
+            box-shadow: none !important;
+        }
+
         /* --- VISUAL FEEDBACK ANIMATIONS --- */
         .action-button.flash-success {
             animation: success-flash 0.2s ease-out;
@@ -324,32 +360,31 @@
 
             <!-- 4x4 Grid representing the 18-yard box -->
             <div id="contact-zones-grid" class="grid grid-cols-4 grid-rows-4 h-96 w-full mx-auto border-4 border-solid border-gray-500 rounded-lg overflow-hidden relative">
-                <!-- Visual markers for pitch layout (Goal line, 6-yard box, etc.) -->
+                <!-- Visual markers for pitch layout (Goal line) -->
                 <div class="absolute inset-x-0 bottom-0 h-1 bg-gray-500 z-10"></div>
-                <!-- 6-yard box markings (approx. 1/4 of the height from the bottom) -->
-                <div class="absolute inset-x-1/4 bottom-0 h-1/4 border-t-2 border-l-2 border-r-2 border-gray-500 z-10"></div>
                 
                 <!-- Grid Items (C1 to C16, C1 is top-left, C16 is bottom-right) -->
                 <!-- Row 1 (Furthest from goal) -->
-                <div data-zone="C1" class="contact-zone-item border border-[#383838]">C1<span class="text-sm text-gray-500"> (0)</span></div>
-                <div data-zone="C2" class="contact-zone-item border border-[#383838]">C2<span class="text-sm text-gray-500"> (0)</span></div>
-                <div data-zone="C3" class="contact-zone-item border border-[#383838]">C3<span class="text-sm text-gray-500"> (0)</span></div>
-                <div data-zone="C4" class="contact-zone-item border border-[#383838]">C4<span class="text-sm text-gray-500"> (0)</span></div>
+                <div data-zone="C1" class="contact-zone-item">C1<span class="text-sm text-gray-500"> (0)</span></div>
+                <div data-zone="C2" class="contact-zone-item">C2<span class="text-sm text-gray-500"> (0)</span></div>
+                <div data-zone="C3" class="contact-zone-item">C3<span class="text-sm text-gray-500"> (0)</span></div>
+                <div data-zone="C4" class="contact-zone-item">C4<span class="text-sm text-gray-500"> (0)</span></div>
                 <!-- Row 2 -->
-                <div data-zone="C5" class="contact-zone-item border border-[#383838]">C5<span class="text-sm text-gray-500"> (0)</span></div>
-                <div data-zone="C6" class="contact-zone-item border border-[#383838]">C6<span class="text-sm text-gray-500"> (0)</span></div>
-                <div data-zone="C7" class="contact-zone-item border border-[#383838]">C7<span class="text-sm text-gray-500"> (0)</span></div>
-                <div data-zone="C8" class="contact-zone-item border border-[#383838]">C8<span class="text-sm text-gray-500"> (0)</span></div>
+                <div data-zone="C5" class="contact-zone-item">C5<span class="text-sm text-gray-500"> (0)</span></div>
+                <div data-zone="C6" class="contact-zone-item">C6<span class="text-sm text-gray-500"> (0)</span></div>
+                <div data-zone="C7" class="contact-zone-item">C7<span class="text-sm text-gray-500"> (0)</span></div>
+                <div data-zone="C8" class="contact-zone-item">C8<span class="text-sm text-gray-500"> (0)</span></div>
                 <!-- Row 3 -->
-                <div data-zone="C9" class="contact-zone-item border border-[#383838]">C9<span class="text-sm text-gray-500"> (0)</span></div>
-                <div data-zone="C10" class="contact-zone-item border border-[#383838]">C10<span class="text-sm text-gray-500"> (0)</span></div>
-                <div data-zone="C11" class="contact-zone-item border border-[#383838]">C11<span class="text-sm text-gray-500"> (0)</span></div>
-                <div data-zone="C12" class="contact-zone-item border border-[#383838]">C12<span class="text-sm text-gray-500"> (0)</span></div>
-                <!-- Row 4 (Closest to goal) -->
-                <div data-zone="C13" class="contact-zone-item border border-[#383838]">C13<span class="text-sm text-gray-500"> (0)</span></div>
-                <div data-zone="C14" class="contact-zone-item border border-[#383838]">C14<span class="text-sm text-gray-500"> (0)</span></div>
-                <div data-zone="C15" class="contact-zone-item border border-[#383838]">C15<span class="text-sm text-gray-500"> (0)</span></div>
-                <div data-zone="C16" class="contact-zone-item border border-[#383838]">C16<span class="text-sm text-gray-500"> (0)</span></div>
+                <div data-zone="C9" class="contact-zone-item">C9<span class="text-sm text-gray-500"> (0)</span></div>
+                <div data-zone="C10" class="contact-zone-item">C10<span class="text-sm text-gray-500"> (0)</span></div>
+                <div data-zone="C11" class="contact-zone-item">C11<span class="text-sm text-gray-500"> (0)</span></div>
+                <div data-zone="C12" class="contact-zone-item">C12<span class="text-sm text-gray-500"> (0)</span></div>
+                <!-- Row 4 (Closest to goal - The 6-yard line area) -->
+                <div data-zone="C13" class="contact-zone-item">C13<span class="text-sm text-gray-500"> (0)</span></div>
+                <!-- C14 and C15 will receive the special thick border styling from the CSS -->
+                <div data-zone="C14" class="contact-zone-item">C14<span class="text-sm text-gray-500"> (0)</span></div>
+                <div data-zone="C15" class="contact-zone-item">C15<span class="text-sm text-gray-500"> (0)</span></div>
+                <div data-zone="C16" class="contact-zone-item">C16<span class="text-sm text-gray-500"> (0)</span></div>
             </div>
         </div>
 
@@ -572,17 +607,16 @@
                     const zone = item.getAttribute('data-zone');
                     const count = zonalData[zone] || 0;
 
-                    // Reset styling
-                    item.classList.remove('bg-green-900', 'bg-opacity-50', 'bg-[#242424]');
-                    item.classList.add('bg-[#242424]');
-
                     // Apply count and visual feedback
                     item.innerHTML = `${zone}<br><span class="text-sm ${count > 0 ? 'stat-value font-bold' : 'text-gray-500'}">(${count})</span>`;
                     
                     if (count > 0) {
-                        // Use a green color for Contact Zones (BBGK requested)
+                        // Use a green color for Contact Zones
                         item.classList.add('bg-green-900', 'bg-opacity-50'); 
+                    } else {
+                        item.classList.remove('bg-green-900', 'bg-opacity-50');
                     }
+                    
                 });
             };
             
@@ -636,16 +670,17 @@
                 
                 // --- 2. Game Metadata Block ---
                 const metaBlockHeight = 25;
-                doc.setFillColor(...LIGHT_GRAY); 
+                doc.setFillColor(230, 230, 230); // Lighter background for metadata
                 doc.rect(10, y - 5, 190, metaBlockHeight, 'F');
                 doc.setFontSize(11);
                 doc.setFont(FONT_FAMILY, 'bold');
-                doc.setTextColor(...TEXT_DARK);
+                doc.setTextColor(...BBGK_DARK);
                 doc.text('GAME DETAILS', 12, y);
                 doc.setDrawColor(200, 200, 200);
                 doc.line(10, y + 1, 200, y + 1); // Separator line
                 y += 5;
                 doc.setFont(FONT_FAMILY, 'normal');
+                doc.setTextColor(...TEXT_DARK);
 
                 doc.text('Goalkeeper Name:', 12, y);
                 doc.setFont(FONT_FAMILY, 'bold');
@@ -847,9 +882,12 @@
                 });
                 doc.line(zTableX, zTableY, zTableX + zTableWidth, zTableY); // Final bottom line
 
-                // --- 5. Contact Zones Grid (4x4 Visual) ---
-                y = zTableY + 15;
+                // --- FORCED PAGE BREAK for 18-Yard Box / Contact Zones ---
+                doc.addPage();
+                y = 20; // Reset Y coordinate for the new page start.
 
+
+                // --- 5. Contact Zones Grid (4x4 Visual) ---
                 doc.setFontSize(14);
                 doc.setFont(FONT_FAMILY, 'bold');
                 doc.setTextColor(...BBGK_DARK); 
@@ -869,17 +907,28 @@
 
                 // Draw the bounding box (18-yard box)
                 doc.rect(gridStartX, gridStartY, gridTotalSize, gridTotalSize, 'S');
-
-                // Draw the 6-yard box marker (approx. 1/4 of the way up from the bottom of the grid)
+                
+                // Draw the 6-yard box marker line (approx. 1/4 of the height from the bottom of the grid)
                 const sixYardMarkerY = gridStartY + (zoneSize * 3);
-                doc.setDrawColor(BBGK_DARK[0], BBGK_DARK[1], BBGK_DARK[2]);
-                doc.setLineWidth(0.5);
-                // Horizontal line for the 6-yard box
-                doc.line(gridStartX, sixYardMarkerY, gridStartX + gridTotalSize, sixYardMarkerY);
+                
+                // CRITICAL PDF FIX: Draw the thick border around C14/C15 only
+                const C14_Left = gridStartX + zoneSize;
+                const C15_Right = gridStartX + zoneSize * 3;
+                
+                doc.setDrawColor(BBGK_GREEN[0], BBGK_GREEN[1], BBGK_GREEN[2]);
+                doc.setLineWidth(1.0); // Thicker line for emphasis
+
+                // Top line of C14/C15
+                doc.line(C14_Left, sixYardMarkerY, C15_Right, sixYardMarkerY); 
+                // Bottom line of C14/C15 (The goal line marker)
+                doc.line(C14_Left, gridStartY + gridTotalSize, C15_Right, gridStartY + gridTotalSize);
+                // Left line of C14
+                doc.line(C14_Left, sixYardMarkerY, C14_Left, gridStartY + gridTotalSize);
+                // Right line of C15
+                doc.line(C15_Right, sixYardMarkerY, C15_Right, gridStartY + gridTotalSize);
 
                 // Draw the 4x4 grid and fill values
                 const [rG, gG, bG] = BBGK_GREEN;
-                const maxIntensity = 120; // Max intensity for the fill
                 
                 CONTACT_ZONES.forEach((zone, index) => {
                     const count = sessionData.contactZones[zone] || 0;
@@ -891,24 +940,29 @@
                     const xPos = gridStartX + (col * zoneSize);
                     const yPos = gridStartY + (row * zoneSize);
                     
-                    // Draw internal cell borders
+                    // Draw internal cell borders (Thin, Dark Gray)
                     doc.setDrawColor(150, 150, 150); 
-                    doc.rect(xPos, yPos, zoneSize, zoneSize, 'S');
                     
-                    // Shade based on count (Higher count = darker fill using BBGK Green)
+                    // Skip drawing the borders of the C14/C15 block as we drew them manually, but draw the internal divider if it's not the critical one
+                    if (!['C14', 'C15'].includes(zone)) {
+                        doc.rect(xPos, yPos, zoneSize, zoneSize, 'S');
+                    } else {
+                        // For C14 and C15, draw ONLY the corner borders that aren't the thick green ones
+                        doc.setDrawColor(150, 150, 150); 
+                        if (zone === 'C14') {
+                             // Draw the internal thin vertical line between C13 and C14
+                             doc.line(xPos, yPos, xPos, yPos + zoneSize);
+                        } else if (zone === 'C15') {
+                            // Draw the internal thin vertical line between C15 and C16
+                            doc.line(xPos + zoneSize, yPos, xPos + zoneSize, yPos + zoneSize);
+                        }
+                    }
+
+                    // Shade based on count (BBGK Green gradient)
                     if (count > 0) {
-                        // Calculate shading: 255 - (min(count, 3) * 50) -> max 105 for 3+ touches
-                        // Blend more of the background color (white paper) to the green
-                        const shadeFactor = Math.min(count * 50, maxIntensity); 
-                        
-                        // Inverse Green blending (closer to white/light green for low counts, darker for high)
-                        // A simple way to get a gradient from light grey to BBGK Green:
-                        const fillR = Math.min(255, 255 - shadeFactor);
-                        const fillG = Math.min(255, 255 - shadeFactor); 
-                        const fillB = Math.min(255, 255 - shadeFactor); 
-                        
-                        // We use the raw RGB values of BBGK_GREEN and blend with white
                         const blendRatio = Math.min(count / 5.0, 1.0); // 5 touches max saturation
+                        
+                        // Blending the BBGK Green with white (255)
                         const blendedR = 255 - Math.floor((255 - rG) * blendRatio);
                         const blendedG = 255 - Math.floor((255 - gG) * blendRatio);
                         const blendedB = 255 - Math.floor((255 - bG) * blendRatio);
@@ -916,7 +970,7 @@
                         doc.setFillColor(blendedR, blendedG, blendedB); 
                         doc.rect(xPos, yPos, zoneSize, zoneSize, 'F');
                         
-                        // Text color: Black if light background, White if dark background (simple check)
+                        // Text color: Black if light background (low ratio), White if dark background (high ratio)
                         doc.setTextColor(blendRatio > 0.6 ? 255 : TEXT_DARK[0], blendRatio > 0.6 ? 255 : TEXT_DARK[1], blendRatio > 0.6 ? 255 : TEXT_DARK[2]);
                         
                     } else {
@@ -936,11 +990,8 @@
 
                 y = gridStartY + gridTotalSize + 10; // Move Y below the grid
 
-                // --- 6. Game Notes / Observations (NEW SECTION) ---
-                if (y > 250) { // Check if we need a new page
-                    doc.addPage();
-                    y = 20;
-                }
+                // --- 6. Game Notes / Observations ---
+                // This section now follows the map on the new page, and should fit easily.
                 
                 doc.setFontSize(14);
                 doc.setFont(FONT_FAMILY, 'bold');
@@ -955,15 +1006,16 @@
                 // Draw a box for the comments
                 const commentBoxX = 10;
                 const commentBoxWidth = 190;
-                const commentBoxHeight = 30;
+                
+                // Text wrapping
+                const comments = safeText(meta.comments);
+                const textLines = doc.splitTextToSize(comments, commentBoxWidth - 4);
+                const commentBoxHeight = Math.max(10, (textLines.length * 4) + 6); // Dynamically size box based on text
                 
                 doc.setDrawColor(BBGK_DARK[0], BBGK_DARK[1], BBGK_DARK[2]);
                 doc.rect(commentBoxX, y, commentBoxWidth, commentBoxHeight, 'S');
                 
                 // Add the comments text
-                const comments = safeText(meta.comments);
-                // Text wrapping
-                const textLines = doc.splitTextToSize(comments, commentBoxWidth - 4);
                 doc.text(textLines, commentBoxX + 2, y + 4);
                 
                 y += commentBoxHeight + 15;
@@ -972,7 +1024,8 @@
                 // --- Footer ---
                 doc.setFontSize(8);
                 doc.setTextColor(100, 100, 100);
-                doc.text(`Data Pack: GOLD | Generated: ${sessionData.timestamp.toLocaleString()} | bbgk.co.uk`, 105, 290, { align: 'center' });
+                // Footer now uses the dynamic page number (doc.internal.getNumberOfPages())
+                doc.text(`Data Pack: GOLD | Generated: ${sessionData.timestamp.toLocaleString()} | Page 2 of 2 | bbgk.co.uk`, 105, 290, { align: 'center' });
 
 
                 // Final save
@@ -1011,7 +1064,7 @@
                 if (zoneDiv) handleZoneClick('goals', zoneDiv.getAttribute('data-zone'), zoneDiv);
             });
             
-            // 4. Setup Contact Zones Listener
+            // 4. Setup Contact Zones Listener (Now correctly targets all 16 zones)
             document.getElementById('contact-zones-grid').addEventListener('click', (e) => {
                 const zoneDiv = e.target.closest('.contact-zone-item');
                 if (zoneDiv) handleContactZoneClick(zoneDiv.getAttribute('data-zone'));
