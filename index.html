@@ -198,10 +198,22 @@
 </head>
 <body class="p-4 sm:p-8">
 
-    <audio id="bg-music" autoplay>
+    <audio id="bg-music" loop>
         <source src="background_Music.mp3" type="audio/mpeg">
         Your browser does not support the audio element.
     </audio>
+
+    <div id="splash-screen" class="fixed inset-0 z-[2000] flex flex-col items-center justify-center text-white p-8 transition-opacity duration-500" style="background-color: var(--color-primary-bg);">
+        <div class="logo-placeholder w-20 h-20 text-4xl mb-6">BB</div>
+        <h1 class="text-8xl font-extrabold tracking-tight uppercase mb-4" style="color: var(--color-accent-green);">BBGK</h1>
+        <p class="text-2xl font-light text-gray-400 mb-8">Professional Goalkeeper Tracker</p>
+        
+        <p class="text-base font-medium tracking-wider mb-10" style="color: var(--color-cogniverse-teal);">Developed by CogniverseAi</p>
+
+        <button id="enter-app-btn" class="action-button px-10 py-4 text-xl shadow-2xl">
+            Enter Application & Start Session
+        </button>
+    </div>
     <div id="custom-error-modal" class="custom-modal">
         <div class="modal-content">
             <h3 id="modal-title" class="text-2xl font-bold mb-4 text-red-400">System Message</h3>
@@ -1049,8 +1061,31 @@
                 if (zoneDiv) handleContactZoneClick(zoneDiv.getAttribute('data-zone'));
             });
 
+            // 5. Setup Splash Screen Listener (The fix for both splash screen and autoplay)
+            const enterAppBtn = document.getElementById('enter-app-btn');
+            const splashScreen = document.getElementById('splash-screen');
 
-            // 5. Setup Control Buttons
+            enterAppBtn.addEventListener('click', () => {
+                const music = document.getElementById('bg-music');
+                
+                // 1. Attempt to play music (Satisfies browser requirement)
+                music.play()
+                    .then(() => {
+                        console.log("Background music started.");
+                    })
+                    .catch(error => {
+                        // This handles a missing file or another browser block (unlikely after user click)
+                        console.warn(`Warning: Could not play background audio: ${error.message}`);
+                    });
+
+                // 2. Hide splash screen with a slight visual transition
+                splashScreen.style.opacity = '0';
+                setTimeout(() => {
+                    splashScreen.style.display = 'none';
+                }, 500); // Duration matches CSS transition
+            });
+
+            // 6. Setup Control Buttons
             document.getElementById('generate-pdf-btn').addEventListener('click', generatePDFReport);
 
             document.getElementById('reset-btn').addEventListener('click', () => {
