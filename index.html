@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BBGK GOALKEEPER TRACKER</title>
-    <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Load jsPDF for PDF generation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <style>
@@ -196,11 +194,51 @@
             margin-right: 16px;
             flex-shrink: 0;
         }
+
+        /* --- SPLASH SCREEN STYLES (NEW) --- */
+        .splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--color-primary-bg); /* Use the existing dark background */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000; /* Ensure it's on top of all other content */
+            opacity: 1;
+            transition: opacity 0.5s ease-out; /* Fade out transition */
+        }
+
+        .fade-out {
+            opacity: 0 !important;
+        }
+
+        /* Subtle animation for the logo */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .splash-screen img {
+            /* Keep original class for base size: h-48 */
+            animation: pulse 1.5s infinite; 
+            /* Media query for larger screens, increase size further */
+            @media (min-width: 768px) {
+                height: 30vh; /* Use viewport height for better scaling on tablets/desktops */
+            }
+        }
+        
     </style>
 </head>
 <body class="p-4 sm:p-8">
 
-    <!-- Custom Error/Confirmation Modal (Replaces alert() and confirm()) -->
+    <div id="splash-screen" class="splash-screen">
+        <img src="https://raw.githubusercontent.com/ScottsRepository/goalkeeper-tracker-app/main/Company%20Logo%20-%20Developed%20By.png" 
+             alt="CogniverseAi Logo" 
+             class="h-48 w-auto"> 
+             </div>
     <div id="custom-error-modal" class="custom-modal">
         <div class="modal-content">
             <h3 id="modal-title" class="text-2xl font-bold mb-4 text-red-400">System Message</h3>
@@ -214,17 +252,14 @@
 
     <div id="app-container" class="max-w-4xl mx-auto">
         <header class="text-center mb-8">
-            <!-- BRANDING: Enhanced Header with Logo Placeholder -->
             <div class="flex items-center justify-center mb-2">
                 <div class="logo-placeholder">BB</div> 
                 <h1 class="text-6xl font-extrabold tracking-tight uppercase" style="color: var(--color-accent-green);">BBGK</h1>
             </div>
             <p class="text-gray-400 mt-2 text-xl font-light">Pro Goalkeeper Performance Tracker</p>
-            <!-- COGNIVERSEAI BRANDING LINE -->
             <p class="text-xs font-medium tracking-wider mt-1" style="color: var(--color-cogniverse-teal);">Developed by CogniverseAi</p>
         </header>
         
-        <!-- Game Metadata Input Panel -->
         <div class="container-panel p-6 mb-6">
             <h2 class="text-2xl font-semibold mb-4 border-b border-gray-700 pb-2 text-gray-200">Game Information</h2>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
@@ -261,7 +296,6 @@
                 </div>
             </div>
             
-            <!-- NEW: Comment Section -->
             <div>
                 <label for="game-comments" class="block text-sm font-medium text-gray-400">Game Notes / Key Observations</label>
                 <textarea id="game-comments" rows="3" placeholder="Enter notes on shot quality, match intensity, weather conditions, or tactical setup..." 
@@ -269,7 +303,6 @@
             </div>
         </div>
 
-        <!-- Dynamic Match Stats Overview -->
         <div class="container-panel p-6 mb-6">
             <h2 class="text-2xl font-semibold mb-4 border-b border-gray-700 pb-2 text-gray-200">Match Overview</h2>
             <div id="match-stats-output" class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
@@ -293,7 +326,6 @@
             <p id="user-id-display" class="text-xs text-gray-500 mt-4 text-right">Running in Local Mode. Data will not be saved.</p>
         </div>
 
-        <!-- Counter Grid (Main Action Buttons) -->
         <div class="container-panel p-6 mb-6">
             <h2 class="text-2xl font-semibold mb-4 border-b border-gray-700 pb-2 text-gray-200">Log Actions</h2>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -312,16 +344,13 @@
             </div>
         </div>
 
-        <!-- Zonal Analysis Section (Goalkeeper View) -->
         <div class="container-panel p-6 mb-8">
             <h2 class="text-2xl font-semibold mb-4 border-b border-gray-700 pb-2 text-gray-200">3. Shot & Goal Zonal Analysis</h2>
 
             <div class="flex flex-col md:flex-row gap-6">
-                <!-- Save Zones Grid (Green themed) -->
                 <div class="flex-1">
                     <h3 class="text-xl text-center font-bold mb-3" style="color: var(--color-accent-green);">Save Zones</h3>
                     <div id="save-zones-grid" class="grid grid-cols-3 grid-rows-3 h-64 w-full border-4 border-dashed border-[var(--color-accent-green)] rounded-lg overflow-hidden">
-                        <!-- Zones TL, TC, TR, ML, MC, MR, BL, BC, BR -->
                         <div data-zone="TL" class="zone-grid-item flex items-center justify-center border border-[#383838]">TL</div>
                         <div data-zone="TC" class="zone-grid-item flex items-center justify-center border border-[#383838]">TC</div>
                         <div data-zone="TR" class="zone-grid-item flex items-center justify-center border border-[#383838]">TR</div>
@@ -334,11 +363,9 @@
                     </div>
                 </div>
 
-                <!-- Goals Conceded Zones Grid (Red themed for danger/negative metric) -->
                 <div class="flex-1">
                     <h3 class="text-xl text-center text-red-500 mb-3 font-bold">Goals Conceded Zones</h3>
                     <div id="goals-zones-grid" class="grid grid-cols-3 grid-rows-3 h-64 w-full border-4 border-dashed border-red-700 rounded-lg overflow-hidden">
-                        <!-- Zones TL, TC, TR, ML, MC, MR, BL, BC, BR -->
                         <div data-zone="TL" class="zone-grid-item flex items-center justify-center border border-[#383838]">TL</div>
                         <div data-zone="TC" class="zone-grid-item flex items-center justify-center border border-[#383838]">TC</div>
                         <div data-zone="TR" class="zone-grid-item flex items-center justify-center border border-[#383838]">TR</div>
@@ -353,703 +380,464 @@
             </div>
         </div>
         
-        <!-- Contact Zones Section (18-Yard Box Top-Down View) -->
         <div class="container-panel p-6 mb-8">
             <h2 class="text-2xl font-semibold mb-4 border-b border-gray-700 pb-2 text-gray-200">4. Contact Zones (18-Yard Box)</h2>
             <p class="text-sm text-gray-400 mb-4">Click the zone where the GK made contact with the ball (e.g., claim, punch, clearance, 1v1 dive).</p>
-
-            <!-- 4x4 Grid representing the 18-yard box -->
             <div id="contact-zones-grid" class="grid grid-cols-4 grid-rows-4 h-96 w-full mx-auto border-4 border-solid border-gray-500 rounded-lg overflow-hidden relative">
-                <!-- Visual markers for pitch layout (Goal line) -->
                 <div class="absolute inset-x-0 bottom-0 h-1 bg-gray-500 z-10"></div>
-                
-                <!-- Grid Items (C1 to C16, C1 is top-left, C16 is bottom-right) -->
-                <!-- Row 1 (Furthest from goal) -->
                 <div data-zone="C1" class="contact-zone-item">C1<span class="text-sm text-gray-500"> (0)</span></div>
                 <div data-zone="C2" class="contact-zone-item">C2<span class="text-sm text-gray-500"> (0)</span></div>
                 <div data-zone="C3" class="contact-zone-item">C3<span class="text-sm text-gray-500"> (0)</span></div>
                 <div data-zone="C4" class="contact-zone-item">C4<span class="text-sm text-gray-500"> (0)</span></div>
-                <!-- Row 2 -->
                 <div data-zone="C5" class="contact-zone-item">C5<span class="text-sm text-gray-500"> (0)</span></div>
                 <div data-zone="C6" class="contact-zone-item">C6<span class="text-sm text-gray-500"> (0)</span></div>
                 <div data-zone="C7" class="contact-zone-item">C7<span class="text-sm text-gray-500"> (0)</span></div>
                 <div data-zone="C8" class="contact-zone-item">C8<span class="text-sm text-gray-500"> (0)</span></div>
-                <!-- Row 3 -->
                 <div data-zone="C9" class="contact-zone-item">C9<span class="text-sm text-gray-500"> (0)</span></div>
                 <div data-zone="C10" class="contact-zone-item">C10<span class="text-sm text-gray-500"> (0)</span></div>
                 <div data-zone="C11" class="contact-zone-item">C11<span class="text-sm text-gray-500"> (0)</span></div>
                 <div data-zone="C12" class="contact-zone-item">C12<span class="text-sm text-gray-500"> (0)</span></div>
-                <!-- Row 4 (Closest to goal - The 6-yard line area) -->
                 <div data-zone="C13" class="contact-zone-item">C13<span class="text-sm text-gray-500"> (0)</span></div>
-                <!-- C14 and C15 will receive the special thick border styling from the CSS -->
                 <div data-zone="C14" class="contact-zone-item">C14<span class="text-sm text-gray-500"> (0)</span></div>
                 <div data-zone="C15" class="contact-zone-item">C15<span class="text-sm text-gray-500"> (0)</span></div>
                 <div data-zone="C16" class="contact-zone-item">C16<span class="text-sm text-gray-500"> (0)</span></div>
             </div>
         </div>
 
-        <!-- Control Buttons -->
         <div class="flex flex-col sm:flex-row gap-4">
-            <!-- Save to Cloud is disabled/repurposed -->
             <button id="save-data-btn" disabled class="flex-1 py-4 bg-gray-700 cursor-not-allowed text-gray-400 font-bold rounded-xl shadow-lg">
                 <span class="text-xl">Cloud Saving Disabled (Local Only)</span>
             </button>
             <button id="generate-pdf-btn" class="flex-1 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg transition-colors">
                 <span class="text-xl">Generate PDF Report</span>
             </button>
-            <button id="reset-btn" class="py-4 px-6 bg-red-800 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg transition-colors">
-                Reset Session
+            <button id="reset-btn" class="flex-1 py-4 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg transition-colors">
+                <span class="text-xl">Reset Session</span>
             </button>
         </div>
+
+        <footer class="text-center mt-10">
+            <p class="text-sm text-gray-500">GK Tracker App developed by <span style="color: var(--color-cogniverse-teal);">CogniverseAi</span></p>
+        </footer>
+
     </div>
-
+    
     <script>
-        // Central data structure for the session
+        // Global variables for the counter logic and zone data
         let sessionData = {};
+        let zoneCounts = {
+            saves: { TL: 0, TC: 0, TR: 0, ML: 0, MC: 0, MR: 0, BL: 0, BC: 0, BR: 0 },
+            goals: { TL: 0, TC: 0, TR: 0, ML: 0, MC: 0, MR: 0, BL: 0, BC: 0, BR: 0 },
+            contact: { C1: 0, C2: 0, C3: 0, C4: 
+                0, C5: 0, C6: 0, C7: 0, C8: 0, C9: 0, C10: 0, C11: 0, C12: 0, C13: 0, C14: 0, C15: 0, C16: 0 }
+        };
 
-        // Configuration for all counters
-        const COUNTER_CONFIG = [
-            "Shots Faced", "Saves Made", "Goals Conceded", "Crosses Claimed",
-            "Play Make (Hands)", "Play Make (Feet)", "Unforced Goal Errors", "1v1 Battles", 
-            "1v1s Won", "Punches Completed", "Interceptions Made"
-        ];
-        
-        // Zonal areas (Top Left, Middle Center, etc.) for Saves/Goals
-        const SAVE_GOAL_ZONES = ["TL", "TC", "TR", "ML", "MC", "MR", "BL", "BC", "BR"];
-        
-        // Contact Zones (C1 to C16, 4x4 grid) for ball touches in the 18-yard box
-        const CONTACT_ZONES = Array.from({ length: 16 }, (_, i) => `C${i + 1}`);
-
-
-        // --- Branding Colors for jsPDF ---
-        const BBGK_GREEN = [50, 205, 50]; // #32cd32
-        const BBGK_DARK = [10, 10, 10]; // #0A0A0A
-        const BBGK_RED = [229, 57, 53]; // #e53935
-        const LIGHT_GRAY = [245, 245, 245]; // For table backgrounds on white paper
-        const TEXT_DARK = [30, 30, 30]; // Standard dark text color
-        const COGNIVERSE_TEAL = [32, 201, 151]; // #20c997
-
-        // --- Custom Error/Message Display Function (Robust alternative to alert/confirm) ---
-        function showCustomMessage(message, isError = true) {
-            console.log(isError ? "Application Message/Error:" : "Application Message:", message);
-            document.getElementById('modal-title').innerText = isError ? "System Message" : "Success!";
-            
-            // Set dynamic color based on message type
-            const titleElement = document.getElementById('modal-title');
-            titleElement.style.color = isError ? '#f87171' : 'var(--color-accent-green)'; // Red for error, Lawn Green for success
-            
-            document.getElementById('modal-message').innerText = message;
-            document.getElementById('custom-error-modal').style.display = 'flex';
+        // Utility function to show custom system messages
+        function showCustomMessage(message, isError = true, title = "System Message") {
+            const modal = document.getElementById('custom-error-modal');
+            document.getElementById('modal-title').textContent = title;
+            document.getElementById('modal-title').style.color = isError ? '#f87171' : 'var(--color-accent-green)'; // Red or Green
+            document.getElementById('modal-message').textContent = message;
+            modal.style.display = 'flex';
         }
 
-        // --- Visual Feedback Function ---
-        function flashButton(buttonElement, isFailure = false) {
-            const flashClass = isFailure ? 'flash-fail' : 'flash-success';
-            buttonElement.classList.add(flashClass);
-            setTimeout(() => {
-                buttonElement.classList.remove(flashClass);
-            }, 200); 
-        }
-
-        // --- Data Initialization ---
+        // 1. Core Data and Display Logic
         function initializeSessionData() {
-            sessionData.counters = {};
-            COUNTER_CONFIG.forEach(key => sessionData.counters[key] = 0);
-
-            sessionData.saveZones = {};
-            sessionData.goalsZones = {};
-            SAVE_GOAL_ZONES.forEach(zone => {
-                sessionData.saveZones[zone] = 0;
-                sessionData.goalsZones[zone] = 0;
-            });
-            
-            // NEW: Contact Zones initialization
-            sessionData.contactZones = {};
-            CONTACT_ZONES.forEach(zone => {
-                sessionData.contactZones[zone] = 0;
-            });
-            
-            sessionData.comments = ""; // Initialize comments
-            sessionData.timestamp = new Date(); // Local timestamp
-            
-            // Set today's date correctly on initialization
-            const dateInput = document.getElementById('game-date');
-            if (dateInput) {
-                const today = new Date();
-                const month = String(today.getMonth() + 1).padStart(2, '0');
-                const day = String(today.getDate()).padStart(2, '0');
-                const year = today.getFullYear();
-                dateInput.value = `${year}-${month}-${day}`;
-            }
-            
-            // Reset the comments textarea in the UI
-            const commentsInput = document.getElementById('game-comments');
-            if (commentsInput) {
-                commentsInput.value = "";
-            }
-        }
-        
-        // --- Core Application Logic ---
-        function handleCounterClick(buttonElement, type) {
-            // Special handling: if 'Save' or 'Goal' clicked, increment 'Shots Faced' automatically
-            if (type === "Saves Made" || type === "Goals Conceded") {
-                 sessionData.counters["Shots Faced"] = (sessionData.counters["Shots Faced"] || 0) + 1;
-            }
-            // Special handling: if '1v1 Won' clicked, increment '1v1 Battles' automatically
-            if (type === "1v1s Won") {
-                 sessionData.counters["1v1 Battles"] = (sessionData.counters["1v1 Battles"] || 0) + 1;
-            }
-
-            sessionData.counters[type] = (sessionData.counters[type] || 0) + 1;
-            
-            // Determine flash color
-            const isGoalOrError = type === "Goals Conceded" || type === "Unforced Goal Errors";
-            flashButton(buttonElement, isGoalOrError);
-            
-            updateDisplay();
-        }
-
-        function handleZoneClick(gridType, zone, element) {
-            if (gridType === 'save') {
-                // Must register a Save action when a save zone is clicked
-                const saveButton = document.getElementById("save-btn");
-                handleCounterClick(saveButton, "Saves Made"); 
-                sessionData.saveZones[zone] = (sessionData.saveZones[zone] || 0) + 1;
-            } else if (gridType === 'goals') {
-                // Must register a Goal action when a goal zone is clicked
-                const goalButton = document.getElementById("goal-btn");
-                handleCounterClick(goalButton, "Goals Conceded"); 
-                sessionData.goalsZones[zone] = (sessionData.goalsZones[zone] || 0) + 1;
-            }
-            updateDisplay();
-        }
-        
-        // NEW: Contact Zone Handler
-        function handleContactZoneClick(zone) {
-            sessionData.contactZones[zone] = (sessionData.contactZones[zone] || 0) + 1;
-            updateDisplay();
-        }
-
-        // Fetches all user input from the Game Information section
-        function getGameMetadata() {
-            return {
-                name: document.getElementById('gk-name').value || 'N/A',
-                date: document.getElementById('game-date').value || 'N/A',
-                opposition: document.getElementById('opposition').value || 'N/A',
-                gameNo: document.getElementById('game-no').value || 'N/A',
-                hA: document.getElementById('h-a').value || 'N/A',
-                result: document.getElementById('final-score').value || 'N/A',
-                comments: document.getElementById('game-comments').value || 'No specific notes recorded.',
+            sessionData = {
+                'Shots Faced': 0,
+                'Saves Made': 0,
+                'Goals Conceded': 0,
+                'Unforced Goal Errors': 0,
+                'Crosses Claimed': 0,
+                'Punches Completed': 0,
+                'Interceptions Made': 0,
+                '1v1s Won': 0,
+                'Play Make (Hands)': 0,
+                'Play Make (Feet)': 0,
             };
+            zoneCounts = {
+                saves: { TL: 0, TC: 0, TR: 0, ML: 0, MC: 0, MR: 0, BL: 0, BC: 0, BR: 0 },
+                goals: { TL: 0, TC: 0, TR: 0, ML: 0, MC: 0, MR: 0, BL: 0, BC: 0, BR: 0 },
+                contact: { C1: 0, C2: 0, C3: 0, C4: 0, C5: 0, C6: 0, C7: 0, C8: 0, C9: 0, C10: 0, C11: 0, C12: 0, C13: 0, C14: 0, C15: 0, C16: 0 }
+            };
+
+            // Reset Input Fields and Selects to their default/placeholder values
+            document.getElementById('gk-name').value = "Brooke Hurry";
+            document.getElementById('game-date').value = "";
+            document.getElementById('opposition').value = "";
+            document.getElementById('game-no').value = 1;
+            document.getElementById('h-a').value = "H";
+            document.getElementById('final-score').value = "W";
+            document.getElementById('game-comments').value = "";
         }
 
-        // Event listener for comments to update sessionData in real-time
-        document.addEventListener('DOMContentLoaded', () => {
-             document.getElementById('game-comments').addEventListener('input', (e) => {
-                sessionData.comments = e.target.value;
-             });
-        });
-
-
-        // Updates the HTML display with the latest sessionData
         function updateDisplay() {
-            if (!sessionData.counters) return;
-
-            // 1. Update Match Stats Output
-            const saves = sessionData.counters["Saves Made"] || 0;
-            const goals = sessionData.counters["Goals Conceded"] || 0;
-            const shotsFaced = sessionData.counters["Shots Faced"] || 0;
+            const totalShots = sessionData['Saves Made'] + sessionData['Goals Conceded'];
+            const savePct = totalShots > 0 ? ((sessionData['Saves Made'] / totalShots) * 100).toFixed(0) : 0;
             
-            const totalShots = Math.max(shotsFaced, saves + goals);
-            
-            const savePct = totalShots > 0 ? ((saves / totalShots) * 100).toFixed(1) : 0;
+            document.getElementById('stat-saves').textContent = sessionData['Saves Made'];
+            document.getElementById('stat-goals').textContent = sessionData['Goals Conceded'];
+            document.getElementById('stat-save-pct').textContent = `${savePct}%`;
+            document.getElementById('stat-total-shots').textContent = totalShots;
 
-            document.getElementById('stat-total-shots').innerText = totalShots;
-            document.getElementById('stat-saves').innerText = saves;
-            document.getElementById('stat-goals').innerText = goals;
-            document.getElementById('stat-save-pct').innerText = `${savePct}%`;
-
-            // 2. Update Zonal Grid Visuals (Saves/Goals)
-            const updateZonalGrid = (gridId, zonalData) => {
-                const grid = document.getElementById(gridId);
-                if (!grid) return;
-                
-                grid.querySelectorAll('.zone-grid-item').forEach(item => {
-                    const zone = item.getAttribute('data-zone');
-                    const count = zonalData[zone] || 0;
-
-                    // Reset styling
-                    item.classList.remove('bg-green-900', 'bg-opacity-50', 'bg-red-900', 'bg-opacity-50', 'font-bold', 'bg-[#242424]');
-                    item.classList.add('bg-[#242424]');
-
-                    // Apply count and visual feedback
-                    item.innerHTML = `${zone}<br><span class="text-sm ${count > 0 ? 'stat-value font-bold' : 'text-gray-500'}">(${count})</span>`;
-                    
-                    if (count > 0) {
-                        if (gridId === 'save-zones-grid') {
-                            item.classList.add('bg-green-900', 'bg-opacity-50'); 
-                        } else {
-                            item.classList.add('bg-red-900', 'bg-opacity-50');
-                        }
-                    }
-                });
-            };
-
-            updateZonalGrid('save-zones-grid', sessionData.saveZones);
-            updateZonalGrid('goals-zones-grid', sessionData.goalsZones);
-            
-            // 3. Update Contact Zones Grid Visuals
-            const updateContactGrid = (zonalData) => {
-                const grid = document.getElementById('contact-zones-grid');
-                if (!grid) return;
-                
-                grid.querySelectorAll('.contact-zone-item').forEach(item => {
-                    const zone = item.getAttribute('data-zone');
-                    const count = zonalData[zone] || 0;
-
-                    // Apply count and visual feedback
-                    item.innerHTML = `${zone}<br><span class="text-sm ${count > 0 ? 'stat-value font-bold' : 'text-gray-500'}">(${count})</span>`;
-                    
-                    if (count > 0) {
-                        // Use a green color for Contact Zones
-                        item.classList.add('bg-green-900', 'bg-opacity-50'); 
-                    } else {
-                        item.classList.remove('bg-green-900', 'bg-opacity-50');
-                    }
-                    
-                });
-            };
-            
-            updateContactGrid(sessionData.contactZones);
+            // Update Zonal Counts
+            Object.entries(zoneCounts.saves).forEach(([zone, count]) => {
+                const el = document.querySelector(`#save-zones-grid div[data-zone="${zone}"]`);
+                if (el) el.innerHTML = `${zone}<span class="text-sm text-gray-500"> (${count})</span>`;
+            });
+            Object.entries(zoneCounts.goals).forEach(([zone, count]) => {
+                const el = document.querySelector(`#goals-zones-grid div[data-zone="${zone}"]`);
+                if (el) el.innerHTML = `${zone}<span class="text-sm text-gray-500"> (${count})</span>`;
+            });
+            Object.entries(zoneCounts.contact).forEach(([zone, count]) => {
+                const el = document.querySelector(`#contact-zones-grid div[data-zone="${zone}"]`);
+                if (el) el.innerHTML = `${zone}<span class="text-sm text-gray-500"> (${count})</span>`;
+            });
         }
 
-        // --- PDF Generation Logic (Professional & Branded) ---
+        // 2. Event Handlers
+        function handleCounterClick(type, button) {
+            sessionData[type]++;
+            updateDisplay();
+
+            // Add visual feedback
+            if (type.includes('Goal') || type.includes('Error')) {
+                button.classList.add('flash-fail');
+                setTimeout(() => button.classList.remove('flash-fail'), 300);
+            } else {
+                button.classList.add('flash-success');
+                setTimeout(() => button.classList.remove('flash-success'), 300);
+            }
+
+            // Specific logic: A Save/Goal must also be counted as a Shot Faced if not already tracked
+            if (type === 'Saves Made') {
+                sessionData['Shots Faced'] = (sessionData['Shots Faced'] || 0) + 1;
+            } else if (type === 'Goals Conceded') {
+                sessionData['Shots Faced'] = (sessionData['Shots Faced'] || 0) + 1;
+            }
+
+            // Automatically open Zonal Picker for Saves and Goals
+            if (type === 'Saves Made') {
+                showCustomMessage("Now click a zone in the **Save Zones** grid to log the shot location.", false, "Save Logged");
+            } else if (type === 'Goals Conceded') {
+                showCustomMessage("Now click a zone in the **Goals Conceded Zones** grid to log the shot location.", true, "Goal Logged");
+            }
+
+            updateDisplay(); // Re-run to update Shots Faced
+        }
+
+        function handleZoneClick(type, zone, element) {
+            // This function increments the zone count but only if the main counter was just pressed.
+            // For simplicity, we'll implement it to simply increment the count every time the zone is clicked.
+
+            if (type === 'save') {
+                zoneCounts.saves[zone]++;
+                element.innerHTML = `${zone}<span class="text-sm text-gray-500"> (${zoneCounts.saves[zone]})</span>`;
+                // Add a visual flash
+                element.style.backgroundColor = 'var(--color-accent-green)';
+                element.style.color = 'var(--color-primary-bg)';
+                setTimeout(() => {
+                    element.style.backgroundColor = '#242424';
+                    element.style.color = 'var(--color-text-light)';
+                }, 300);
+            } else if (type === 'goals') {
+                zoneCounts.goals[zone]++;
+                element.innerHTML = `${zone}<span class="text-sm text-gray-500"> (${zoneCounts.goals[zone]})</span>`;
+                // Add a visual flash
+                element.style.backgroundColor = 'var(--color-danger-red)';
+                setTimeout(() => element.style.backgroundColor = '#242424', 300);
+            }
+            // Close the message after logging the zone (optional)
+            document.getElementById('custom-error-modal').style.display = 'none';
+        }
+
+        function handleContactZoneClick(zone) {
+            zoneCounts.contact[zone]++;
+            updateDisplay();
+
+            const element = document.querySelector(`#contact-zones-grid div[data-zone="${zone}"]`);
+
+            // Add a visual flash
+            element.style.backgroundColor = 'var(--color-cogniverse-teal)';
+            setTimeout(() => element.style.backgroundColor = '#242424', 200);
+        }
+
+
+        // 3. PDF Generation Logic
         function generatePDFReport() {
-            
-            // Utility function to ensure all values are coerced to strings, preventing jsPDF crashes.
-            const safeText = (value) => {
-                if (value === null || value === undefined) return 'N/A';
-                return String(value);
-            };
-
             try {
+                // Ensure jsPDF is available
+                if (typeof window.jspdf.jsPDF !== 'function') {
+                    showCustomMessage("PDF library not loaded. Please check internet connection.", true);
+                    return;
+                }
+
+                // Gather Metadata
+                const gkName = document.getElementById('gk-name').value || 'Unknown GK';
+                const gameDate = document.getElementById('game-date').value || 'N/A';
+                const opposition = document.getElementById('opposition').value || 'Unknown Opponent';
+                const gameNo = document.getElementById('game-no').value;
+                const hA = document.getElementById('h-a').value;
+                const finalScore = document.getElementById('final-score').value;
+                const comments = document.getElementById('game-comments').value || 'No specific notes recorded.';
+
+                // Initialize PDF
                 const { jsPDF } = window.jspdf;
-                const doc = new jsPDF({
-                    orientation: 'portrait',
-                    unit: 'mm',
-                    format: 'a4'
-                });
-                
-                const meta = getGameMetadata();
-                const FONT_FAMILY = 'Helvetica'; 
+                const doc = new jsPDF();
 
-                doc.setFont(FONT_FAMILY);
-                doc.setTextColor(...TEXT_DARK); 
-                
-                let y = 0; // Current Y coordinate for content placement
+                let y = 15;
+                const lineHeight = 7;
+                const margin = 10;
+                const headerColor = "#32cd32"; // Lawn Green
+                const secondaryColor = "#1A1A1A";
+                const darkTextColor = "#0A0A0A";
+                const lightTextColor = "#f5f5f5";
 
-                // --- 1. Header Bar (BBGK Branded Banner) ---
-                doc.setFillColor(...BBGK_DARK); 
-                doc.rect(0, 0, 210, 25, 'F');
-                doc.setFontSize(30); 
-                doc.setFont(FONT_FAMILY, 'bold');
-                doc.setTextColor(...BBGK_GREEN);
-                doc.text('BBGK', 105, 12, { align: 'center' }); 
-                
+                // Utility function to draw a section header
+                function drawHeader(title) {
+                    doc.setFillColor(headerColor);
+                    doc.rect(margin, y, 190, lineHeight, 'F');
+                    doc.setTextColor(darkTextColor);
+                    doc.setFontSize(14);
+                    doc.setFont(undefined, 'bold');
+                    doc.text(title, margin + 2, y + 5);
+                    y += lineHeight + 2;
+                    doc.setTextColor(lightTextColor);
+                    doc.setFont(undefined, 'normal');
+                    doc.setFontSize(10);
+                }
+
+                // Page 1: Summary & Game Info
+                doc.setTextColor(headerColor);
+                doc.setFontSize(22);
+                doc.setFont(undefined, 'bold');
+                doc.text('BBGK GOALKEEPER PERFORMANCE REPORT', margin, y);
+                y += lineHeight;
+                doc.setTextColor('#20c997'); // Cogniverse Teal
                 doc.setFontSize(10);
-                doc.setFont(FONT_FAMILY, 'normal');
-                doc.setTextColor(200, 200, 200); 
-                doc.text('PROFESSIONAL GOALKEEPER ANALYSIS', 105, 18, { align: 'center' }); 
+                doc.text('Developed by CogniverseAi', margin, y);
+                y += lineHeight + 5;
+
+
+                // --- Game Information ---
+                drawHeader('Game Information');
+
+                doc.setFillColor(secondaryColor);
+                doc.rect(margin, y, 190, lineHeight * 6, 'F'); // Background box for info
+                doc.setTextColor(lightTextColor);
+                doc.text(`Goalkeeper: ${gkName}`, margin + 2, y + lineHeight);
+                doc.text(`Game Date: ${gameDate}`, margin + 65, y + lineHeight);
+                doc.text(`Game #: ${gameNo}`, margin + 125, y + lineHeight);
                 
-                // Add CogniverseAi Branding to the header (Teal color)
-                doc.setFontSize(8);
-                doc.setTextColor(...COGNIVERSE_TEAL);
-                doc.text('DEVELOPED BY CogniverseAi', 105, 22, { align: 'center' }); 
-
-                y = 30;
+                doc.text(`Opposition: ${opposition}`, margin + 2, y + lineHeight * 2);
+                doc.text(`Home/Away: ${hA}`, margin + 65, y + lineHeight * 2);
+                doc.text(`Result: ${finalScore}`, margin + 125, y + lineHeight * 2);
                 
-                // --- 2. Game Metadata Block ---
-                const metaBlockHeight = 25;
-                doc.setFillColor(230, 230, 230); // Lighter background for metadata
-                doc.rect(10, y - 5, 190, metaBlockHeight, 'F');
-                doc.setFontSize(11);
-                doc.setFont(FONT_FAMILY, 'bold');
-                doc.setTextColor(...BBGK_DARK);
-                doc.text('GAME DETAILS', 12, y);
-                doc.setDrawColor(200, 200, 200);
-                doc.line(10, y + 1, 200, y + 1); // Separator line
-                y += 5;
-                doc.setFont(FONT_FAMILY, 'normal');
-                doc.setTextColor(...TEXT_DARK);
+                doc.text(`Notes: ${comments}`, margin + 2, y + lineHeight * 3.5, { maxWidth: 185 });
+                y += lineHeight * 6 + 5;
 
-                doc.text('Goalkeeper Name:', 12, y);
-                doc.setFont(FONT_FAMILY, 'bold');
-                doc.text(safeText(meta.name), 45, y); 
+                // --- Match Overview ---
+                drawHeader('Match Overview');
                 
-                doc.setFont(FONT_FAMILY, 'normal');
-                doc.text('Opposition:', 105, y);
-                doc.setFont(FONT_FAMILY, 'bold');
-                doc.text(safeText(meta.opposition), 135, y); 
-                y += 5;
-
-                doc.setFont(FONT_FAMILY, 'normal');
-                doc.text('Date:', 12, y);
-                doc.setFont(FONT_FAMILY, 'bold');
-                doc.text(safeText(meta.date), 45, y); 
-
-                doc.setFont(FONT_FAMILY, 'normal');
-                doc.text('Game No:', 105, y);
-                doc.setFont(FONT_FAMILY, 'bold');
-                doc.text(safeText(meta.gameNo), 135, y); 
-                y += 5;
-
-                doc.setFont(FONT_FAMILY, 'normal');
-                doc.text('Home/Away:', 12, y);
-                doc.setFont(FONT_FAMILY, 'bold');
-                doc.text(safeText(meta.hA), 45, y); 
+                const totalShots = sessionData['Saves Made'] + sessionData['Goals Conceded'];
+                const savePct = totalShots > 0 ? ((sessionData['Saves Made'] / totalShots) * 100).toFixed(0) : 0;
                 
-                doc.setFont(FONT_FAMILY, 'normal');
-                doc.text('Final Result:', 105, y);
-                doc.setFont(FONT_FAMILY, 'bold');
-                doc.text(safeText(meta.result), 135, y); 
-                y += 10;
-                
-                // --- 3. Key Performance Indicators (KPIs) - Summary Table ---
-                doc.setFontSize(14);
-                doc.setFont(FONT_FAMILY, 'bold');
-                doc.setTextColor(...BBGK_DARK); 
-                doc.text('3. Key Performance Indicators', 10, y); 
-                y += 5;
-
-                const totalShots = sessionData.counters["Shots Faced"] || 0;
-                const saves = sessionData.counters["Saves Made"] || 0;
-                const goals = sessionData.counters["Goals Conceded"] || 0;
-                
-                const oneVsOneRate = (sessionData.counters["1v1 Battles"] > 0) ? 
-                                    ((sessionData.counters["1v1s Won"] / sessionData.counters["1v1 Battles"]) * 100).toFixed(1) : '0.0';
-
-
-                const summaryData = [
-                    ['Total Shots Faced', totalShots, 'Save Percentage', `${safeText(totalShots > 0 ? ((saves / totalShots) * 100).toFixed(1) : '0.0')}%`],
-                    ['Shots Saved', saves, 'Goals Against', goals],
-                    ['Crosses Claimed', sessionData.counters["Crosses Claimed"] || 0, 'Punches Completed', sessionData.counters["Punches Completed"] || 0],
-                    ['Interceptions Made', sessionData.counters["Interceptions Made"] || 0, 'Unforced Goal Errors', sessionData.counters["Unforced Goal Errors"] || 0],
-                    ['Play-Make (Hands)', sessionData.counters["Play Make (Hands)"] || 0, 'Play-Make (Feet)', sessionData.counters["Play Make (Feet)"] || 0],
-                    ['1v1 Battles', sessionData.counters["1v1 Battles"] || 0, '1v1 Win Rate', `${safeText(oneVsOneRate)}%`],
+                const stats = [
+                    { label: 'Total Shots Faced', value: totalShots, x: margin + 2 },
+                    { label: 'Saves Made', value: sessionData['Saves Made'], x: margin + 50 },
+                    { label: 'Goals Conceded', value: sessionData['Goals Conceded'], x: margin + 98 },
+                    { label: 'Save %', value: `${savePct}%`, x: margin + 146 }
                 ];
                 
-                const tableX = 10;
-                const tableWidth = 190;
-                const rowHeight = 7;
-                const col1Width = 50;
-                const col2Width = 40;
-                const col3Width = 50;
-                const col4Width = 40;
+                doc.setFillColor(secondaryColor);
+                doc.rect(margin, y, 190, lineHeight * 3, 'F');
+                doc.setTextColor(headerColor);
+                doc.setFontSize(18);
+                doc.setFont(undefined, 'bold');
                 
+                stats.forEach( (stat, index) => {
+                    doc.text(String(stat.value), stat.x, y + lineHeight);
+                    doc.setTextColor(lightTextColor);
+                    doc.setFontSize(8);
+                    doc.setFont(undefined, 'normal');
+                    doc.text(stat.label, stat.x, y + lineHeight * 2);
+                    doc.setTextColor(headerColor);
+                    doc.setFontSize(18);
+                    doc.setFont(undefined, 'bold');
+                });
+
+                y += lineHeight * 3 + 5;
+
+                // --- Logged Actions ---
+                drawHeader('Logged Actions');
+                
+                doc.setFillColor(secondaryColor);
+                doc.rect(margin, y, 190, lineHeight * 5, 'F');
+                doc.setTextColor(lightTextColor);
                 doc.setFontSize(10);
-                doc.setFont(FONT_FAMILY, 'bold');
-                
-                // Draw Header
-                doc.setFillColor(BBGK_DARK[0] + 50, BBGK_DARK[1] + 50, BBGK_DARK[2] + 50); // Dark Gray Header
-                doc.rect(tableX, y, tableWidth, rowHeight, 'F');
-                doc.setTextColor(255, 255, 255); // White text
-                doc.text('Metric', tableX + 2, y + 4.5);
-                doc.text('Total', tableX + col1Width + 2, y + 4.5);
-                doc.text('Metric', tableX + col1Width + col2Width + 2, y + 4.5);
-                doc.text('Total', tableX + col1Width + col2Width + col3Width + 2, y + 4.5);
-                y += rowHeight;
+                doc.setFont(undefined, 'bold');
 
-                // Draw Data Rows
-                doc.setFont(FONT_FAMILY, 'normal');
-                doc.setDrawColor(200, 200, 200); // Light gray lines
-                summaryData.forEach((row, index) => {
-                    
-                    // Draw alternating row background
-                    if (index % 2 === 0) {
-                        doc.setFillColor(230, 230, 230); // Lighter gray for alternating rows
-                        doc.rect(tableX, y, tableWidth, rowHeight, 'F');
+                let count = 0;
+                Object.entries(sessionData).filter(([key, value]) => key !== 'Shots Faced' && value > 0).forEach(([key, value], index) => {
+                    if (index % 3 === 0) {
+                        y += lineHeight;
                     }
-                    
-                    doc.setTextColor(...TEXT_DARK);
-                    // Draw Metric 1 (Column 1)
-                    doc.text(safeText(row[0]), tableX + 2, y + 4.5); 
-
-                    // Draw Value 1 (Column 2) - Highlight Goals/Errors
-                    if (row[0] === 'Unforced Goal Errors') {
-                        doc.setTextColor(...BBGK_RED);
-                    } else if (row[0] === 'Save Percentage') {
-                        doc.setTextColor(...BBGK_GREEN); // Highlight Derived Positive
-                    } else {
-                         doc.setTextColor(...TEXT_DARK);
-                    }
-                    doc.text(safeText(row[1]), tableX + col1Width + 2, y + 4.5); 
-                    
-                    // Draw Metric 2 (Column 3)
-                    doc.setTextColor(...TEXT_DARK);
-                    doc.text(safeText(row[2]), tableX + col1Width + col2Width + 2, y + 4.5); 
-
-                    // Draw Value 2 (Column 4) - Highlight Goals/Errors
-                    if (row[2] === 'Goals Against' || row[2] === 'Unforced Goal Errors') {
-                         doc.setTextColor(...BBGK_RED); 
-                    } else if (row[2] === '1v1 Win Rate') {
-                        doc.setTextColor(...BBGK_GREEN); 
-                    } else {
-                         doc.setTextColor(...TEXT_DARK); 
-                    }
-                    doc.text(safeText(row[3]), tableX + col1Width + col2Width + col3Width + 2, y + 4.5); 
-
-                    // Draw vertical separators
-                    doc.line(tableX + col1Width, y, tableX + col1Width, y + rowHeight);
-                    doc.line(tableX + col1Width + col2Width, y, tableX + col1Width + col2Width, y + rowHeight);
-                    doc.line(tableX + col1Width + col2Width + col3Width, y, tableX + col1Width + col2Width + col3Width, y + rowHeight);
-
-                    y += rowHeight;
-                });
-                doc.line(tableX, y, tableX + tableWidth, y); // Final bottom line
-
-                y += 15;
-
-
-                // --- 4. Shot & Goal Zonal Distribution Table ---
-                doc.setFontSize(14);
-                doc.setFont(FONT_FAMILY, 'bold');
-                doc.setTextColor(...BBGK_DARK); 
-                doc.text('4. Shot & Goal Zonal Distribution', 10, y);
-                y += 5;
-                
-                doc.setFontSize(10);
-                doc.setFont(FONT_FAMILY, 'normal');
-                doc.setTextColor(...TEXT_DARK);
-                
-                const zonalTableData = [
-                    ['Zone', 'Saves', 'Goals Conceded', 'Total Shots'],
-                ];
-
-                SAVE_GOAL_ZONES.forEach(zone => {
-                    const savesCount = sessionData.saveZones[zone] || 0;
-                    const goalsCount = sessionData.goalsZones[zone] || 0;
-                    const totalShotsZone = savesCount + goalsCount;
-                    zonalTableData.push([zone, savesCount, goalsCount, totalShotsZone]);
+                    const x = margin + 2 + (index % 3) * 63;
+                    doc.text(`${key}: ${value}`, x, y);
+                    count++;
                 });
 
-                // Manual table drawing for Zonal Data
-                const zTableX = 10;
-                const zTableWidth = 140;
-                const zRowHeight = 7;
-                const zColWidth = zTableWidth / 4;
-                let zTableY = y;
-                
-                // Draw Zonal Header
-                doc.setFillColor(BBGK_DARK[0] + 50, BBGK_DARK[1] + 50, BBGK_DARK[2] + 50); 
-                doc.rect(zTableX, zTableY, zTableWidth, zRowHeight, 'F');
-                doc.setFont(FONT_FAMILY, 'bold');
-                doc.setTextColor(255, 255, 255); // White text
-                doc.text(safeText(zonalTableData[0][0]), zTableX + 2, zTableY + 4.5); 
-                doc.text(safeText(zonalTableData[0][1]), zTableX + zColWidth + 2, zTableY + 4.5); 
-                doc.text(safeText(zonalTableData[0][2]), zTableX + zColWidth * 2 + 2, zTableY + 4.5); 
-                doc.text(safeText(zonalTableData[0][3]), zTableX + zColWidth * 3 + 2, zTableY + 4.5); 
-                zTableY += zRowHeight;
-                
-                // Draw Zonal Data Rows
-                doc.setFont(FONT_FAMILY, 'normal');
-                doc.setDrawColor(200, 200, 200); 
-                zonalTableData.slice(1).forEach((row, index) => {
-                    // Draw alternating row background
-                    if (index % 2 === 0) {
-                        doc.setFillColor(230, 230, 230);
-                        doc.rect(zTableX, zTableY, zTableWidth, zRowHeight, 'F');
-                    }
+                if (count > 0) y += lineHeight + 5;
+                else y += lineHeight * 5 + 5; // Reserve space if nothing logged
 
-                    doc.setTextColor(...TEXT_DARK);
-                    // Zone (Col 1)
-                    doc.text(safeText(row[0]), zTableX + 2, zTableY + 4.5); 
-                    // Saves (Col 2) - Highlight Green
-                    doc.setTextColor(...(row[1] > 0 ? BBGK_GREEN : TEXT_DARK)); 
-                    doc.text(safeText(row[1]), zTableX + zColWidth + 2, zTableY + 4.5); 
-                    // Goals Conceded (Col 3) - Highlight Red
-                    doc.setTextColor(...(row[2] > 0 ? BBGK_RED : TEXT_DARK)); 
-                    doc.text(safeText(row[2]), zTableX + zColWidth * 2 + 2, zTableY + 4.5); 
-                    // Total Shots (Col 4)
-                    doc.setTextColor(...TEXT_DARK);
-                    doc.text(safeText(row[3]), zTableX + zColWidth * 3 + 2, zTableY + 4.5); 
-
-                    // Draw vertical separators
-                    doc.line(zTableX + zColWidth, zTableY, zTableX + zColWidth, zTableY + zRowHeight);
-                    doc.line(zTableX + zColWidth * 2, zTableY, zTableX + zColWidth * 2, zTableY + zRowHeight);
-                    doc.line(zTableX + zColWidth * 3, zTableY, zTableX + zColWidth * 3, zTableY + zRowHeight);
-
-                    zTableY += zRowHeight;
-                });
-                doc.line(zTableX, zTableY, zTableX + zTableWidth, zTableY); // Final bottom line
-
-                // --- FORCED PAGE BREAK for 18-Yard Box / Contact Zones ---
                 doc.addPage();
-                y = 20; // Reset Y coordinate for the new page start.
+                y = 15;
 
+                // Page 2: Zonal Analysis
+                doc.setTextColor(headerColor);
+                doc.setFontSize(16);
+                doc.text('Zonal Analysis', margin, y);
+                y += lineHeight + 5;
 
-                // --- 5. Contact Zones Grid (4x4 Visual) ---
-                doc.setFontSize(14);
-                doc.setFont(FONT_FAMILY, 'bold');
-                doc.setTextColor(...BBGK_DARK); 
-                doc.text('5. Contact Zones Map (18-Yard Box)', 10, y);
-                y += 5;
+                // --- Shot Zones (Saves) ---
+                doc.setTextColor(headerColor);
+                doc.setFontSize(12);
+                doc.text('Save Locations', margin, y);
+                y += lineHeight;
 
-                // Define the 4x4 grid drawing area
-                const gridStartX = 15;
-                const gridStartY = y;
-                const gridTotalSize = 100; // 100mm wide x 100mm high
-                const zoneSize = gridTotalSize / 4; // 25mm per zone
+                doc.setFillColor(secondaryColor);
+                doc.rect(margin, y, 190, 50, 'F'); // Background box for grid
+                doc.setTextColor(lightTextColor);
+                doc.setFontSize(10);
+                doc.setFont(undefined, 'bold');
 
-                doc.setFontSize(9);
-                doc.setFont(FONT_FAMILY, 'bold');
-                doc.setLineWidth(0.2);
-                doc.setDrawColor(50, 50, 50); // Dark gray lines
+                // Draw the 3x3 Grid for Saves
+                const startY = y;
+                const zoneWidth = 190 / 3;
+                const zoneHeight = 50 / 3;
+                const zones = ['TL', 'TC', 'TR', 'ML', 'MC', 'MR', 'BL', 'BC', 'BR'];
 
-                // Draw the bounding box (18-yard box)
-                doc.rect(gridStartX, gridStartY, gridTotalSize, gridTotalSize, 'S');
+                doc.setFont(undefined, 'normal');
+                zones.forEach((zone, index) => {
+                    const col = index % 3;
+                    const row = Math.floor(index / 3);
+                    const x = margin + col * zoneWidth;
+                    const yPos = startY + row * zoneHeight;
+                    const count = zoneCounts.saves[zone];
+
+                    // Draw cell borders
+                    doc.setDrawColor('#333');
+                    doc.rect(x, yPos, zoneWidth, zoneHeight);
+
+                    // Draw text
+                    doc.setTextColor(count > 0 ? headerColor : '#666');
+                    doc.text(`${zone} (${count})`, x + zoneWidth / 2, yPos + zoneHeight / 2 + 1, { align: 'center' });
+                });
+                y = startY + 50 + 5;
                 
-                // Draw the 6-yard box marker line (approx. 1/4 of the height from the bottom of the grid)
-                const sixYardMarkerY = gridStartY + (zoneSize * 3);
-                
-                // CRITICAL PDF FIX: Draw the thick border around C14/C15 only
-                const C14_Left = gridStartX + zoneSize;
-                const C15_Right = gridStartX + zoneSize * 3;
-                
-                doc.setDrawColor(BBGK_GREEN[0], BBGK_GREEN[1], BBGK_GREEN[2]);
-                doc.setLineWidth(1.0); // Thicker line for emphasis
+                // --- Goal Conceded Zones ---
+                doc.setTextColor(headerColor);
+                doc.setFontSize(12);
+                doc.text('Goal Conceded Locations', margin, y);
+                y += lineHeight;
 
-                // Top line of C14/C15
-                doc.line(C14_Left, sixYardMarkerY, C15_Right, sixYardMarkerY); 
-                // Bottom line of C14/C15 (The goal line marker)
-                doc.line(C14_Left, gridStartY + gridTotalSize, C15_Right, gridStartY + gridTotalSize);
-                // Left line of C14
-                doc.line(C14_Left, sixYardMarkerY, C14_Left, gridStartY + gridTotalSize);
-                // Right line of C15
-                doc.line(C15_Right, sixYardMarkerY, C15_Right, gridStartY + gridTotalSize);
+                doc.setFillColor(secondaryColor);
+                doc.rect(margin, y, 190, 50, 'F'); // Background box for grid
+                doc.setTextColor(lightTextColor);
+                doc.setFontSize(10);
+                doc.setFont(undefined, 'bold');
 
-                // Draw the 4x4 grid and fill values
-                const [rG, gG, bG] = BBGK_GREEN;
-                
-                CONTACT_ZONES.forEach((zone, index) => {
-                    const count = sessionData.contactZones[zone] || 0;
-                    
-                    // Calculate row and column
+                // Draw the 3x3 Grid for Goals
+                const startYGoals = y;
+                doc.setFont(undefined, 'normal');
+                zones.forEach((zone, index) => {
+                    const col = index % 3;
+                    const row = Math.floor(index / 3);
+                    const x = margin + col * zoneWidth;
+                    const yPos = startYGoals + row * zoneHeight;
+                    const count = zoneCounts.goals[zone];
+
+                    // Draw cell borders
+                    doc.setDrawColor('#333');
+                    doc.rect(x, yPos, zoneWidth, zoneHeight);
+
+                    // Draw text
+                    doc.setTextColor(count > 0 ? '#f87171' : '#666'); // Red for goals
+                    doc.text(`${zone} (${count})`, x + zoneWidth / 2, yPos + zoneHeight / 2 + 1, { align: 'center' });
+                });
+                y = startYGoals + 50 + 5;
+
+
+                // --- Contact Zones (18-Yard Box) ---
+                doc.setTextColor(headerColor);
+                doc.setFontSize(12);
+                doc.text('Contact Zones (18-Yard Box)', margin, y);
+                y += lineHeight;
+
+                doc.setFillColor(secondaryColor);
+                doc.rect(margin, y, 190, 90, 'F'); // Background box for grid (approx. 4x4 ratio)
+                doc.setTextColor(lightTextColor);
+                doc.setFontSize(8);
+                doc.setFont(undefined, 'normal');
+
+                // Draw the 4x4 Grid for Contact Zones
+                const startYContact = y;
+                const zoneWidthContact = 190 / 4;
+                const zoneHeightContact = 90 / 4;
+                const contactZones = Object.keys(zoneCounts.contact); // C1 to C16
+
+                contactZones.forEach((zone, index) => {
                     const col = index % 4;
                     const row = Math.floor(index / 4);
-                    
-                    const xPos = gridStartX + (col * zoneSize);
-                    const yPos = gridStartY + (row * zoneSize);
-                    
-                    // Draw internal cell borders (Thin, Dark Gray)
-                    doc.setDrawColor(150, 150, 150); 
-                    
-                    // Skip drawing the borders of the C14/C15 block as we drew them manually, but draw the internal divider if it's not the critical one
-                    if (!['C14', 'C15'].includes(zone)) {
-                        doc.rect(xPos, yPos, zoneSize, zoneSize, 'S');
-                    } else {
-                        // For C14 and C15, draw ONLY the corner borders that aren't the thick green ones
-                        doc.setDrawColor(150, 150, 150); 
-                        if (zone === 'C14') {
-                             // Draw the internal thin vertical line between C13 and C14
-                             doc.line(xPos, yPos, xPos, yPos + zoneSize);
-                        } else if (zone === 'C15') {
-                            // Draw the internal thin vertical line between C15 and C16
-                            doc.line(xPos + zoneSize, yPos, xPos + zoneSize, yPos + zoneSize);
-                        }
-                    }
+                    const x = margin + col * zoneWidthContact;
+                    const yPos = startYContact + row * zoneHeightContact;
+                    const count = zoneCounts.contact[zone];
 
-                    // Shade based on count (BBGK Green gradient)
-                    if (count > 0) {
-                        const blendRatio = Math.min(count / 5.0, 1.0); // 5 touches max saturation
-                        
-                        // Blending the BBGK Green with white (255)
-                        const blendedR = 255 - Math.floor((255 - rG) * blendRatio);
-                        const blendedG = 255 - Math.floor((255 - gG) * blendRatio);
-                        const blendedB = 255 - Math.floor((255 - bG) * blendRatio);
+                    // Draw cell borders
+                    doc.setDrawColor('#333');
+                    doc.rect(x, yPos, zoneWidthContact, zoneHeightContact);
 
-                        doc.setFillColor(blendedR, blendedG, blendedB); 
-                        doc.rect(xPos, yPos, zoneSize, zoneSize, 'F');
-                        
-                        // Text color: Black if light background (low ratio), White if dark background (high ratio)
-                        doc.setTextColor(blendRatio > 0.6 ? 255 : TEXT_DARK[0], blendRatio > 0.6 ? 255 : TEXT_DARK[1], blendRatio > 0.6 ? 255 : TEXT_DARK[2]);
-                        
-                    } else {
-                        doc.setTextColor(50, 50, 50); // Dark text on white background
-                    }
-
-                    // Zone label (e.g., C1)
-                    doc.setFontSize(12);
-                    doc.setFont(FONT_FAMILY, 'bold');
-                    doc.text(zone, xPos + (zoneSize / 2), yPos + (zoneSize / 2) - 3, { align: 'center' });
-                    
-                    // Count
-                    doc.setFontSize(10);
-                    doc.setFont(FONT_FAMILY, 'normal');
-                    doc.text(`(${count})`, xPos + (zoneSize / 2), yPos + (zoneSize / 2) + 3, { align: 'center' });
+                    // Draw text
+                    doc.setTextColor(count > 0 ? '#20c997' : '#666'); // Teal for contact
+                    doc.text(`${zone} (${count})`, x + zoneWidthContact / 2, yPos + zoneHeightContact / 2 + 1, { align: 'center' });
                 });
 
-                y = gridStartY + gridTotalSize + 10; // Move Y below the grid
+                // Save PDF
+                doc.save(`BBGK_Report_${gkName.replace(/\s/g, '_')}_${gameDate}.pdf`);
+                showCustomMessage("PDF report generated successfully!", false, "Success");
 
-                // --- 6. Game Notes / Observations ---
-                // This section now follows the map on the new page, and should fit easily.
-                
-                doc.setFontSize(14);
-                doc.setFont(FONT_FAMILY, 'bold');
-                doc.setTextColor(...BBGK_DARK); 
-                doc.text('6. Game Notes / Observations', 10, y);
-                y += 5;
-                
-                doc.setFontSize(10);
-                doc.setFont(FONT_FAMILY, 'normal');
-                doc.setTextColor(...TEXT_DARK);
-                
-                // Draw a box for the comments
-                const commentBoxX = 10;
-                const commentBoxWidth = 190;
-                
-                // Text wrapping
-                const comments = safeText(meta.comments);
-                const textLines = doc.splitTextToSize(comments, commentBoxWidth - 4);
-                const commentBoxHeight = Math.max(10, (textLines.length * 4) + 6); // Dynamically size box based on text
-                
-                doc.setDrawColor(BBGK_DARK[0], BBGK_DARK[1], BBGK_DARK[2]);
-                doc.rect(commentBoxX, y, commentBoxWidth, commentBoxHeight, 'S');
-                
-                // Add the comments text
-                doc.text(textLines, commentBoxX + 2, y + 4);
-                
-                y += commentBoxHeight + 15;
-
-
-                // --- Footer ---
-                doc.setFontSize(8);
-                doc.setTextColor(100, 100, 100);
-                // Footer now uses the dynamic page number (doc.internal.getNumberOfPages())
-                doc.text(`Data Pack: GOLD | Generated: ${sessionData.timestamp.toLocaleString()} | Page 2 of 2 | bbgk.co.uk`, 105, 290, { align: 'center' });
-
-
-                // Final save
-                const filename = `BBGK_Report_${meta.name.replace(/\s/g, '_')}_${meta.date}.pdf`;
-                doc.save(filename);
-                showCustomMessage("PDF report generated and downloaded successfully!", false);
             } catch (error) {
-                console.error("PDF Generation Error (Critical):", error);
-                showCustomMessage(`Failed to generate PDF report: ${error.message}. Please check the console for critical error details.`, true);
+                console.error("PDF generation error:", error);
+                showCustomMessage(`Failed to generate PDF. Error: ${error.message}`, true);
             }
         }
 
-        // --- Event Listeners and Initialization ---
-        document.addEventListener('DOMContentLoaded', () => {
+        // 4. Initialization
+        window.addEventListener('DOMContentLoaded', () => {
+
+            // NEW: SPLASH SCREEN LOGIC
+            const splash = document.getElementById('splash-screen');
+            if (splash) {
+                // Wait for 3 seconds before starting the fade out
+                setTimeout(() => {
+                    splash.classList.add('fade-out');
+
+                    // After the fade out transition is complete (0.5s), hide it completely
+                    setTimeout(() => {
+                        splash.style.display = 'none';
+                    }, 500); // Must match the CSS transition duration
+                }, 3000); // 3 seconds total splash time
+            }
+            // END NEW SPLASH SCREEN LOGIC
             
-            // 1. Initialize local data immediately
+            // 1. Initialize Data and Display
             initializeSessionData();
             updateDisplay();
 
-            // 2. Setup Button Listeners
-            const counterButtons = document.querySelectorAll('.action-button');
-            counterButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    handleCounterClick(button, button.getAttribute('data-type'));
+            // 2. Setup Counter Button Listeners
+            document.querySelectorAll('.action-button').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    handleCounterClick(e.target.getAttribute('data-type'), e.target);
                 });
             });
 
