@@ -89,7 +89,7 @@
         .contact-zone-item {
             cursor: pointer;
             transition: background-color 0.1s;
-            background-color: #242424;
+            background-color: #242424; /* Cell background */
             color: var(--color-text-light);
             display: flex; 
             flex-direction: column;
@@ -111,7 +111,6 @@
 
         /* 1. Apply visual emphasis (glow) and default thick borders to the new zones */
         [data-zone="C2"], [data-zone="C3"] {
-            /* Ensure the thick border is present for the new zones */
             box-shadow: 0 0 8px var(--color-accent-green); 
             border-color: var(--color-accent-green) !important;
             border-width: 3px; 
@@ -120,15 +119,15 @@
         /* 2. C2 (Left side of the pair): Keep Left, Top, Bottom thick. Hide the Right edge (internal line) */
         [data-zone="C2"] {
             border-right-width: 0.5px !important; 
-            /* Match the background color to visually eliminate the separation */
-            border-right-color: var(--color-secondary-bg) !important; 
+            /* MATCH CELL BACKGROUND: Use #242424 to visually eliminate the separation */
+            border-right-color: #242424 !important; 
         }
 
         /* 3. C3 (Right side of the pair): Keep Right, Top, Bottom thick. Hide the Left edge (internal line) */
         [data-zone="C3"] {
             border-left-width: 0.5px !important;
-            /* Match the background color to visually eliminate the separation */
-            border-left-color: var(--color-secondary-bg) !important;
+            /* MATCH CELL BACKGROUND: Use #242424 to visually eliminate the separation */
+            border-left-color: #242424 !important;
         }
         
         /* 4. Ensure C14 and C15 revert to thin dark borders (overrides from previous fix) */
@@ -472,7 +471,6 @@
             document.getElementById('game-comments').value = "";
         }
 
-        // FIX 2 & 4: Corrected calculation for Match Overview
         function updateDisplay() {
             // Shots On Target (Used for Save %)
             const totalShotsOnTarget = sessionData['Saves Made'] + sessionData['Goals Conceded'];
@@ -480,7 +478,7 @@
             // Total Shots Faced (Includes Saves, Goals, and Off-Target Shots)
             const totalShots = totalShotsOnTarget + sessionData['Shots Faced'];
             
-            // Save % calculation
+            // Save % calculation - Handle division by zero
             const savePct = totalShotsOnTarget > 0 ? ((sessionData['Saves Made'] / totalShotsOnTarget) * 100).toFixed(0) : 0;
             
             document.getElementById('stat-saves').textContent = sessionData['Saves Made'];
@@ -503,8 +501,10 @@
             });
         }
 
-        // FIX 1: Removed pop-up and redundant 'Shots Faced' logic
+        // Action Button Handler (Only for off-target shots and other GK actions)
         function handleCounterClick(type, button) {
+            // Note: Saves and Goals Conceded are intended to be logged via the Zonal grids now.
+            // If the user clicks these buttons, they are logged as quick actions.
             sessionData[type]++;
             updateDisplay();
 
@@ -516,15 +516,16 @@
                 button.classList.add('flash-success');
                 setTimeout(() => button.classList.remove('flash-success'), 300);
             }
-
-            // NOTE: The separate logic to increment Shots Faced when Save/Goal is pressed has been REMOVED.
-            // The `updateDisplay` function now calculates the total shots correctly based on the three counters: Saves, Goals, and Shots Faced (Off Target).
         }
 
-        // FIX 3: Zone clicks should ONLY update the zone detail, not the Match Overview.
+        // FIX: Zonal click now updates both the zonal detail AND the Match Overview stat (Saves Made/Goals Conceded)
         function handleZoneClick(type, zone, element) {
             if (type === 'save') {
+                // 1. Log to Zonal Detail
                 zoneCounts.saves[zone]++;
+                // 2. Log to Match Overview Stat (User Request)
+                sessionData['Saves Made']++; 
+                
                 element.innerHTML = `${zone}<span class="text-sm text-gray-500"> (${zoneCounts.saves[zone]})</span>`;
                 // Add a visual flash
                 element.style.backgroundColor = 'var(--color-accent-green)';
@@ -534,13 +535,19 @@
                     element.style.color = 'var(--color-text-light)';
                 }, 300);
             } else if (type === 'goals') {
+                // 1. Log to Zonal Detail
                 zoneCounts.goals[zone]++;
+                // 2. Log to Match Overview Stat (User Request)
+                sessionData['Goals Conceded']++; 
+                
                 element.innerHTML = `${zone}<span class="text-sm text-gray-500"> (${zoneCounts.goals[zone]})</span>`;
                 // Add a visual flash
                 element.style.backgroundColor = 'var(--color-danger-red)';
                 setTimeout(() => element.style.backgroundColor = '#242424', 300);
             }
-            // Do NOT call updateDisplay() here to avoid double-counting in the Match Overview.
+            
+            // 3. Update Match Overview after the action is logged
+            updateDisplay();
         }
 
         function handleContactZoneClick(zone) {
@@ -555,7 +562,7 @@
         }
 
 
-        // 3. PDF Generation Logic (FIX 5: C2/C3 Border)
+        // 3. PDF Generation Logic (C2/C3 Border Fix is also in the PDF Logic)
         function generatePDFReport() {
             try {
                 // Ensure jsPDF is available
@@ -663,7 +670,7 @@
 
                 y += lineHeight * 3 + 5;
 
-                // --- Logged Actions (FIX 4: Renamed for clarity) ---
+                // --- Logged Actions ---
                 drawHeader('Other Goalkeeping Actions');
                 
                 doc.setFillColor(secondaryColor);
@@ -799,23 +806,12 @@
                     doc.setDrawColor('#333');
                     doc.setLineWidth(0.2); 
                     
-                    if (zone === 'C2') {
-                        // C2: Skip Right line
-                        doc.line(x, yPos, x + zoneWidthContact, yPos); // Top
-                        doc.line(x, yPos + zoneHeightContact, x + zoneWidthContact, yPos + zoneHeightContact); // Bottom
-                        doc.line(x, yPos, x, yPos + zoneHeightContact); // Left
-                    }
-                    else if (zone === 'C3') {
-                        // C3: Skip Left line
-                        doc.line(x, yPos, x + zoneWidthContact, yPos); // Top
-                        doc.line(x, yPos + zoneHeightContact, x + zoneWidthContact, yPos + zoneHeightContact); // Bottom
-                        doc.line(x + zoneWidthContact, yPos, x + zoneWidthContact, yPos + zoneHeightContact); // Right
-                    }
-                    else {
+                    // Only draw standard borders if not C2 or C3
+                    if (zone !== 'C2' && zone !== 'C3') {
                         doc.rect(x, yPos, zoneWidthContact, zoneHeightContact, 'S');
                     }
                     
-                    // 4. FIX 5: Draw C2/C3 THICK BORDER OVERRIDE (Draws the outer wrapper)
+                    // 4. FIX: Draw C2/C3 THICK BORDER OVERRIDE (Draws the outer wrapper)
                     if (zone === 'C2') {
                         doc.setDrawColor(headerColor); // Green
                         doc.setLineWidth(1.5); // Thicker line
@@ -847,7 +843,7 @@
         // 4. Initialization
         window.addEventListener('DOMContentLoaded', () => {
 
-            // NEW: SPLASH SCREEN LOGIC
+            // SPLASH SCREEN LOGIC
             const splash = document.getElementById('splash-screen');
             if (splash) {
                 // Wait for 3 seconds before starting the fade out
@@ -860,7 +856,6 @@
                     }, 500); // Must match the CSS transition duration
                 }, 3000); // 3 seconds total splash time
             }
-            // END NEW SPLASH SCREEN LOGIC
             
             // 1. Initialize Data and Display
             initializeSessionData();
@@ -876,13 +871,11 @@
             // 3. Setup Shot/Goal Zonal Grid Listeners
             document.getElementById('save-zones-grid').addEventListener('click', (e) => {
                 const zoneDiv = e.target.closest('.zone-grid-item');
-                // FIX 3: Zone clicks do NOT update Match Overview (no updateDisplay call)
                 if (zoneDiv) handleZoneClick('save', zoneDiv.getAttribute('data-zone'), zoneDiv);
             });
 
             document.getElementById('goals-zones-grid').addEventListener('click', (e) => {
                 const zoneDiv = e.target.closest('.zone-grid-item');
-                // FIX 3: Zone clicks do NOT update Match Overview (no updateDisplay call)
                 if (zoneDiv) handleZoneClick('goals', zoneDiv.getAttribute('data-zone'), zoneDiv);
             });
             
