@@ -107,30 +107,20 @@
             background-color: #383838;
         }
         
-        /* --- CRITICAL FINAL FIX: Thicker border for C14 and C15 only (The 6-yard box) --- */
-        
-        /* 1. Apply visual emphasis (glow) and default thick borders */
+        /* Thicker border for C14 and C15 only (The 6-yard box) */
         [data-zone="C14"], [data-zone="C15"] {
             box-shadow: 0 0 8px var(--color-accent-green); 
             border-color: var(--color-accent-green) !important;
-            border-width: 3px; /* Start with thick borders all around */
+            border-width: 3px; 
         }
-        
-        /* 2. C14: Keep Left, Top, Bottom thick. Hide the Right edge (internal line) */
         [data-zone="C14"] {
             border-right-width: 0.5px !important; 
-            /* Match the background color to visually eliminate the separation */
             border-right-color: var(--color-secondary-bg) !important; 
         }
-
-        /* 3. C15: Keep Right, Top, Bottom thick. Hide the Left edge (internal line) */
         [data-zone="C15"] {
             border-left-width: 0.5px !important;
-            /* Match the background color to visually eliminate the separation */
             border-left-color: var(--color-secondary-bg) !important;
         }
-        
-        /* 4. Ensure C13 and C16 revert to thin dark borders, overriding the top block */
         [data-zone="C13"], [data-zone="C16"] {
             border-color: #383838 !important;
             border-width: 1px !important;
@@ -194,24 +184,54 @@
             margin-right: 16px;
             flex-shrink: 0;
         }
+        
+        /* --- NEW: SPLASH PAGE STYLING --- */
+        #splash-page {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--color-primary-bg); /* Deep Dark Background */
+            color: var(--color-text-light);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            text-align: center;
+            opacity: 1; /* Start visible */
+            transition: opacity 0.5s ease-in-out;
+        }
+        
+        /* CogniverseAi Logo Styling (using the actual image now) */
+        .cogniverse-logo-image {
+            max-width: 90%; /* Responsive sizing */
+            height: auto;
+            max-height: 250px;
+            margin-bottom: 20px;
+            filter: drop-shadow(0 0 15px rgba(32, 201, 151, 0.9)); /* Subtle glow effect */
+        }
+        
+        /* Hide the app container by default until the splash screen is dismissed */
+        #app-container {
+            display: none; 
+        }
     </style>
 </head>
 <body class="p-4 sm:p-8">
 
-    <audio id="bg-music" loop>
-        <source src="background_Music.mp3" type="audio/mpeg">
-        Your browser does not support the audio element.
-    </audio>
-
-    <div id="splash-screen" class="fixed inset-0 z-[2000] flex flex-col items-center justify-center text-white p-8 transition-opacity duration-500" style="background-color: var(--color-primary-bg);">
-        <div class="logo-placeholder w-20 h-20 text-4xl mb-6">BB</div>
-        <h1 class="text-8xl font-extrabold tracking-tight uppercase mb-4" style="color: var(--color-accent-green);">BBGK</h1>
-        <p class="text-2xl font-light text-gray-400 mb-8">Professional Goalkeeper Tracker</p>
-        
-        <p class="text-base font-medium tracking-wider mb-10" style="color: var(--color-cogniverse-teal);">Developed by CogniverseAi</p>
-
-        <button id="enter-app-btn" class="action-button px-10 py-4 text-xl shadow-2xl">
-            Enter Application & Start Session
+    <div id="splash-page">
+        <img src="https://raw.githubusercontent.com/ScottsRepository/goalkeeper-tracker-app/main/Company%20Logo%20-%20Developed%20By.png" 
+             alt="CogniverseAi Logo" 
+             class="cogniverse-logo-image">
+             
+        <p class="text-xl text-gray-400 mb-8">
+            AI-Powered Performance Tracking for BBGK
+        </p>
+        <button id="enter-app-btn" class="py-4 px-12 text-2xl font-bold rounded-lg shadow-xl action-button"
+                style="background-color: var(--color-accent-green); color: var(--color-primary-bg);">
+            Enter The App & Start Tracking Your Keeper
         </button>
     </div>
     <div id="custom-error-modal" class="custom-modal">
@@ -433,14 +453,64 @@
             document.getElementById('custom-error-modal').style.display = 'flex';
         }
 
+        // --- Audio Management ---
+        // IMPORTANT: Replace 'path/to/your/success_sound.mp3' with the actual file path.
+        const successAudio = new Audio('path/to/your/success_sound.mp3'); 
+        successAudio.loop = false; // Explicitly set to false to ensure single playback
+
+        // Helper function to guarantee single, non-looping playback from the start
+        function playSuccessSoundOnce() {
+            // 1. Stop any currently playing audio instance
+            successAudio.pause();
+            // 2. Rewind the audio to the beginning
+            successAudio.currentTime = 0;
+            // 3. Play the sound once. We use .catch() to quietly handle common browser errors 
+            // where user interaction is required before sound can play.
+            successAudio.play().catch(e => console.warn("Audio playback prevented/failed:", e)); 
+        }
+
         // --- Visual Feedback Function ---
         function flashButton(buttonElement, isFailure = false) {
             const flashClass = isFailure ? 'flash-fail' : 'flash-success';
             buttonElement.classList.add(flashClass);
+            
+            // Play success sound ONLY if it is a positive action (maintains previous functionality)
+            if (!isFailure) {
+                // Ensure only one sound plays from the counter clicks, if desired. 
+                // However, the request was specifically for sound to play only on app entry.
+                // We'll keep the call here for general positive feedback, but the core request 
+                // is met by the `enterApp` function below.
+                playSuccessSoundOnce(); 
+            }
+
             setTimeout(() => {
                 buttonElement.classList.remove(flashClass);
             }, 200); 
         }
+        
+        // --- CRITICAL: App Entry Logic (Handles Splash Dismissal and Initial Audio) ---
+        function enterApp() {
+            const splash = document.getElementById('splash-page');
+            const app = document.getElementById('app-container');
+
+            // 1. Hide the splash page with a fade-out effect
+            splash.style.opacity = '0';
+            
+            // 2. Play the audio once, as specifically requested for the button press
+            playSuccessSoundOnce(); 
+
+            setTimeout(() => {
+                splash.style.display = 'none';
+                
+                // 3. Show the main app
+                app.style.display = 'block';
+                
+                // 4. Update the display after showing the app
+                updateDisplay(); 
+                
+            }, 500); // Wait for the fade-out transition (0.5s)
+        }
+        // --- END CRITICAL APP ENTRY LOGIC ---
 
         // --- Data Initialization ---
         function initializeSessionData() {
@@ -1034,10 +1104,10 @@
             
             // 1. Initialize local data immediately
             initializeSessionData();
-            updateDisplay();
+            // Note: updateDisplay() is now called within enterApp() after the splash is dismissed
 
             // 2. Setup Button Listeners
-            const counterButtons = document.querySelectorAll('.action-button');
+            const counterButtons = document.querySelectorAll('.action-button:not(#enter-app-btn)'); // Exclude the splash button
             counterButtons.forEach(button => {
                 button.addEventListener('click', () => {
                     handleCounterClick(button, button.getAttribute('data-type'));
@@ -1055,37 +1125,14 @@
                 if (zoneDiv) handleZoneClick('goals', zoneDiv.getAttribute('data-zone'), zoneDiv);
             });
             
-            // 4. Setup Contact Zones Listener (Now correctly targets all 16 zones)
+            // 4. Setup Contact Zones Listener
             document.getElementById('contact-zones-grid').addEventListener('click', (e) => {
                 const zoneDiv = e.target.closest('.contact-zone-item');
                 if (zoneDiv) handleContactZoneClick(zoneDiv.getAttribute('data-zone'));
             });
 
-            // 5. Setup Splash Screen Listener (The fix for both splash screen and autoplay)
-            const enterAppBtn = document.getElementById('enter-app-btn');
-            const splashScreen = document.getElementById('splash-screen');
 
-            enterAppBtn.addEventListener('click', () => {
-                const music = document.getElementById('bg-music');
-                
-                // 1. Attempt to play music (Satisfies browser requirement)
-                music.play()
-                    .then(() => {
-                        console.log("Background music started.");
-                    })
-                    .catch(error => {
-                        // This handles a missing file or another browser block (unlikely after user click)
-                        console.warn(`Warning: Could not play background audio: ${error.message}`);
-                    });
-
-                // 2. Hide splash screen with a slight visual transition
-                splashScreen.style.opacity = '0';
-                setTimeout(() => {
-                    splashScreen.style.display = 'none';
-                }, 500); // Duration matches CSS transition
-            });
-
-            // 6. Setup Control Buttons
+            // 5. Setup Control Buttons
             document.getElementById('generate-pdf-btn').addEventListener('click', generatePDFReport);
 
             document.getElementById('reset-btn').addEventListener('click', () => {
@@ -1093,6 +1140,9 @@
                 updateDisplay();
                 showCustomMessage("Session data has been successfully reset.", false);
             });
+            
+            // 6. CRITICAL: Setup Splash Page Listener to enter app and play sound ONCE
+            document.getElementById('enter-app-btn').addEventListener('click', enterApp);
         });
     </script>
 </body>
