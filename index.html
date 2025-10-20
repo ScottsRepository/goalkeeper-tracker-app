@@ -107,13 +107,14 @@
             background-color: #383838;
         }
         
-        /* --- CRITICAL FINAL FIX: Thicker border for C2 and C3 (The new furthest zone) --- */
+        /* --- CRITICAL FIX: Thicker border for C2 and C3 (The new furthest zone) --- */
 
         /* 1. Apply visual emphasis (glow) and default thick borders to the new zones */
         [data-zone="C2"], [data-zone="C3"] {
+            /* Ensure the thick border is present for the new zones */
             box-shadow: 0 0 8px var(--color-accent-green); 
             border-color: var(--color-accent-green) !important;
-            border-width: 3px; /* Start with thick borders all around */
+            border-width: 3px; 
         }
 
         /* 2. C2 (Left side of the pair): Keep Left, Top, Bottom thick. Hide the Right edge (internal line) */
@@ -130,6 +131,13 @@
             border-left-color: var(--color-secondary-bg) !important;
         }
         
+        /* 4. Ensure C14 and C15 revert to thin dark borders (overrides from previous fix) */
+        [data-zone="C14"], [data-zone="C15"] {
+            border-color: #383838 !important;
+            border-width: 1px !important;
+            box-shadow: none !important;
+        }
+
         /* --- VISUAL FEEDBACK ANIMATIONS --- */
         .action-button.flash-success {
             animation: success-flash 0.2s ease-out;
@@ -437,7 +445,7 @@
         // 1. Core Data and Display Logic
         function initializeSessionData() {
             sessionData = {
-                'Shots Faced': 0,
+                'Shots Faced': 0, // This counter is now exclusively for OFF-TARGET shots
                 'Saves Made': 0,
                 'Goals Conceded': 0,
                 'Unforced Goal Errors': 0,
@@ -464,9 +472,16 @@
             document.getElementById('game-comments').value = "";
         }
 
+        // FIX 2 & 4: Corrected calculation for Match Overview
         function updateDisplay() {
-            const totalShots = sessionData['Saves Made'] + sessionData['Goals Conceded'];
-            const savePct = totalShots > 0 ? ((sessionData['Saves Made'] / totalShots) * 100).toFixed(0) : 0;
+            // Shots On Target (Used for Save %)
+            const totalShotsOnTarget = sessionData['Saves Made'] + sessionData['Goals Conceded'];
+            
+            // Total Shots Faced (Includes Saves, Goals, and Off-Target Shots)
+            const totalShots = totalShotsOnTarget + sessionData['Shots Faced'];
+            
+            // Save % calculation
+            const savePct = totalShotsOnTarget > 0 ? ((sessionData['Saves Made'] / totalShotsOnTarget) * 100).toFixed(0) : 0;
             
             document.getElementById('stat-saves').textContent = sessionData['Saves Made'];
             document.getElementById('stat-goals').textContent = sessionData['Goals Conceded'];
@@ -488,7 +503,7 @@
             });
         }
 
-        // 2. Event Handlers
+        // FIX 1: Removed pop-up and redundant 'Shots Faced' logic
         function handleCounterClick(type, button) {
             sessionData[type]++;
             updateDisplay();
@@ -502,27 +517,12 @@
                 setTimeout(() => button.classList.remove('flash-success'), 300);
             }
 
-            // Specific logic: A Save/Goal must also be counted as a Shot Faced if not already tracked
-            if (type === 'Saves Made') {
-                sessionData['Shots Faced'] = (sessionData['Shots Faced'] || 0) + 1;
-            } else if (type === 'Goals Conceded') {
-                sessionData['Shots Faced'] = (sessionData['Shots Faced'] || 0) + 1;
-            }
-
-            // Automatically open Zonal Picker for Saves and Goals
-            if (type === 'Saves Made') {
-                showCustomMessage("Now click a zone in the **Save Zones** grid to log the shot location.", false, "Save Logged");
-            } else if (type === 'Goals Conceded') {
-                showCustomMessage("Now click a zone in the **Goals Conceded Zones** grid to log the shot location.", true, "Goal Logged");
-            }
-
-            updateDisplay(); // Re-run to update Shots Faced
+            // NOTE: The separate logic to increment Shots Faced when Save/Goal is pressed has been REMOVED.
+            // The `updateDisplay` function now calculates the total shots correctly based on the three counters: Saves, Goals, and Shots Faced (Off Target).
         }
 
+        // FIX 3: Zone clicks should ONLY update the zone detail, not the Match Overview.
         function handleZoneClick(type, zone, element) {
-            // This function increments the zone count but only if the main counter was just pressed.
-            // For simplicity, we'll implement it to simply increment the count every time the zone is clicked.
-
             if (type === 'save') {
                 zoneCounts.saves[zone]++;
                 element.innerHTML = `${zone}<span class="text-sm text-gray-500"> (${zoneCounts.saves[zone]})</span>`;
@@ -540,8 +540,7 @@
                 element.style.backgroundColor = 'var(--color-danger-red)';
                 setTimeout(() => element.style.backgroundColor = '#242424', 300);
             }
-            // Close the message after logging the zone (optional)
-            document.getElementById('custom-error-modal').style.display = 'none';
+            // Do NOT call updateDisplay() here to avoid double-counting in the Match Overview.
         }
 
         function handleContactZoneClick(zone) {
@@ -556,7 +555,7 @@
         }
 
 
-        // 3. PDF Generation Logic
+        // 3. PDF Generation Logic (FIX 5: C2/C3 Border)
         function generatePDFReport() {
             try {
                 // Ensure jsPDF is available
@@ -634,8 +633,9 @@
                 // --- Match Overview ---
                 drawHeader('Match Overview');
                 
-                const totalShots = sessionData['Saves Made'] + sessionData['Goals Conceded'];
-                const savePct = totalShots > 0 ? ((sessionData['Saves Made'] / totalShots) * 100).toFixed(0) : 0;
+                const totalShotsOnTarget = sessionData['Saves Made'] + sessionData['Goals Conceded'];
+                const totalShots = totalShotsOnTarget + sessionData['Shots Faced'];
+                const savePct = totalShotsOnTarget > 0 ? ((sessionData['Saves Made'] / totalShotsOnTarget) * 100).toFixed(0) : 0;
                 
                 const stats = [
                     { label: 'Total Shots Faced', value: totalShots, x: margin + 2 },
@@ -663,27 +663,31 @@
 
                 y += lineHeight * 3 + 5;
 
-                // --- Logged Actions ---
-                drawHeader('Logged Actions');
+                // --- Logged Actions (FIX 4: Renamed for clarity) ---
+                drawHeader('Other Goalkeeping Actions');
                 
                 doc.setFillColor(secondaryColor);
-                doc.rect(margin, y, 190, lineHeight * 5, 'F');
+                // Calculate required height based on number of logged items
+                const actionsToLog = Object.entries(sessionData).filter(([key, value]) => !['Shots Faced', 'Saves Made', 'Goals Conceded'].includes(key) && value > 0);
+                const rows = Math.ceil(actionsToLog.length / 3) || 1;
+                const blockHeight = rows * lineHeight + lineHeight; 
+                doc.rect(margin, y, 190, blockHeight, 'F');
+
                 doc.setTextColor(lightTextColor);
                 doc.setFontSize(10);
                 doc.setFont(undefined, 'bold');
 
-                let count = 0;
-                Object.entries(sessionData).filter(([key, value]) => key !== 'Shots Faced' && value > 0).forEach(([key, value], index) => {
+                let currentY = y;
+                actionsToLog.forEach(([key, value], index) => {
                     if (index % 3 === 0) {
-                        y += lineHeight;
+                        currentY += lineHeight;
                     }
                     const x = margin + 2 + (index % 3) * 63;
-                    doc.text(`${key}: ${value}`, x, y);
-                    count++;
+                    doc.text(`${key}: ${value}`, x, currentY);
                 });
 
-                if (count > 0) y += lineHeight + 5;
-                else y += lineHeight * 5 + 5; // Reserve space if nothing logged
+                if (actionsToLog.length > 0) y = currentY + lineHeight + 5;
+                else y += blockHeight + 5; // Reserve space if nothing logged
 
                 doc.addPage();
                 y = 15;
@@ -769,12 +773,6 @@
                 doc.text('Contact Zones (18-Yard Box)', margin, y);
                 y += lineHeight;
 
-                doc.setFillColor(secondaryColor);
-                doc.rect(margin, y, 190, 90, 'F'); // Background box for grid (approx. 4x4 ratio)
-                doc.setTextColor(lightTextColor);
-                doc.setFontSize(8);
-                doc.setFont(undefined, 'normal');
-
                 // Draw the 4x4 Grid for Contact Zones
                 const startYContact = y;
                 const zoneWidthContact = 190 / 4;
@@ -787,15 +785,54 @@
                     const x = margin + col * zoneWidthContact;
                     const yPos = startYContact + row * zoneHeightContact;
                     const count = zoneCounts.contact[zone];
+                    
+                    // 1. Draw Fill
+                    doc.setFillColor(secondaryColor);
+                    doc.rect(x, yPos, zoneWidthContact, zoneHeightContact, 'F'); 
 
-                    // Draw cell borders
-                    doc.setDrawColor('#333');
-                    doc.rect(x, yPos, zoneWidthContact, zoneHeightContact);
-
-                    // Draw text
+                    // 2. Draw Text
                     doc.setTextColor(count > 0 ? '#20c997' : '#666'); // Teal for contact
+                    doc.setFontSize(8);
                     doc.text(`${zone} (${count})`, x + zoneWidthContact / 2, yPos + zoneHeightContact / 2 + 1, { align: 'center' });
+                    
+                    // 3. Draw Standard Borders (Handling C2/C3 internal line removal)
+                    doc.setDrawColor('#333');
+                    doc.setLineWidth(0.2); 
+                    
+                    if (zone === 'C2') {
+                        // C2: Skip Right line
+                        doc.line(x, yPos, x + zoneWidthContact, yPos); // Top
+                        doc.line(x, yPos + zoneHeightContact, x + zoneWidthContact, yPos + zoneHeightContact); // Bottom
+                        doc.line(x, yPos, x, yPos + zoneHeightContact); // Left
+                    }
+                    else if (zone === 'C3') {
+                        // C3: Skip Left line
+                        doc.line(x, yPos, x + zoneWidthContact, yPos); // Top
+                        doc.line(x, yPos + zoneHeightContact, x + zoneWidthContact, yPos + zoneHeightContact); // Bottom
+                        doc.line(x + zoneWidthContact, yPos, x + zoneWidthContact, yPos + zoneHeightContact); // Right
+                    }
+                    else {
+                        doc.rect(x, yPos, zoneWidthContact, zoneHeightContact, 'S');
+                    }
+                    
+                    // 4. FIX 5: Draw C2/C3 THICK BORDER OVERRIDE (Draws the outer wrapper)
+                    if (zone === 'C2') {
+                        doc.setDrawColor(headerColor); // Green
+                        doc.setLineWidth(1.5); // Thicker line
+                        
+                        const rectX = x; 
+                        const rectY = yPos; 
+                        const rectW = zoneWidthContact * 2; // Width of C2 + C3
+                        const rectH = zoneHeightContact; 
+                        
+                        // Draw the border of the combined box (C2/C3)
+                        doc.rect(rectX, rectY, rectW, rectH, 'S');
+                        
+                        // Reset line width
+                        doc.setLineWidth(0.2); 
+                    }
                 });
+                y = startYContact + 90 + 5;
 
                 // Save PDF
                 doc.save(`BBGK_Report_${gkName.replace(/\s/g, '_')}_${gameDate}.pdf`);
@@ -839,15 +876,17 @@
             // 3. Setup Shot/Goal Zonal Grid Listeners
             document.getElementById('save-zones-grid').addEventListener('click', (e) => {
                 const zoneDiv = e.target.closest('.zone-grid-item');
+                // FIX 3: Zone clicks do NOT update Match Overview (no updateDisplay call)
                 if (zoneDiv) handleZoneClick('save', zoneDiv.getAttribute('data-zone'), zoneDiv);
             });
 
             document.getElementById('goals-zones-grid').addEventListener('click', (e) => {
                 const zoneDiv = e.target.closest('.zone-grid-item');
+                // FIX 3: Zone clicks do NOT update Match Overview (no updateDisplay call)
                 if (zoneDiv) handleZoneClick('goals', zoneDiv.getAttribute('data-zone'), zoneDiv);
             });
             
-            // 4. Setup Contact Zones Listener (Now correctly targets all 16 zones)
+            // 4. Setup Contact Zones Listener 
             document.getElementById('contact-zones-grid').addEventListener('click', (e) => {
                 const zoneDiv = e.target.closest('.contact-zone-item');
                 if (zoneDiv) handleContactZoneClick(zoneDiv.getAttribute('data-zone'));
