@@ -230,6 +230,11 @@
             }
         }
         
+        /* NEW: Hide audio player controls */
+        #splash-audio {
+            display: none; 
+        }
+        
     </style>
 </head>
 <body class="p-4 sm:p-8">
@@ -238,7 +243,12 @@
         <img src="https://raw.githubusercontent.com/ScottsRepository/goalkeeper-tracker-app/main/Company%20Logo%20-%20Developed%20By.png" 
              alt="CogniverseAi Logo" 
              class="h-48 w-auto"> 
-             </div>
+        
+        <audio id="splash-audio" preload="auto" autoplay>
+            <source src="https://raw.githubusercontent.com/ScottsRepository/goalkeeper-tracker-app/main/Great%20Save.mp3" type="audio/mpeg">
+            Your browser does not support the audio element.
+        </audio>
+    </div>
     <div id="custom-error-modal" class="custom-modal">
         <div class="modal-content">
             <h3 id="modal-title" class="text-2xl font-bold mb-4 text-red-400">System Message</h3>
@@ -845,6 +855,15 @@
 
             // SPLASH SCREEN LOGIC
             const splash = document.getElementById('splash-screen');
+            const audio = document.getElementById('splash-audio'); // Get the audio element
+            
+            // Try to play audio immediately
+            audio.play().catch(error => {
+                 // Autoplay failed (common browser restriction). We can't do anything about this 
+                 // without a user interaction, but we keep the audio logic for when it is allowed.
+                 console.log("Audio autoplay failed. Browser restriction.");
+            });
+
             if (splash) {
                 // Wait for 3 seconds before starting the fade out
                 setTimeout(() => {
@@ -852,6 +871,9 @@
 
                     // After the fade out transition is complete (0.5s), hide it completely
                     setTimeout(() => {
+                        // Stop the audio immediately after fade out is complete
+                        audio.pause(); 
+                        audio.currentTime = 0; // Reset for next load/play
                         splash.style.display = 'none';
                     }, 500); // Must match the CSS transition duration
                 }, 3000); // 3 seconds total splash time
