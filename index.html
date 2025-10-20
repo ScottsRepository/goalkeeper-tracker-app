@@ -75,7 +75,7 @@
             background-color: #444;
         }
         
-        /* Custom Modal for Error/System Messages (Non-disruptive) */
+        /* Custom Modal for Error/System Messages (Now fully branded Lawn Green) */
         .custom-modal {
             position: fixed;
             top: 0;
@@ -94,8 +94,8 @@
             border-radius: 12px;
             max-width: 400px;
             width: 90%;
-            border: 2px solid #32cd32; /* New border color */
-            box-shadow: 0 0 20px rgba(50, 205, 50, 0.5); /* New shadow color */
+            border: 2px solid #32cd32; /* Lawn Green border */
+            box-shadow: 0 0 20px rgba(50, 205, 50, 0.5); /* Lawn Green neon shadow */
         }
     </style>
 </head>
@@ -104,10 +104,12 @@
     <!-- Custom Error/Confirmation Modal (Replaces alert() and confirm()) -->
     <div id="custom-error-modal" class="custom-modal">
         <div class="modal-content">
+            <!-- Modal Title is handled by JS to switch between red (error) and green (success) -->
             <h3 id="modal-title" class="text-xl font-bold mb-4 text-red-400">System Message</h3>
             <p id="modal-message" class="text-gray-300"></p>
+            <!-- Close button now uses Lawn Green for a consistent look -->
             <button onclick="document.getElementById('custom-error-modal').style.display = 'none';"
-                    class="mt-6 w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-lg">
+                    class="mt-6 w-full py-3 bg-[#32cd32] hover:bg-[#28a428] text-[#1f1f1f] font-bold rounded-lg shadow-lg transition-colors">
                 Close
             </button>
         </div>
@@ -222,6 +224,7 @@
         let app, db, auth;
         let userId = 'anonymous'; // Default until authenticated
         let dataRef; // Reference to the user's data document
+        let isPersistenceDisabled = false; // Flag to check if persistence is working
 
         // Central data structure for the session
         let sessionData = {};
@@ -239,9 +242,10 @@
         function showCustomMessage(message, isError = true) {
             console.log(isError ? "Application Message/Error:" : "Application Message:", message);
             document.getElementById('modal-title').innerText = isError ? "System Message" : "Success!";
-            // Use Lawn Green for Success messages
-            document.getElementById('modal-title').classList.toggle('text-red-400', isError);
-            document.getElementById('modal-title').style.color = isError ? '#f87171' : '#32cd32'; // Red for error, Green for success
+            
+            // Set dynamic color based on message type
+            const titleElement = document.getElementById('modal-title');
+            titleElement.style.color = isError ? '#f87171' : '#32cd32'; // Red for error, Lawn Green for success
             
             document.getElementById('modal-message').innerText = message;
             document.getElementById('custom-error-modal').style.display = 'flex';
@@ -249,31 +253,44 @@
 
         // --- Firebase/Firestore Initialization (Stable Logic) ---
         async function initializeFirebase() {
+            let firebaseConfig;
             try {
                 const { initializeApp, getAuth, signInAnonymously, signInWithCustomToken, getFirestore } = window.FirebaseServices;
 
                 // MANDATORY Global Variables Check
                 const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-                const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
                 const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-                
-                if (!firebaseConfig) {
-                    throw new Error("Firebase configuration (__firebase_config) is missing.");
+
+                // 1. Check and parse Firebase config with robust fallback
+                try {
+                    firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+                    if (!firebaseConfig || Object.keys(firebaseConfig).length === 0) {
+                        throw new Error("Config variable exists but is empty.");
+                    }
+                } catch (e) {
+                    // Fallback for missing or malformed config
+                    console.warn("WARNING: Firebase config is missing or invalid. Switching to Demo Mode (Persistence Disabled).", e);
+                    
+                    // Use a dummy config to prevent initializeApp from crashing
+                    firebaseConfig = { apiKey: "dummy", authDomain: "dummy.firebaseapp.com", projectId: "dummy-project" };
+                    isPersistenceDisabled = true;
+                    
+                    showCustomMessage("🚨 Demo Mode Active: Cloud persistence is disabled. Data will NOT be saved between sessions.", true);
                 }
 
-                // 1. Initialize Firebase
+                // 2. Initialize Firebase (will work even with dummy config)
                 app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 auth = getAuth(app);
 
-                // 2. Authenticate User
+                // 3. Authenticate User
                 if (initialAuthToken) {
                     await signInWithCustomToken(auth, initialAuthToken);
                 } else {
                     await signInAnonymously(auth);
                 }
 
-                // 3. Wait for Auth State to be ready
+                // 4. Wait for Auth State to be ready
                 const user = await new Promise((resolve) => {
                     const unsubscribe = window.FirebaseServices.onAuthStateChanged(auth, (user) => {
                         unsubscribe();
@@ -282,14 +299,22 @@
                 });
 
                 userId = user ? user.uid : crypto.randomUUID();
-                document.getElementById('user-id-display').innerText = `User ID: ${userId}`;
+                document.getElementById('user-id-display').innerText = `User ID: ${userId} ${isPersistenceDisabled ? ' (Demo Mode)' : ''}`;
 
-                // 4. Set up data reference and listener
-                dataRef = window.FirebaseServices.doc(db, `artifacts/${appId}/users/${userId}/gk_tracker_data/current_session`);
-                setupDataListener();
+                // 5. Set up data reference and listener ONLY if persistence is enabled
+                if (!isPersistenceDisabled) {
+                    dataRef = window.FirebaseServices.doc(db, `artifacts/${appId}/users/${userId}/gk_tracker_data/current_session`);
+                    setupDataListener();
+                } else {
+                    // Initialize local session data immediately if no persistence
+                    initializeSessionData();
+                    updateDisplay();
+                }
                 
             } catch (error) {
+                // Catch any other critical Firebase initialization errors
                 showCustomMessage(`Firebase Setup Failed: ${error.message}`);
+                isPersistenceDisabled = true; // Ensure flag is set on any failure
             }
         }
         
@@ -309,8 +334,10 @@
 
         // Sets up real-time listener for session data
         function setupDataListener() {
-            if (!dataRef) {
-                showCustomMessage("Data reference not set up. Cannot listen for updates.");
+            if (isPersistenceDisabled || !dataRef) {
+                // If persistence is disabled, do nothing (local state is used)
+                initializeSessionData();
+                updateDisplay();
                 return;
             }
 
@@ -336,17 +363,21 @@
                     saveDataToCloud(false); // Save the initial state, no success message here
                 }
             }, (error) => {
-                // Ignore 'permission-denied' if user is unauthenticated during setup, otherwise show error
+                // This is a persistence error, not necessarily a crash
                 if (error.code !== 'permission-denied') {
-                    showCustomMessage(`Firestore Listener Error: ${error.message}. Please check network connection.`);
+                    console.error("Firestore Listener Error:", error.message);
+                    isPersistenceDisabled = true;
+                    showCustomMessage(`Firestore Persistence Error: Data saving/loading failed. Check network or environment setup.`, true);
                 }
             });
         }
 
         // Saves current session data to Firestore
         async function saveDataToCloud(showSuccess = true) {
-            if (!dataRef) {
-                showCustomMessage("Cannot save: Database reference is missing.");
+            if (isPersistenceDisabled || !dataRef) {
+                if (showSuccess) {
+                    showCustomMessage("Cannot save: Persistence is disabled (Demo Mode).", true);
+                }
                 return;
             }
             try {
@@ -362,13 +393,19 @@
                 }
             } catch (error) {
                 showCustomMessage(`Failed to save data to cloud: ${error.message}`);
+                isPersistenceDisabled = true;
             }
         }
 
         // --- Core Application Logic ---
         function handleCounterClick(type) {
             sessionData.counters[type] = (sessionData.counters[type] || 0) + 1;
-            saveDataToCloud(false); // Auto-save silently on every click
+            // Only attempt to save if persistence is not disabled
+            if (!isPersistenceDisabled) {
+                saveDataToCloud(false); // Auto-save silently on every click
+            } else {
+                updateDisplay(); // Update display locally if not saving
+            }
         }
 
         function handleZoneClick(gridType, zone) {
@@ -377,7 +414,12 @@
             } else if (gridType === 'goals') {
                 sessionData.goalsZones[zone] = (sessionData.goalsZones[zone] || 0) + 1;
             }
-            saveDataToCloud(false); // Auto-save silently on every click
+             // Only attempt to save if persistence is not disabled
+            if (!isPersistenceDisabled) {
+                saveDataToCloud(false); // Auto-save silently on every click
+            } else {
+                updateDisplay(); // Update display locally if not saving
+            }
         }
 
         // Updates the HTML display with the latest sessionData
@@ -461,6 +503,7 @@
             // --- User ID and Timestamp ---
             doc.setFontSize(10);
             doc.setTextColor(50, 50, 50);
+            // Handle serverTimestamp if it's not a function (i.e., in Demo Mode)
             const timestamp = sessionData.timestamp && sessionData.timestamp.toDate ? sessionData.timestamp.toDate().toLocaleString() : new Date().toLocaleString();
             doc.text(`User Session ID: ${userId}`, 10, 20);
             doc.text(`Report Generated: ${timestamp}`, 200, 20, { align: 'right' });
@@ -597,9 +640,12 @@
                 // Use a custom prompt for confirmation
                 const isConfirmed = window.prompt("Type 'RESET' in capital letters to confirm erasing all current session data:");
                 if (isConfirmed === 'RESET') {
-                    // Re-initialize local data and save to cloud to wipe the document
+                    // Re-initialize local data
                     initializeSessionData();
-                    saveDataToCloud(true); // Show success message
+                    // Save to cloud if persistence is active, otherwise just update local state
+                    if (!isPersistenceDisabled) {
+                        saveDataToCloud(true); 
+                    }
                     showCustomMessage("Session data has been successfully reset.", false);
                 } else {
                     showCustomMessage("Reset cancelled.", false);
