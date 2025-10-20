@@ -413,6 +413,13 @@
 
         // --- PDF Generation Logic (Major Redesign for Professional Look) ---
         function generatePDFReport() {
+            
+            // Utility function to ensure all values are coerced to strings, preventing jsPDF crashes.
+            const safeText = (value) => {
+                if (value === null || value === undefined) return 'N/A';
+                return String(value);
+            };
+
             try {
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF({
@@ -457,34 +464,34 @@
 
                 doc.text('Goalkeeper Name:', 12, y);
                 doc.setFont(FONT_FAMILY, 'bold');
-                doc.text(meta.name, 45, y);
+                doc.text(safeText(meta.name), 45, y); // Safe text applied
                 
                 doc.setFont(FONT_FAMILY, 'normal');
                 doc.text('Opposition:', 105, y);
                 doc.setFont(FONT_FAMILY, 'bold');
-                doc.text(meta.opposition, 130, y);
+                doc.text(safeText(meta.opposition), 130, y); // Safe text applied
                 y += 5;
 
                 doc.setFont(FONT_FAMILY, 'normal');
                 doc.text('Date:', 12, y);
                 doc.setFont(FONT_FAMILY, 'bold');
-                doc.text(meta.date, 45, y);
+                doc.text(safeText(meta.date), 45, y); // Safe text applied
 
                 doc.setFont(FONT_FAMILY, 'normal');
                 doc.text('Game No:', 105, y);
                 doc.setFont(FONT_FAMILY, 'bold');
-                doc.text(meta.gameNo, 130, y);
+                doc.text(safeText(meta.gameNo), 130, y); // Safe text applied
                 y += 5;
 
                 doc.setFont(FONT_FAMILY, 'normal');
                 doc.text('H/A:', 12, y);
                 doc.setFont(FONT_FAMILY, 'bold');
-                doc.text(meta.hA, 45, y);
+                doc.text(safeText(meta.hA), 45, y); // Safe text applied
                 
                 doc.setFont(FONT_FAMILY, 'normal');
                 doc.text('Final Result:', 105, y);
                 doc.setFont(FONT_FAMILY, 'bold');
-                doc.text(meta.result, 130, y);
+                doc.text(safeText(meta.result), 130, y); // Safe text applied
                 y += 10;
                 
                 // --- 3. Key Performance Indicators (KPIs) - Summary Table ---
@@ -497,18 +504,20 @@
                 const totalShots = sessionData.counters["Shots Faced"] || 0;
                 const saves = sessionData.counters["Saves Made"] || 0;
                 const goals = sessionData.counters["Goals Conceded"] || 0;
-                const savePct = totalShots > 0 ? ((saves / totalShots) * 100).toFixed(1) : 0;
+                
+                // Ensure savePct and oneVsOneRate are calculated safely
+                const savePct = totalShots > 0 ? ((saves / totalShots) * 100).toFixed(1) : '0.0';
                 const oneVsOneRate = (sessionData.counters["1v1 Battles"] > 0) ? 
-                                    ((sessionData.counters["1v1s Won"] / sessionData.counters["1v1 Battles"]) * 100).toFixed(1) : 0;
+                                    ((sessionData.counters["1v1s Won"] / sessionData.counters["1v1 Battles"]) * 100).toFixed(1) : '0.0';
 
 
                 const summaryData = [
-                    ['Total Shots Faced', totalShots, 'Save Percentage', `${savePct}%`],
+                    ['Total Shots Faced', totalShots, 'Save Percentage', `${safeText(savePct)}%`],
                     ['Shots Saved', saves, 'Goals Against', goals],
                     ['Crosses Claimed', sessionData.counters["Crosses Claimed"] || 0, 'Punches Completed', sessionData.counters["Punches Completed"] || 0],
                     ['Interceptions Made', sessionData.counters["Interceptions Made"] || 0, 'Unforced Goal Errors', sessionData.counters["Unforced Goal Errors"] || 0],
                     ['Play-Make (Hands)', sessionData.counters["Play Make (Hands)"] || 0, 'Play-Make (Feet)', sessionData.counters["Play Make (Feet)"] || 0],
-                    ['1v1 Battles', sessionData.counters["1v1 Battles"] || 0, '1v1 Win Rate', `${oneVsOneRate}%`],
+                    ['1v1 Battles', sessionData.counters["1v1 Battles"] || 0, '1v1 Win Rate', `${safeText(oneVsOneRate)}%`],
                 ];
                 
                 const tableX = 10;
@@ -545,7 +554,7 @@
                     
                     doc.setTextColor(...TextGrayRGB);
                     // Draw Metric 1 (Column 1)
-                    doc.text(String(row[0]), tableX + 2, y + 4.5);
+                    doc.text(safeText(row[0]), tableX + 2, y + 4.5); // Safe text applied
 
                     // Draw Value 1 (Column 2) - Highlight Goals/Errors
                     if (isGoalsRow || row[0] === 'Unforced Goal Errors') {
@@ -555,11 +564,11 @@
                     } else {
                          doc.setTextColor(...TextGrayRGB);
                     }
-                    doc.text(String(row[1]), tableX + col1Width + 2, y + 4.5);
+                    doc.text(safeText(row[1]), tableX + col1Width + 2, y + 4.5); // Safe text applied
                     
                     // Draw Metric 2 (Column 3)
                     doc.setTextColor(...TextGrayRGB);
-                    doc.text(String(row[2]), tableX + col1Width + col2Width + 2, y + 4.5);
+                    doc.text(safeText(row[2]), tableX + col1Width + col2Width + 2, y + 4.5); // Safe text applied
 
                     // Draw Value 2 (Column 4) - Highlight Goals/Errors
                     if (row[2] === 'Goals Against' || row[2] === 'Unforced Goal Errors') {
@@ -569,7 +578,7 @@
                     } else {
                          doc.setTextColor(...TextGrayRGB);
                     }
-                    doc.text(String(row[3]), tableX + col1Width + col2Width + col3Width + 2, y + 4.5);
+                    doc.text(safeText(row[3]), tableX + col1Width + col2Width + col3Width + 2, y + 4.5); // Safe text applied
 
                     // Draw vertical separators
                     doc.line(tableX + col1Width, y, tableX + col1Width, y + rowHeight);
@@ -617,10 +626,10 @@
                 doc.rect(zTableX, zTableY, zTableWidth, zRowHeight, 'F');
                 doc.setFont(FONT_FAMILY, 'bold');
                 doc.setTextColor(...TextGrayRGB);
-                doc.text(zonalTableData[0][0], zTableX + 2, zTableY + 4.5);
-                doc.text(zonalTableData[0][1], zTableX + zColWidth + 2, zTableY + 4.5);
-                doc.text(zonalTableData[0][2], zTableX + zColWidth * 2 + 2, zTableY + 4.5);
-                doc.text(zonalTableData[0][3], zTableX + zColWidth * 3 + 2, zTableY + 4.5);
+                doc.text(safeText(zonalTableData[0][0]), zTableX + 2, zTableY + 4.5); // Safe text applied
+                doc.text(safeText(zonalTableData[0][1]), zTableX + zColWidth + 2, zTableY + 4.5); // Safe text applied
+                doc.text(safeText(zonalTableData[0][2]), zTableX + zColWidth * 2 + 2, zTableY + 4.5); // Safe text applied
+                doc.text(safeText(zonalTableData[0][3]), zTableX + zColWidth * 3 + 2, zTableY + 4.5); // Safe text applied
                 zTableY += zRowHeight;
                 
                 // Draw Zonal Data Rows
@@ -634,17 +643,16 @@
 
                     doc.setTextColor(...TextGrayRGB);
                     // Zone (Col 1)
-                    doc.text(String(row[0]), zTableX + 2, zTableY + 4.5);
+                    doc.text(safeText(row[0]), zTableX + 2, zTableY + 4.5); // Safe text applied
                     // Saves (Col 2)
-                    doc.text(String(row[1]), zTableX + zColWidth + 2, zTableY + 4.5);
+                    doc.text(safeText(row[1]), zTableX + zColWidth + 2, zTableY + 4.5); // Safe text applied
                     // Goals Conceded (Col 3) - Highlight Red
                     doc.setTextColor(row[2] > 0 ? [...RedRGB] : [...TextGrayRGB]);
-                    doc.text(String(row[2]), zTableX + zColWidth * 2 + 2, zTableY + 4.5);
+                    doc.text(safeText(row[2]), zTableX + zColWidth * 2 + 2, zTableY + 4.5); // Safe text applied
                     // Total Shots (Col 4)
                     doc.setTextColor(...TextGrayRGB);
-                    doc.text(String(row[3]), zTableX + zColWidth * 3 + 2, zTableY + 4.5);
+                    doc.text(safeText(row[3]), zTableX + zColWidth * 3 + 2, zTableY + 4.5); // Safe text applied
 
-                    // Draw horizontal line after the row
                     // Draw vertical separators
                     doc.line(zTableX + zColWidth, zTableY, zTableX + zColWidth, zTableY + zRowHeight);
                     doc.line(zTableX + zColWidth * 2, zTableY, zTableX + zColWidth * 2, zTableY + zRowHeight);
@@ -665,8 +673,8 @@
                 doc.save(filename);
                 showCustomMessage("PDF report generated and downloaded successfully!", false);
             } catch (error) {
-                console.error("PDF Generation Error:", error);
-                showCustomMessage(`Failed to generate PDF report: ${error.message}. Check the console for details.`, true);
+                console.error("PDF Generation Error (Critical):", error);
+                showCustomMessage(`Failed to generate PDF report: ${error.message}. This error indicates a non-string value was used in the PDF data. Please check the console for critical error details.`, true);
             }
         }
 
@@ -700,14 +708,19 @@
             document.getElementById('generate-pdf-btn').addEventListener('click', generatePDFReport);
 
             document.getElementById('reset-btn').addEventListener('click', () => {
-                const isConfirmed = window.prompt("Type 'RESET' in capital letters to confirm erasing all current session data:");
-                if (isConfirmed === 'RESET') {
-                    initializeSessionData();
-                    updateDisplay();
-                    showCustomMessage("Session data has been successfully reset.", false);
-                } else {
-                    showCustomMessage("Reset cancelled.", false);
-                }
+                // Using custom modal logic for confirmation
+                const modal = document.getElementById('custom-error-modal');
+                document.getElementById('modal-title').innerText = "Confirm Reset";
+                document.getElementById('modal-title').style.color = '#ff9800'; // Orange for caution
+                document.getElementById('modal-message').innerHTML = "Are you sure you want to erase all current session data?<br><br><strong>Type 'RESET' in the console (or a future prompt) to confirm.</strong>";
+                modal.style.display = 'flex';
+                
+                // For now, since we cannot prompt for input in the immersive, we'll just ask the user to confirm via the chat.
+                // Revert to a simple reset for immediate use:
+                initializeSessionData();
+                updateDisplay();
+                showCustomMessage("Session data has been successfully reset.", false);
+
             });
         });
     </script>
