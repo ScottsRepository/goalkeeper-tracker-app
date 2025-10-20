@@ -3,66 +3,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GOALKEEPER TRACKER (LOCAL)</title>
+    <title>BBGK GOALKEEPER TRACKER</title>
     <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Load jsPDF for PDF generation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <style>
-        /* --- DEFINITIVE ORIGINAL AESTHETICS --- */
+        /* --- BRANDING & AESTHETICS (Based on BBGK website look) --- */
+        
+        /* Core Colors */
+        :root {
+            --color-primary-bg: #0A0A0A; /* Deep Dark Background */
+            --color-secondary-bg: #1A1A1A; /* Panel Background */
+            --color-accent-green: #32cd32; /* Lawn Green (BBGK) */
+            --color-cogniverse-teal: #20c997; /* Teal/Cyan (CogniverseAi) */
+            --color-text-light: #f5f5f5;
+            --color-danger-red: #e53935;
+        }
+
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #121212; /* Very dark background */
-            color: #ffffff;
+            background-color: var(--color-primary-bg); 
+            color: var(--color-text-light);
         }
+        
+        /* Container Panels */
         .container-panel {
-            background-color: #1f1f1f; /* Slightly lighter panel background */
+            background-color: var(--color-secondary-bg); 
             border: 1px solid #333;
-            border-radius: 0.5rem;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+            border-radius: 0.75rem; /* Slightly more rounded */
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.7); /* Deeper shadow */
         }
+
+        /* Stat Boxes */
         .stat-box {
-            background-color: #2a2a2a;
+            background-color: #242424;
             border-radius: 0.5rem;
             border: 1px solid #3a3a3a;
         }
-        /* PRIMARY ACCENT COLOR: #32cd32 (Lawn Green) */
         .stat-value {
-            color: #32cd32; 
-            text-shadow: 0 0 5px rgba(50, 205, 50, 0.6); /* Matching neon shadow effect */
+            color: var(--color-accent-green); 
+            text-shadow: 0 0 8px rgba(50, 205, 50, 0.7); /* Enhanced Neon shadow effect */
         }
+        
+        /* Action Buttons */
         .action-button {
-            transition: all 0.1s ease-in-out;
-            background-color: #32cd32; /* Primary accent color for buttons */
-            color: #1f1f1f; /* Dark text for contrast */
+            transition: all 0.15s ease-in-out;
+            background-color: var(--color-accent-green);
+            color: var(--color-primary-bg); /* Dark text for max contrast */
             font-weight: 700;
             border-radius: 0.5rem;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 4px 8px rgba(50, 205, 50, 0.3); /* Green glow shadow */
         }
         .action-button:hover {
-            background-color: #28a428; /* Darker green on hover */
-            transform: translateY(-1px);
+            background-color: #28a428; 
+            transform: translateY(-2px); /* Lift effect */
+            box-shadow: 0 6px 12px rgba(50, 205, 50, 0.5);
         }
         .action-button:active {
             transform: scale(0.98);
         }
-        /* Specific override for Goal Conceded/Error button */
+
+        /* Specific override for Goal Conceded/Error button (Danger Red) */
         #goal-btn, #unforced-error-btn {
-            background-color: #e53935; /* Red */
+            background-color: var(--color-danger-red);
+            box-shadow: 0 4px 8px rgba(229, 57, 53, 0.4);
+            color: var(--color-text-light);
         }
         #goal-btn:hover, #unforced-error-btn:hover {
             background-color: #c62828;
+            box-shadow: 0 6px 12px rgba(229, 57, 53, 0.6);
         }
 
+        /* Zonal Grid */
         .zone-grid-item {
             cursor: pointer;
             transition: background-color 0.1s;
-            background-color: #333;
-            color: #ccc;
+            background-color: #242424;
+            color: var(--color-text-light);
         }
         .zone-grid-item:hover {
-            background-color: #444;
+            background-color: #383838;
         }
         
         /* --- VISUAL FEEDBACK ANIMATIONS --- */
@@ -70,18 +92,18 @@
             animation: success-flash 0.2s ease-out;
         }
         @keyframes success-flash {
-            0% { transform: scale(1); box-shadow: 0 0 15px rgba(50, 205, 50, 1); }
-            50% { transform: scale(0.98); background-color: #50e050; } /* Brighter Green flash */
-            100% { transform: scale(1); box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5); }
+            0% { transform: scale(1); box-shadow: 0 0 20px rgba(50, 205, 50, 1); }
+            50% { transform: scale(0.98); background-color: #50e050; } 
+            100% { transform: scale(1); box-shadow: 0 4px 8px rgba(50, 205, 50, 0.3); }
         }
 
         .action-button.flash-fail {
             animation: fail-flash 0.2s ease-out;
         }
         @keyframes fail-flash {
-            0% { transform: scale(1); box-shadow: 0 0 15px rgba(229, 57, 53, 1); }
-            50% { transform: scale(0.98); background-color: #ff5252; } /* Brighter Red flash */
-            100% { transform: scale(1); box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5); }
+            0% { transform: scale(1); box-shadow: 0 0 20px rgba(229, 57, 53, 1); }
+            50% { transform: scale(0.98); background-color: #ff5252; } 
+            100% { transform: scale(1); box-shadow: 0 4px 8px rgba(229, 57, 53, 0.4); }
         }
         
         /* Custom Modal for Error/System Messages */
@@ -91,20 +113,36 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.85);
+            background-color: rgba(0, 0, 0, 0.9);
             display: none;
             justify-content: center;
             align-items: center;
             z-index: 1000;
         }
         .modal-content {
-            background-color: #1f1f1f;
-            padding: 24px;
+            background-color: var(--color-secondary-bg);
+            padding: 30px;
             border-radius: 12px;
-            max-width: 400px;
+            max-width: 450px;
             width: 90%;
-            border: 2px solid #32cd32; 
-            box-shadow: 0 0 20px rgba(50, 205, 50, 0.5); 
+            border: 3px solid var(--color-accent-green); 
+            box-shadow: 0 0 25px rgba(50, 205, 50, 0.6); 
+        }
+
+        /* Logo Placeholder Styling */
+        .logo-placeholder {
+            width: 50px;
+            height: 50px;
+            background-color: var(--color-accent-green);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--color-primary-bg);
+            font-weight: bold;
+            font-size: 24px;
+            margin-right: 16px;
+            flex-shrink: 0;
         }
     </style>
 </head>
@@ -113,52 +151,58 @@
     <!-- Custom Error/Confirmation Modal (Replaces alert() and confirm()) -->
     <div id="custom-error-modal" class="custom-modal">
         <div class="modal-content">
-            <h3 id="modal-title" class="text-xl font-bold mb-4 text-red-400">System Message</h3>
+            <h3 id="modal-title" class="text-2xl font-bold mb-4 text-red-400">System Message</h3>
             <p id="modal-message" class="text-gray-300"></p>
             <button onclick="document.getElementById('custom-error-modal').style.display = 'none';"
-                    class="mt-6 w-full py-3 bg-[#32cd32] hover:bg-[#28a428] text-[#1f1f1f] font-bold rounded-lg shadow-lg transition-colors">
+                    class="mt-6 w-full py-3 bg-[var(--color-accent-green)] hover:bg-[#28a428] text-black font-bold rounded-lg shadow-lg transition-colors">
                 Close
             </button>
         </div>
     </div>
 
     <div id="app-container" class="max-w-4xl mx-auto">
-        <header class="text-center mb-6">
-            <h1 class="text-5xl font-extrabold tracking-tight uppercase" style="color: #32cd32;">GOALKEEPER TRACKER</h1>
-            <p class="text-gray-400 mt-2 text-lg">Live Performance Analysis Tool (Local Session)</p>
+        <header class="text-center mb-8">
+            <!-- BRANDING: Enhanced Header with Logo Placeholder -->
+            <div class="flex items-center justify-center mb-2">
+                <!-- NOTE: Replace this div with your <img> tag for Company Logo.jpg -->
+                <div class="logo-placeholder">BB</div> 
+                <h1 class="text-6xl font-extrabold tracking-tight uppercase" style="color: var(--color-accent-green);">BBGK</h1>
+            </div>
+            <p class="text-gray-400 mt-2 text-xl font-light">Pro Goalkeeper Performance Tracker</p>
+            <!-- COGNIVERSEAI BRANDING LINE -->
+            <p class="text-xs font-medium tracking-wider mt-1" style="color: var(--color-cogniverse-teal);">Developed by CogniverseAi</p>
         </header>
         
         <!-- Game Metadata Input Panel -->
-        <div class="container-panel p-5 mb-6">
-            <h2 class="text-xl font-semibold mb-4 border-b border-gray-600 pb-2 text-gray-300">Game Information</h2>
+        <div class="container-panel p-6 mb-6">
+            <h2 class="text-2xl font-semibold mb-4 border-b border-gray-700 pb-2 text-gray-200">Game Information</h2>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div>
                     <label for="gk-name" class="block text-sm font-medium text-gray-400">Goalkeeper Name</label>
-                    <input type="text" id="gk-name" value="Brooke Hurry" class="mt-1 block w-full rounded-md bg-[#2a2a2a] border-gray-600 text-white p-2">
+                    <input type="text" id="gk-name" value="Brooke Hurry" class="mt-1 block w-full rounded-md bg-[#242424] border-gray-600 text-white p-3 shadow-inner">
                 </div>
                 <div>
-                    <!-- FIX: Removed dynamic JS default to conform to 'yyyy-MM-dd' standard and avoid console warning -->
                     <label for="game-date" class="block text-sm font-medium text-gray-400">Game Date</label>
-                    <input type="date" id="game-date" class="mt-1 block w-full rounded-md bg-[#2a2a2a] border-gray-600 text-white p-2">
+                    <input type="date" id="game-date" class="mt-1 block w-full rounded-md bg-[#242424] border-gray-600 text-white p-3 shadow-inner">
                 </div>
                 <div>
                     <label for="opposition" class="block text-sm font-medium text-gray-400">Opposition</label>
-                    <input type="text" id="opposition" placeholder="e.g., The Rivals FC" class="mt-1 block w-full rounded-md bg-[#2a2a2a] border-gray-600 text-white p-2">
+                    <input type="text" id="opposition" placeholder="e.g., The Rivals FC" class="mt-1 block w-full rounded-md bg-[#242424] border-gray-600 text-white p-3 shadow-inner">
                 </div>
                 <div>
                     <label for="game-no" class="block text-sm font-medium text-gray-400">Game Number</label>
-                    <input type="number" id="game-no" min="1" value="1" class="mt-1 block w-full rounded-md bg-[#2a2a2a] border-gray-600 text-white p-2">
+                    <input type="number" id="game-no" min="1" value="1" class="mt-1 block w-full rounded-md bg-[#242424] border-gray-600 text-white p-3 shadow-inner">
                 </div>
                 <div>
                     <label for="h-a" class="block text-sm font-medium text-gray-400">Home / Away</label>
-                    <select id="h-a" class="mt-1 block w-full rounded-md bg-[#2a2a2a] border-gray-600 text-white p-2">
+                    <select id="h-a" class="mt-1 block w-full rounded-md bg-[#242424] border-gray-600 text-white p-3 shadow-inner">
                         <option value="H">Home</option>
                         <option value="A">Away</option>
                     </select>
                 </div>
                 <div>
                     <label for="final-score" class="block text-sm font-medium text-gray-400">Final Result</label>
-                    <select id="final-score" class="mt-1 block w-full rounded-md bg-[#2a2a2a] border-gray-600 text-white p-2">
+                    <select id="final-score" class="mt-1 block w-full rounded-md bg-[#242424] border-gray-600 text-white p-3 shadow-inner">
                         <option value="W">Win</option>
                         <option value="D">Draw</option>
                         <option value="L">Loss</option>
@@ -168,32 +212,32 @@
         </div>
 
         <!-- Dynamic Match Stats Overview -->
-        <div class="container-panel p-5 mb-6">
-            <h2 class="text-xl font-semibold mb-4 border-b border-gray-600 pb-2 text-gray-300">Match Overview</h2>
+        <div class="container-panel p-6 mb-6">
+            <h2 class="text-2xl font-semibold mb-4 border-b border-gray-700 pb-2 text-gray-200">Match Overview</h2>
             <div id="match-stats-output" class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-                <div class="stat-box p-3">
-                    <p class="text-3xl font-extrabold stat-value" id="stat-saves">0</p>
-                    <p class="text-sm text-gray-400">Saves Made</p>
+                <div class="stat-box p-4">
+                    <p class="text-4xl font-extrabold stat-value" id="stat-saves">0</p>
+                    <p class="text-sm text-gray-400 mt-1">Saves Made</p>
                 </div>
-                <div class="stat-box p-3">
-                    <p class="text-3xl font-extrabold stat-value" id="stat-goals">0</p>
-                    <p class="text-sm text-gray-400">Goals Conceded</p>
+                <div class="stat-box p-4">
+                    <p class="text-4xl font-extrabold stat-value" id="stat-goals">0</p>
+                    <p class="text-sm text-gray-400 mt-1">Goals Conceded</p>
                 </div>
-                <div class="stat-box p-3">
-                    <p class="text-3xl font-extrabold stat-value" id="stat-save-pct">0%</p>
-                    <p class="text-sm text-gray-400">Save %</p>
+                <div class="stat-box p-4">
+                    <p class="text-4xl font-extrabold stat-value" id="stat-save-pct">0%</p>
+                    <p class="text-sm text-gray-400 mt-1">Save %</p>
                 </div>
-                <div class="stat-box p-3">
-                    <p class="text-3xl font-extrabold stat-value" id="stat-total-shots">0</p>
-                    <p class="text-sm text-gray-400">Shots Faced</p>
+                <div class="stat-box p-4">
+                    <p class="text-4xl font-extrabold stat-value" id="stat-total-shots">0</p>
+                    <p class="text-sm text-gray-400 mt-1">Shots Faced</p>
                 </div>
             </div>
             <p id="user-id-display" class="text-xs text-gray-500 mt-4 text-right">Running in Local Mode. Data will not be saved.</p>
         </div>
 
         <!-- Counter Grid (Main Action Buttons) -->
-        <div class="container-panel p-5 mb-6">
-            <h2 class="text-xl font-semibold mb-4 border-b border-gray-600 pb-2 text-gray-300">Log Actions</h2>
+        <div class="container-panel p-6 mb-6">
+            <h2 class="text-2xl font-semibold mb-4 border-b border-gray-700 pb-2 text-gray-200">Log Actions</h2>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <button id="shot-faced-btn" data-type="Shots Faced" class="action-button p-4 text-lg">Shot Faced</button>
                 <button id="save-btn" data-type="Saves Made" class="action-button p-4 text-lg">Save</button>
@@ -211,41 +255,41 @@
         </div>
 
         <!-- Zonal Analysis Section (Goalkeeper View) -->
-        <div class="container-panel p-5 mb-8">
-            <h2 class="text-xl font-semibold mb-4 border-b border-gray-600 pb-2 text-gray-300">Zonal Analysis</h2>
+        <div class="container-panel p-6 mb-8">
+            <h2 class="text-2xl font-semibold mb-4 border-b border-gray-700 pb-2 text-gray-200">Zonal Analysis</h2>
 
             <div class="flex flex-col md:flex-row gap-6">
                 <!-- Save Zones Grid (Green themed) -->
                 <div class="flex-1">
-                    <h3 class="text-lg text-center font-bold mb-2" style="color: #32cd32;">Save Zones</h3>
-                    <div id="save-zones-grid" class="grid grid-cols-3 grid-rows-3 h-64 w-full border-2 border-[#32cd32] rounded-lg overflow-hidden">
+                    <h3 class="text-xl text-center font-bold mb-3" style="color: var(--color-accent-green);">Save Zones</h3>
+                    <div id="save-zones-grid" class="grid grid-cols-3 grid-rows-3 h-64 w-full border-4 border-dashed border-[var(--color-accent-green)] rounded-lg overflow-hidden">
                         <!-- Zones TL, TC, TR, ML, MC, MR, BL, BC, BR -->
-                        <div data-zone="TL" class="zone-grid-item flex items-center justify-center border border-gray-600">TL</div>
-                        <div data-zone="TC" class="zone-grid-item flex items-center justify-center border border-gray-600">TC</div>
-                        <div data-zone="TR" class="zone-grid-item flex items-center justify-center border border-gray-600">TR</div>
-                        <div data-zone="ML" class="zone-grid-item flex items-center justify-center border border-gray-600">ML</div>
-                        <div data-zone="MC" class="zone-grid-item flex items-center justify-center border border-gray-600">MC</div>
-                        <div data-zone="MR" class="zone-grid-item flex items-center justify-center border border-gray-600">MR</div>
-                        <div data-zone="BL" class="zone-grid-item flex items-center justify-center border border-gray-600">BL</div>
-                        <div data-zone="BC" class="zone-grid-item flex items-center justify-center border border-gray-600">BC</div>
-                        <div data-zone="BR" class="zone-grid-item flex items-center justify-center border border-gray-600">BR</div>
+                        <div data-zone="TL" class="zone-grid-item flex items-center justify-center border border-[#383838]">TL</div>
+                        <div data-zone="TC" class="zone-grid-item flex items-center justify-center border border-[#383838]">TC</div>
+                        <div data-zone="TR" class="zone-grid-item flex items-center justify-center border border-[#383838]">TR</div>
+                        <div data-zone="ML" class="zone-grid-item flex items-center justify-center border border-[#383838]">ML</div>
+                        <div data-zone="MC" class="zone-grid-item flex items-center justify-center border border-[#383838]">MC</div>
+                        <div data-zone="MR" class="zone-grid-item flex items-center justify-center border border-[#383838]">MR</div>
+                        <div data-zone="BL" class="zone-grid-item flex items-center justify-center border border-[#383838]">BL</div>
+                        <div data-zone="BC" class="zone-grid-item flex items-center justify-center border border-[#383838]">BC</div>
+                        <div data-zone="BR" class="zone-grid-item flex items-center justify-center border border-[#383838]">BR</div>
                     </div>
                 </div>
 
                 <!-- Goals Conceded Zones Grid (Red themed for danger/negative metric) -->
                 <div class="flex-1">
-                    <h3 class="text-lg text-center text-red-400 mb-2 font-bold">Goals Conceded Zones</h3>
-                    <div id="goals-zones-grid" class="grid grid-cols-3 grid-rows-3 h-64 w-full border-2 border-red-500 rounded-lg overflow-hidden">
+                    <h3 class="text-xl text-center text-red-500 mb-3 font-bold">Goals Conceded Zones</h3>
+                    <div id="goals-zones-grid" class="grid grid-cols-3 grid-rows-3 h-64 w-full border-4 border-dashed border-red-700 rounded-lg overflow-hidden">
                         <!-- Zones TL, TC, TR, ML, MC, MR, BL, BC, BR -->
-                        <div data-zone="TL" class="zone-grid-item flex items-center justify-center border border-gray-600">TL</div>
-                        <div data-zone="TC" class="zone-grid-item flex items-center justify-center border border-gray-600">TC</div>
-                        <div data-zone="TR" class="zone-grid-item flex items-center justify-center border border-gray-600">TR</div>
-                        <div data-zone="ML" class="zone-grid-item flex items-center justify-center border border-gray-600">ML</div>
-                        <div data-zone="MC" class="zone-grid-item flex items-center justify-center border border-gray-600">MC</div>
-                        <div data-zone="MR" class="zone-grid-item flex items-center justify-center border border-gray-600">MR</div>
-                        <div data-zone="BL" class="zone-grid-item flex items-center justify-center border border-gray-600">BL</div>
-                        <div data-zone="BC" class="zone-grid-item flex items-center justify-center border border-gray-600">BC</div>
-                        <div data-zone="BR" class="zone-grid-item flex items-center justify-center border border-gray-600">BR</div>
+                        <div data-zone="TL" class="zone-grid-item flex items-center justify-center border border-[#383838]">TL</div>
+                        <div data-zone="TC" class="zone-grid-item flex items-center justify-center border border-[#383838]">TC</div>
+                        <div data-zone="TR" class="zone-grid-item flex items-center justify-center border border-[#383838]">TR</div>
+                        <div data-zone="ML" class="zone-grid-item flex items-center justify-center border border-[#383838]">ML</div>
+                        <div data-zone="MC" class="zone-grid-item flex items-center justify-center border border-[#383838]">MC</div>
+                        <div data-zone="MR" class="zone-grid-item flex items-center justify-center border border-[#383838]">MR</div>
+                        <div data-zone="BL" class="zone-grid-item flex items-center justify-center border border-[#383838]">BL</div>
+                        <div data-zone="BC" class="zone-grid-item flex items-center justify-center border border-[#383838]">BC</div>
+                        <div data-zone="BR" class="zone-grid-item flex items-center justify-center border border-[#383838]">BR</div>
                     </div>
                 </div>
             </div>
@@ -254,19 +298,19 @@
         <!-- Control Buttons -->
         <div class="flex flex-col sm:flex-row gap-4">
             <!-- Save to Cloud is disabled/repurposed -->
-            <button id="save-data-btn" disabled class="flex-1 py-4 bg-gray-600 cursor-not-allowed text-white font-bold rounded-xl shadow-lg">
+            <button id="save-data-btn" disabled class="flex-1 py-4 bg-gray-700 cursor-not-allowed text-gray-400 font-bold rounded-xl shadow-lg">
                 <span class="text-xl">Cloud Saving Disabled (Local Only)</span>
             </button>
-            <button id="generate-pdf-btn" class="flex-1 py-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl shadow-lg transition-colors">
+            <button id="generate-pdf-btn" class="flex-1 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg transition-colors">
                 <span class="text-xl">Generate PDF Report</span>
             </button>
-            <button id="reset-btn" class="py-4 px-6 bg-gray-500 hover:bg-gray-600 text-white font-bold rounded-xl shadow-lg transition-colors">
+            <button id="reset-btn" class="py-4 px-6 bg-red-800 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg transition-colors">
                 Reset Session
             </button>
         </div>
     </div>
 
-    <script type="module">
+    <script>
         // Central data structure for the session
         let sessionData = {};
 
@@ -280,6 +324,14 @@
         // Zonal areas (Top Left, Middle Center, etc.)
         const ZONES = ["TL", "TC", "TR", "ML", "MC", "MR", "BL", "BC", "BR"];
 
+        // --- Branding Colors for jsPDF ---
+        const BBGK_GREEN = [50, 205, 50]; // #32cd32
+        const BBGK_DARK = [10, 10, 10]; // #0A0A0A
+        const BBGK_RED = [229, 57, 53]; // #e53935
+        const LIGHT_GRAY = [245, 245, 245]; // For table backgrounds on white paper
+        const TEXT_DARK = [30, 30, 30]; // Standard dark text color
+        const COGNIVERSE_TEAL = [32, 201, 151]; // #20c997
+
         // --- Custom Error/Message Display Function (Robust alternative to alert/confirm) ---
         function showCustomMessage(message, isError = true) {
             console.log(isError ? "Application Message/Error:" : "Application Message:", message);
@@ -287,7 +339,7 @@
             
             // Set dynamic color based on message type
             const titleElement = document.getElementById('modal-title');
-            titleElement.style.color = isError ? '#f87171' : '#32cd32'; // Red for error, Lawn Green for success
+            titleElement.style.color = isError ? '#f87171' : 'var(--color-accent-green)'; // Red for error, Lawn Green for success
             
             document.getElementById('modal-message').innerText = message;
             document.getElementById('custom-error-modal').style.display = 'flex';
@@ -315,7 +367,7 @@
             });
             sessionData.timestamp = new Date(); // Local timestamp
             
-            // Set today's date correctly on initialization to avoid the console warning
+            // Set today's date correctly on initialization
             const dateInput = document.getElementById('game-date');
             if (dateInput) {
                 const today = new Date();
@@ -402,17 +454,17 @@
                     const count = zonalData[zone] || 0;
 
                     // Reset styling
-                    item.classList.remove('bg-green-800', 'bg-red-800', 'font-bold', 'bg-lime-900', 'bg-gray-800', 'text-gray-400');
-                    item.classList.add('bg-gray-800', 'text-gray-400');
+                    item.classList.remove('bg-green-800', 'bg-red-800', 'font-bold', 'bg-lime-900', 'bg-gray-800', 'text-gray-400', 'bg-[#242424]');
+                    item.classList.add('bg-[#242424]');
 
                     // Apply count and visual feedback
-                    item.innerHTML = `${zone}<br><span class="text-xs ${count > 0 ? 'stat-value font-bold' : 'text-gray-500'}">(${count})</span>`;
+                    item.innerHTML = `${zone}<br><span class="text-sm ${count > 0 ? 'stat-value font-bold' : 'text-gray-500'}">(${count})</span>`;
                     
                     if (count > 0) {
                         if (gridId === 'save-zones-grid') {
-                            item.classList.add('bg-lime-900'); 
+                            item.classList.add('bg-green-900', 'bg-opacity-50'); 
                         } else {
-                            item.classList.add('bg-red-800');
+                            item.classList.add('bg-red-900', 'bg-opacity-50');
                         }
                     }
                 });
@@ -422,7 +474,7 @@
             updateZonalGrid('goals-zones-grid', sessionData.goalsZones);
         }
 
-        // --- PDF Generation Logic (Major Redesign for Professional Look) ---
+        // --- PDF Generation Logic (Professional & Branded) ---
         function generatePDFReport() {
             
             // Utility function to ensure all values are coerced to strings, preventing jsPDF crashes.
@@ -441,82 +493,89 @@
                 
                 const meta = getGameMetadata();
                 const FONT_FAMILY = 'Helvetica'; 
-                const LawnGreenRGB = [50, 205, 50]; // #32cd32
-                const DarkGrayRGB = [42, 42, 42]; // #2a2a2a
-                const LightGrayRGB = [240, 240, 240]; // For table backgrounds
-                const TextGrayRGB = [50, 50, 50];
-                const RedRGB = [229, 57, 53]; // #e53935
 
                 doc.setFont(FONT_FAMILY);
-                doc.setTextColor(...TextGrayRGB); 
+                doc.setTextColor(...TEXT_DARK); 
                 
                 let y = 0; // Current Y coordinate for content placement
 
-                // --- 1. Header Bar (Professional Banner) ---
-                doc.setFillColor(...DarkGrayRGB); 
+                // --- 1. Header Bar (BBGK Branded Banner) ---
+                doc.setFillColor(...BBGK_DARK); 
                 doc.rect(0, 0, 210, 25, 'F');
-                doc.setFontSize(22);
+                doc.setFontSize(30); 
                 doc.setFont(FONT_FAMILY, 'bold');
-                doc.setTextColor(...LawnGreenRGB);
-                doc.text('BBGK TRACKER | GAME ANALYSIS REPORT', 105, 15, { align: 'center' });
+                doc.setTextColor(...BBGK_GREEN);
+                doc.text('BBGK', 105, 12, { align: 'center' }); 
+                
+                doc.setFontSize(10);
+                doc.setFont(FONT_FAMILY, 'normal');
+                doc.setTextColor(200, 200, 200); 
+                doc.text('PROFESSIONAL GOALKEEPER ANALYSIS', 105, 18, { align: 'center' }); 
+                
+                // Add CogniverseAi Branding to the header (Teal color)
+                doc.setFontSize(8);
+                doc.setTextColor(...COGNIVERSE_TEAL);
+                doc.text('DEVELOPED BY CogniverseAi', 105, 22, { align: 'center' }); 
+
                 y = 30;
                 
                 // --- 2. Game Metadata Block ---
                 const metaBlockHeight = 25;
-                doc.setFillColor(...LightGrayRGB); 
+                doc.setFillColor(...LIGHT_GRAY); 
                 doc.rect(10, y - 5, 190, metaBlockHeight, 'F');
-                doc.setFontSize(10);
+                doc.setFontSize(11);
                 doc.setFont(FONT_FAMILY, 'bold');
-                doc.setTextColor(...TextGrayRGB);
+                doc.setTextColor(...TEXT_DARK);
                 doc.text('GAME DETAILS', 12, y);
+                doc.setDrawColor(200, 200, 200);
                 doc.line(10, y + 1, 200, y + 1); // Separator line
                 y += 5;
                 doc.setFont(FONT_FAMILY, 'normal');
 
                 doc.text('Goalkeeper Name:', 12, y);
                 doc.setFont(FONT_FAMILY, 'bold');
-                doc.text(safeText(meta.name), 45, y); // Safe text applied
+                doc.text(safeText(meta.name), 45, y); 
                 
                 doc.setFont(FONT_FAMILY, 'normal');
                 doc.text('Opposition:', 105, y);
                 doc.setFont(FONT_FAMILY, 'bold');
-                doc.text(safeText(meta.opposition), 130, y); // Safe text applied
+                doc.text(safeText(meta.opposition), 135, y); 
                 y += 5;
 
                 doc.setFont(FONT_FAMILY, 'normal');
                 doc.text('Date:', 12, y);
                 doc.setFont(FONT_FAMILY, 'bold');
-                doc.text(safeText(meta.date), 45, y); // Safe text applied
+                doc.text(safeText(meta.date), 45, y); 
 
                 doc.setFont(FONT_FAMILY, 'normal');
                 doc.text('Game No:', 105, y);
                 doc.setFont(FONT_FAMILY, 'bold');
-                doc.text(safeText(meta.gameNo), 130, y); // Safe text applied
+                doc.text(safeText(meta.gameNo), 135, y); 
                 y += 5;
 
                 doc.setFont(FONT_FAMILY, 'normal');
-                doc.text('H/A:', 12, y);
+                doc.text('Home/Away:', 12, y);
                 doc.setFont(FONT_FAMILY, 'bold');
-                doc.text(safeText(meta.hA), 45, y); // Safe text applied
+                doc.text(safeText(meta.hA), 45, y); 
                 
                 doc.setFont(FONT_FAMILY, 'normal');
                 doc.text('Final Result:', 105, y);
                 doc.setFont(FONT_FAMILY, 'bold');
-                doc.text(safeText(meta.result), 130, y); // Safe text applied
+                doc.text(safeText(meta.result), 135, y); 
                 y += 10;
                 
                 // --- 3. Key Performance Indicators (KPIs) - Summary Table ---
                 doc.setFontSize(14);
                 doc.setFont(FONT_FAMILY, 'bold');
-                doc.setTextColor(...LawnGreenRGB); 
-                doc.text('3. Key Performance Indicators (KPIs)', 10, y);
+                doc.setTextColor(...BBGK_DARK); 
+                // Removed the extra text here: (GOLD DATA PACK)
+                doc.text('3. Key Performance Indicators', 10, y); 
                 y += 5;
 
                 const totalShots = sessionData.counters["Shots Faced"] || 0;
                 const saves = sessionData.counters["Saves Made"] || 0;
                 const goals = sessionData.counters["Goals Conceded"] || 0;
                 
-                // Ensure savePct and oneVsOneRate are calculated safely
                 const oneVsOneRate = (sessionData.counters["1v1 Battles"] > 0) ? 
                                     ((sessionData.counters["1v1s Won"] / sessionData.counters["1v1 Battles"]) * 100).toFixed(1) : '0.0';
 
@@ -542,9 +601,9 @@
                 doc.setFont(FONT_FAMILY, 'bold');
                 
                 // Draw Header
-                doc.setFillColor(200, 200, 200); // Darker gray for header
+                doc.setFillColor(BBGK_DARK[0] + 50, BBGK_DARK[1] + 50, BBGK_DARK[2] + 50); // Dark Gray Header
                 doc.rect(tableX, y, tableWidth, rowHeight, 'F');
-                doc.setTextColor(...TextGrayRGB);
+                doc.setTextColor(255, 255, 255); // White text
                 doc.text('Metric', tableX + 2, y + 4.5);
                 doc.text('Total', tableX + col1Width + 2, y + 4.5);
                 doc.text('Metric', tableX + col1Width + col2Width + 2, y + 4.5);
@@ -553,40 +612,40 @@
 
                 // Draw Data Rows
                 doc.setFont(FONT_FAMILY, 'normal');
+                doc.setDrawColor(200, 200, 200); // Light gray lines
                 summaryData.forEach((row, index) => {
-                    const isGoalsRow = row[1] === goals && row[3] === goals; // Highlight Goal/Error rows
                     
                     // Draw alternating row background
                     if (index % 2 === 0) {
-                        doc.setFillColor(235, 235, 235);
+                        doc.setFillColor(230, 230, 230); // Lighter gray for alternating rows
                         doc.rect(tableX, y, tableWidth, rowHeight, 'F');
                     }
                     
-                    doc.setTextColor(...TextGrayRGB);
+                    doc.setTextColor(...TEXT_DARK);
                     // Draw Metric 1 (Column 1)
                     doc.text(safeText(row[0]), tableX + 2, y + 4.5); 
 
                     // Draw Value 1 (Column 2) - Highlight Goals/Errors
-                    if (isGoalsRow || row[0] === 'Unforced Goal Errors') {
-                        doc.setTextColor(...RedRGB);
-                    } else if (row[0] === 'Save Percentage' || row[0] === '1v1 Win Rate') {
-                        doc.setTextColor(...LawnGreenRGB); // Highlight Derived Positive
+                    if (row[0] === 'Unforced Goal Errors') {
+                        doc.setTextColor(...BBGK_RED);
+                    } else if (row[0] === 'Save Percentage') {
+                        doc.setTextColor(...BBGK_GREEN); // Highlight Derived Positive
                     } else {
-                         doc.setTextColor(...TextGrayRGB);
+                         doc.setTextColor(...TEXT_DARK);
                     }
                     doc.text(safeText(row[1]), tableX + col1Width + 2, y + 4.5); 
                     
                     // Draw Metric 2 (Column 3)
-                    doc.setTextColor(...TextGrayRGB);
+                    doc.setTextColor(...TEXT_DARK);
                     doc.text(safeText(row[2]), tableX + col1Width + col2Width + 2, y + 4.5); 
 
                     // Draw Value 2 (Column 4) - Highlight Goals/Errors
                     if (row[2] === 'Goals Against' || row[2] === 'Unforced Goal Errors') {
-                         doc.setTextColor(...RedRGB); // FIX: Spread operator is now correctly used
-                    } else if (row[2] === 'Save Percentage' || row[2] === '1v1 Win Rate') {
-                        doc.setTextColor(...LawnGreenRGB); // FIX: Spread operator is now correctly used
+                         doc.setTextColor(...BBGK_RED); 
+                    } else if (row[2] === '1v1 Win Rate') {
+                        doc.setTextColor(...BBGK_GREEN); 
                     } else {
-                         doc.setTextColor(...TextGrayRGB); // FIX: Spread operator is now correctly used
+                         doc.setTextColor(...TEXT_DARK); 
                     }
                     doc.text(safeText(row[3]), tableX + col1Width + col2Width + col3Width + 2, y + 4.5); 
 
@@ -605,13 +664,13 @@
                 // --- 4. Zonal Analysis ---
                 doc.setFontSize(14);
                 doc.setFont(FONT_FAMILY, 'bold');
-                doc.setTextColor(...LawnGreenRGB); 
+                doc.setTextColor(...BBGK_DARK); 
                 doc.text('4. Zonal Distribution', 10, y);
                 y += 5;
                 
                 doc.setFontSize(10);
                 doc.setFont(FONT_FAMILY, 'normal');
-                doc.setTextColor(...TextGrayRGB);
+                doc.setTextColor(...TEXT_DARK);
                 
                 const zonalTableData = [
                     ['Zone', 'Saves', 'Goals Conceded', 'Total Shots'],
@@ -632,10 +691,10 @@
                 let zTableY = y;
                 
                 // Draw Zonal Header
-                doc.setFillColor(200, 200, 200); 
+                doc.setFillColor(...BBGK_DARK); 
                 doc.rect(zTableX, zTableY, zTableWidth, zRowHeight, 'F');
                 doc.setFont(FONT_FAMILY, 'bold');
-                doc.setTextColor(...TextGrayRGB);
+                doc.setTextColor(255, 255, 255); // White text
                 doc.text(safeText(zonalTableData[0][0]), zTableX + 2, zTableY + 4.5); 
                 doc.text(safeText(zonalTableData[0][1]), zTableX + zColWidth + 2, zTableY + 4.5); 
                 doc.text(safeText(zonalTableData[0][2]), zTableX + zColWidth * 2 + 2, zTableY + 4.5); 
@@ -644,23 +703,25 @@
                 
                 // Draw Zonal Data Rows
                 doc.setFont(FONT_FAMILY, 'normal');
+                doc.setDrawColor(200, 200, 200); 
                 zonalTableData.slice(1).forEach((row, index) => {
                     // Draw alternating row background
                     if (index % 2 === 0) {
-                        doc.setFillColor(235, 235, 235);
+                        doc.setFillColor(230, 230, 230);
                         doc.rect(zTableX, zTableY, zTableWidth, zRowHeight, 'F');
                     }
 
-                    doc.setTextColor(...TextGrayRGB);
+                    doc.setTextColor(...TEXT_DARK);
                     // Zone (Col 1)
                     doc.text(safeText(row[0]), zTableX + 2, zTableY + 4.5); 
-                    // Saves (Col 2)
+                    // Saves (Col 2) - Highlight Green
+                    doc.setTextColor(...(row[1] > 0 ? BBGK_GREEN : TEXT_DARK)); 
                     doc.text(safeText(row[1]), zTableX + zColWidth + 2, zTableY + 4.5); 
                     // Goals Conceded (Col 3) - Highlight Red
-                    doc.setTextColor(...(row[2] > 0 ? RedRGB : TextGrayRGB)); // FIX: Conditional spread used correctly
+                    doc.setTextColor(...(row[2] > 0 ? BBGK_RED : TEXT_DARK)); 
                     doc.text(safeText(row[2]), zTableX + zColWidth * 2 + 2, zTableY + 4.5); 
                     // Total Shots (Col 4)
-                    doc.setTextColor(...TextGrayRGB);
+                    doc.setTextColor(...TEXT_DARK);
                     doc.text(safeText(row[3]), zTableX + zColWidth * 3 + 2, zTableY + 4.5); 
 
                     // Draw vertical separators
@@ -675,7 +736,7 @@
                 // --- Footer ---
                 doc.setFontSize(8);
                 doc.setTextColor(100, 100, 100);
-                doc.text(`Data Pack: GOLD | Generated: ${sessionData.timestamp.toLocaleString()}`, 105, 290, { align: 'center' });
+                doc.text(`Data Pack: GOLD | Generated: ${sessionData.timestamp.toLocaleString()} | bbgk.co.uk`, 105, 290, { align: 'center' });
 
 
                 // Final save
@@ -684,7 +745,7 @@
                 showCustomMessage("PDF report generated and downloaded successfully!", false);
             } catch (error) {
                 console.error("PDF Generation Error (Critical):", error);
-                showCustomMessage(`Failed to generate PDF report: ${error.message}. This error indicates a non-string value was used in the PDF data. Please check the console for critical error details.`, true);
+                showCustomMessage(`Failed to generate PDF report: ${error.message}. Please check the console for critical error details.`, true);
             }
         }
 
@@ -718,11 +779,9 @@
             document.getElementById('generate-pdf-btn').addEventListener('click', generatePDFReport);
 
             document.getElementById('reset-btn').addEventListener('click', () => {
-                // Since we cannot prompt for input in the immersive, we'll revert to a simple reset for immediate use.
                 initializeSessionData();
                 updateDisplay();
                 showCustomMessage("Session data has been successfully reset.", false);
-
             });
         });
     </script>
