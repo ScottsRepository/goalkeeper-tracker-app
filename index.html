@@ -253,68 +253,62 @@
 
         // --- Firebase/Firestore Initialization (Stable Logic) ---
         async function initializeFirebase() {
+            const { initializeApp, getAuth, signInAnonymously, signInWithCustomToken, getFirestore } = window.FirebaseServices;
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+            const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
             let firebaseConfig;
             try {
-                const { initializeApp, getAuth, signInAnonymously, signInWithCustomToken, getFirestore } = window.FirebaseServices;
-
-                // MANDATORY Global Variables Check
-                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-                const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
-                // 1. Check and parse Firebase config with robust fallback
-                try {
-                    firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-                    if (!firebaseConfig || Object.keys(firebaseConfig).length === 0) {
-                        throw new Error("Config variable exists but is empty.");
-                    }
-                } catch (e) {
-                    // Fallback for missing or malformed config
-                    console.warn("WARNING: Firebase config is missing or invalid. Switching to Demo Mode (Persistence Disabled).", e);
-                    
-                    // Use a dummy config to prevent initializeApp from crashing
-                    firebaseConfig = { apiKey: "dummy", authDomain: "dummy.firebaseapp.com", projectId: "dummy-project" };
-                    isPersistenceDisabled = true;
-                    
-                    showCustomMessage("🚨 Demo Mode Active: Cloud persistence is disabled. Data will NOT be saved between sessions.", true);
+                // Try to get and parse the configuration
+                firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+                if (!firebaseConfig || Object.keys(firebaseConfig).length === 0) {
+                    throw new Error("Missing or empty Firebase configuration.");
                 }
-
-                // 2. Initialize Firebase (will work even with dummy config)
+            } catch (e) {
+                // --- CRITICAL FALLBACK: SKIP FIREBASE ENTIRELY ---
+                isPersistenceDisabled = true;
+                
+                // Initialize local data so the app starts with zeros
+                initializeSessionData();
+                updateDisplay();
+                
+                document.getElementById('user-id-display').innerText = `User ID: N/A (Demo Mode)`;
+                showCustomMessage("🚨 Demo Mode Active: Cloud persistence is disabled. Data will NOT be saved between sessions.", true);
+                
+                // CRITICAL: Return immediately to skip all Firebase API calls, preventing the 'api-key-not-valid' error.
+                return; 
+            }
+            
+            // --- FULL FIREBASE INIT PATH (Only runs if config is valid) ---
+            try {
+                // 1. Initialize Firebase
                 app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 auth = getAuth(app);
 
-                // 3. Authenticate User
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
-
-                // 4. Wait for Auth State to be ready
-                const user = await new Promise((resolve) => {
-                    const unsubscribe = window.FirebaseServices.onAuthStateChanged(auth, (user) => {
-                        unsubscribe();
-                        resolve(user);
-                    });
+                // 2. Authenticate User
+                const user = await new Promise((resolve, reject) => {
+                    const authPromise = initialAuthToken 
+                        ? signInWithCustomToken(auth, initialAuthToken)
+                        : signInAnonymously(auth);
+                    
+                    authPromise.then(res => resolve(res.user)).catch(reject);
                 });
 
-                userId = user ? user.uid : crypto.randomUUID();
-                document.getElementById('user-id-display').innerText = `User ID: ${userId} ${isPersistenceDisabled ? ' (Demo Mode)' : ''}`;
+                userId = user.uid;
+                document.getElementById('user-id-display').innerText = `User ID: ${userId}`;
 
-                // 5. Set up data reference and listener ONLY if persistence is enabled
-                if (!isPersistenceDisabled) {
-                    dataRef = window.FirebaseServices.doc(db, `artifacts/${appId}/users/${userId}/gk_tracker_data/current_session`);
-                    setupDataListener();
-                } else {
-                    // Initialize local session data immediately if no persistence
-                    initializeSessionData();
-                    updateDisplay();
-                }
-                
+                // 3. Set up data reference and listener
+                dataRef = window.FirebaseServices.doc(db, `artifacts/${appId}/users/${userId}/gk_tracker_data/current_session`);
+                setupDataListener();
+
             } catch (error) {
-                // Catch any other critical Firebase initialization errors
-                showCustomMessage(`Firebase Setup Failed: ${error.message}`);
-                isPersistenceDisabled = true; // Ensure flag is set on any failure
+                // Catch any authentication/initialization failures even when config is present
+                isPersistenceDisabled = true;
+                initializeSessionData();
+                updateDisplay();
+                document.getElementById('user-id-display').innerText = `User ID: N/A (Demo Mode Failed)`;
+                showCustomMessage(`Firebase Setup Failed: ${error.message}. Switching to local Demo Mode.`, true);
             }
         }
         
@@ -329,15 +323,13 @@
                 sessionData.saveZones[zone] = 0;
                 sessionData.goalsZones[zone] = 0;
             });
-            sessionData.timestamp = window.FirebaseServices.serverTimestamp();
+            sessionData.timestamp = window.FirebaseServices.serverTimestamp; // Placeholder for non-persisted mode
         }
 
         // Sets up real-time listener for session data
         function setupDataListener() {
             if (isPersistenceDisabled || !dataRef) {
-                // If persistence is disabled, do nothing (local state is used)
-                initializeSessionData();
-                updateDisplay();
+                // Should not happen if the check in initializeFirebase works, but safety return
                 return;
             }
 
@@ -503,8 +495,10 @@
             // --- User ID and Timestamp ---
             doc.setFontSize(10);
             doc.setTextColor(50, 50, 50);
-            // Handle serverTimestamp if it's not a function (i.e., in Demo Mode)
-            const timestamp = sessionData.timestamp && sessionData.timestamp.toDate ? sessionData.timestamp.toDate().toLocaleString() : new Date().toLocaleString();
+            // Handle serverTimestamp for Demo Mode
+            const timestamp = sessionData.timestamp && typeof sessionData.timestamp.toDate === 'function' 
+                                ? sessionData.timestamp.toDate().toLocaleString() 
+                                : new Date().toLocaleString();
             doc.text(`User Session ID: ${userId}`, 10, 20);
             doc.text(`Report Generated: ${timestamp}`, 200, 20, { align: 'right' });
 
