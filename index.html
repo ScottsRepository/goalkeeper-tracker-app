@@ -198,6 +198,10 @@
 </head>
 <body class="p-4 sm:p-8">
 
+    <audio id="bg-music" autoplay>
+        <source src="background_Music.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
     <div id="custom-error-modal" class="custom-modal">
         <div class="modal-content">
             <h3 id="modal-title" class="text-2xl font-bold mb-4 text-red-400">System Message</h3>
@@ -209,25 +213,7 @@
         </div>
     </div>
 
-    <div id="splash-screen" class="fixed inset-0 z-[2000] flex flex-col items-center justify-center" style="background-color: var(--color-primary-bg);">
-        <div class="text-center">
-            <div class="flex items-center justify-center mb-2">
-                <div class="logo-placeholder">BB</div> 
-                <h1 class="text-6xl font-extrabold tracking-tight uppercase" style="color: var(--color-accent-green);">BBGK</h1>
-            </div>
-            <p class="text-gray-400 mt-2 text-xl font-light">Pro Goalkeeper Performance Tracker</p>
-            <p class="text-xs font-medium tracking-wider mt-1 mb-8" style="color: var(--color-cogniverse-teal);">Developed by CogniverseAi</p>
-            
-            <button id="enter-app-btn" class="action-button p-6 text-2xl px-12 transition-all">
-                Enter App
-            </button>
-        </div>
-    </div>
-    
-    <audio id="app-audio" src="background_music.mp3" loop preload="auto"></audio> 
-
-
-    <div id="app-container" class="max-w-4xl mx-auto hidden"> 
+    <div id="app-container" class="max-w-4xl mx-auto">
         <header class="text-center mb-8">
             <div class="flex items-center justify-center mb-2">
                 <div class="logo-placeholder">BB</div> 
@@ -238,7 +224,7 @@
         </header>
         
         <div class="container-panel p-6 mb-6">
-            <h2 class="text-2xl font-semibold mb-4 border-b border-gray-700 pb-2">Game Information</h2>
+            <h2 class="text-2xl font-semibold mb-4 border-b border-gray-700 pb-2 text-gray-200">Game Information</h2>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
                 <div>
                     <label for="gk-name" class="block text-sm font-medium text-gray-400">Goalkeeper Name</label>
@@ -281,7 +267,7 @@
         </div>
 
         <div class="container-panel p-6 mb-6">
-            <h2 class="text-2xl font-semibold mb-4 border-b border-gray-700 pb-2">Match Overview</h2>
+            <h2 class="text-2xl font-semibold mb-4 border-b border-gray-700 pb-2 text-gray-200">Match Overview</h2>
             <div id="match-stats-output" class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
                 <div class="stat-box p-4">
                     <p class="text-4xl font-extrabold stat-value" id="stat-saves">0</p>
@@ -304,7 +290,7 @@
         </div>
 
         <div class="container-panel p-6 mb-6">
-            <h2 class="text-2xl font-semibold mb-4 border-b border-gray-700 pb-2">Log Actions</h2>
+            <h2 class="text-2xl font-semibold mb-4 border-b border-gray-700 pb-2 text-gray-200">Log Actions</h2>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <button id="shot-faced-btn" data-type="Shots Faced" class="action-button p-4 text-lg">Shot Faced</button>
                 <button id="save-btn" data-type="Saves Made" class="action-button p-4 text-lg">Save</button>
@@ -322,7 +308,7 @@
         </div>
 
         <div class="container-panel p-6 mb-8">
-            <h2 class="text-2xl font-semibold mb-4 border-b border-gray-700 pb-2">3. Shot & Goal Zonal Analysis</h2>
+            <h2 class="text-2xl font-semibold mb-4 border-b border-gray-700 pb-2 text-gray-200">3. Shot & Goal Zonal Analysis</h2>
 
             <div class="flex flex-col md:flex-row gap-6">
                 <div class="flex-1">
@@ -358,7 +344,7 @@
         </div>
         
         <div class="container-panel p-6 mb-8">
-            <h2 class="text-2xl font-semibold mb-4 border-b border-gray-700 pb-2">4. Contact Zones (18-Yard Box)</h2>
+            <h2 class="text-2xl font-semibold mb-4 border-b border-gray-700 pb-2 text-gray-200">4. Contact Zones (18-Yard Box)</h2>
             <p class="text-sm text-gray-400 mb-4">Click the zone where the GK made contact with the ball (e.g., claim, punch, clearance, 1v1 dive).</p>
 
             <div id="contact-zones-grid" class="grid grid-cols-4 grid-rows-4 h-96 w-full mx-auto border-4 border-solid border-gray-500 rounded-lg overflow-hidden relative">
@@ -1031,15 +1017,15 @@
             }
         }
 
-        // Function to set up the main app logic and listeners
-        function setupAppListeners() {
-            // 1. Initialize local data
+        // --- Event Listeners and Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // 1. Initialize local data immediately
             initializeSessionData();
             updateDisplay();
 
             // 2. Setup Button Listeners
-            // Select all buttons with action-button class, excluding the enter-app-btn
-            const counterButtons = document.querySelectorAll('.action-button:not(#enter-app-btn)');
+            const counterButtons = document.querySelectorAll('.action-button');
             counterButtons.forEach(button => {
                 button.addEventListener('click', () => {
                     handleCounterClick(button, button.getAttribute('data-type'));
@@ -1057,7 +1043,7 @@
                 if (zoneDiv) handleZoneClick('goals', zoneDiv.getAttribute('data-zone'), zoneDiv);
             });
             
-            // 4. Setup Contact Zones Listener
+            // 4. Setup Contact Zones Listener (Now correctly targets all 16 zones)
             document.getElementById('contact-zones-grid').addEventListener('click', (e) => {
                 const zoneDiv = e.target.closest('.contact-zone-item');
                 if (zoneDiv) handleContactZoneClick(zoneDiv.getAttribute('data-zone'));
@@ -1072,42 +1058,6 @@
                 updateDisplay();
                 showCustomMessage("Session data has been successfully reset.", false);
             });
-        }
-
-
-        // --- Event Listeners and Initialization ---
-        document.addEventListener('DOMContentLoaded', () => {
-            
-            // 1. Setup Splash Screen Logic
-            const splashScreen = document.getElementById('splash-screen');
-            const appContainer = document.getElementById('app-container');
-            const enterButton = document.getElementById('enter-app-btn');
-            const appAudio = document.getElementById('app-audio');
-
-            enterButton.addEventListener('click', () => {
-                // 1. Hide Splash Screen
-                splashScreen.classList.add('hidden');
-                
-                // 2. Show Main App
-                appContainer.classList.remove('hidden');
-                
-                // 3. Play MP3 (Uses a promise to handle potential browser autoplay restrictions)
-                if (appAudio) {
-                    appAudio.play().catch(error => {
-                        console.warn("Audio playback failed (browser policy or missing file):", error);
-                    });
-                }
-
-                // 4. Initialize the main application logic
-                setupAppListeners();
-            }, { once: true }); // Ensure the listener only runs once and initializes the app.
-        
-             // Setup comments listener outside of the app logic, as it manipulates sessionData which is initialized inside setupAppListeners
-             document.getElementById('game-comments').addEventListener('input', (e) => {
-                sessionData.comments = e.target.value;
-             });
-
-             // The app is now fully initialized only after the 'Enter App' button is clicked.
         });
     </script>
 </body>
